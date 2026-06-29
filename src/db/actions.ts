@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { suggestUsernames, validateUsername } from '@/lib/username';
 import { ensureProfileSchema } from './ensure-schema';
 import { ensureStorageBuckets } from './ensure-storage';
+import { DEFAULT_PROFILE_AVATAR } from '@/lib/profile-avatars';
 
 // Mock in-memory database fallback for easy developer review/testing
 const mockStore: {
@@ -213,7 +214,7 @@ export async function saveOnboardingData(userId: string, data: any) {
       username: username?.toLowerCase().trim(),
       email,
       fullName,
-      avatar: avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName || username || '')}`,
+      avatar: avatarUrl || DEFAULT_PROFILE_AVATAR,
       headline,
       location,
       bio,
@@ -260,7 +261,7 @@ export async function saveOnboardingData(userId: string, data: any) {
       username: username?.toLowerCase().trim(),
       email,
       fullName,
-      avatar: avatarUrl,
+      avatar: avatarUrl || DEFAULT_PROFILE_AVATAR,
       headline,
       location,
       bio,
@@ -274,7 +275,7 @@ export async function saveOnboardingData(userId: string, data: any) {
       set: {
         username: username?.toLowerCase().trim(),
         fullName,
-        avatar: avatarUrl,
+        ...(avatarUrl != null ? { avatar: avatarUrl || DEFAULT_PROFILE_AVATAR } : {}),
         headline,
         location,
         bio,

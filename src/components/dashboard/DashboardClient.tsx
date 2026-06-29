@@ -13,7 +13,9 @@ import { saveOnboardingData } from '@/db/actions';
 import { createClient } from '@/utils/supabase/client';
 import { captureVideoThumbnail, uploadProfileThumbnail, uploadProfileVideo, validateVideoFile } from '@/lib/storage';
 import ProfileCardPreview from '@/components/profile/ProfileCardPreview';
+import AvatarPicker from '@/components/profile/AvatarPicker';
 import { formatVideoDurationLimit } from '@/lib/video-limits';
+import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
 import { useRouter } from 'next/navigation';
 
 interface DashboardClientProps {
@@ -36,6 +38,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [headline, setHeadline] = useState(profile?.user?.headline || '');
   const [location, setLocation] = useState(profile?.user?.location || '');
   const [bio, setBio] = useState(profile?.user?.bio || '');
+  const [avatar, setAvatar] = useState(() => resolveProfileAvatarSelection(profile?.user?.avatar));
   
   const [experiences, setExperiences] = useState<any[]>(profile?.experiences || []);
   const [projects, setProjects] = useState<any[]>(profile?.projects || []);
@@ -59,6 +62,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
       headline,
       location,
       bio,
+      avatarUrl: avatar,
       videoUrl: profile?.user?.videoUrl,
       resumeUrl: profile?.user?.resumeUrl,
       experiences,
@@ -73,7 +77,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
       // Update local state
       setProfile({
         ...profile,
-        user: { ...profile.user, fullName, headline, location, bio },
+        user: { ...profile.user, fullName, headline, location, bio, avatar },
         experiences,
         projects,
         socials
@@ -230,7 +234,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
             bio={bio}
             videoUrl={profile?.user?.videoUrl}
             thumbnailUrl={profile?.user?.thumbnailUrl}
-            avatar={profile?.user?.avatar}
+            avatar={avatar}
           />
         </nav>
 
@@ -328,6 +332,8 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                   <Save className="h-3.5 w-3.5" /> {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
+
+              <AvatarPicker value={avatar} onChange={setAvatar} compact />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">

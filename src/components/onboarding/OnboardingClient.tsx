@@ -18,6 +18,8 @@ import {
   validateVideoFile,
 } from '@/lib/storage';
 import { MAX_VIDEO_DURATION_SEC, formatVideoDurationLimit } from '@/lib/video-limits';
+import { DEFAULT_PROFILE_AVATAR } from '@/lib/profile-avatars';
+import AvatarPicker from '@/components/profile/AvatarPicker';
 import Confetti from '@/components/Confetti';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
@@ -48,6 +50,7 @@ export default function OnboardingClient() {
   const [headline, setHeadline] = useState('');
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
+  const [selectedAvatar, setSelectedAvatar] = useState(DEFAULT_PROFILE_AVATAR);
   
   // Video states
   const [videoMethod, setVideoMethod] = useState<'record' | 'upload'>('record');
@@ -371,7 +374,7 @@ export default function OnboardingClient() {
         finalResumeUrl = await uploadProfileResume(resumeFile);
       }
 
-      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName || username)}`;
+      const avatarUrl = selectedAvatar;
 
       const onboardingPayload = {
         username,
@@ -802,6 +805,8 @@ export default function OnboardingClient() {
                 </div>
 
                 <div className="space-y-4">
+                  <AvatarPicker value={selectedAvatar} onChange={setSelectedAvatar} />
+
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Full Name</label>
                     <input 
@@ -1281,15 +1286,11 @@ export default function OnboardingClient() {
             {/* Profile Avatar / Username Header */}
             <div className="flex flex-col items-center text-center mt-6 space-y-3">
               <div className="h-16 w-16 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden">
-                {fullName ? (
-                  <img 
-                    src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName)}`} 
-                    alt={fullName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <User className="h-7 w-7 text-zinc-500" />
-                )}
+                <img
+                  src={selectedAvatar}
+                  alt={fullName || 'Profile avatar'}
+                  className="h-full w-full object-cover"
+                />
               </div>
               <div className="space-y-0.5">
                 <h3 className="font-semibold text-sm text-white">{fullName || "Your Full Name"}</h3>
