@@ -65,27 +65,12 @@ export default function OnboardingProfilePreview(props: OnboardingProfilePreview
   }, [props]);
 
   return (
-    <>
-      {/* Desktop — side panel */}
-      <ProfileLivePreview
-        profileData={profileData}
-        username={props.username}
-        defaultLayout="mobile"
-        panelMode="side"
-        className="hidden min-h-0 min-w-0 flex-1 border-l border-white/10 bg-[#0a0a0a] lg:flex"
-      />
-
-      {/* Mobile — app-style bottom preview */}
-      <div className="flex h-[min(42dvh,400px)] min-h-[240px] shrink-0 flex-col overflow-hidden border-t border-white/10 bg-[#0a0a0a] lg:hidden">
-        <ProfileLivePreview
-          profileData={profileData}
-          username={props.username}
-          defaultLayout="mobile"
-          alwaysVisible
-          panelMode="bottom"
-          className="min-h-0 flex-1"
-        />
-      </div>
-    </>
+    <ProfileLivePreview
+      profileData={profileData}
+      username={props.username}
+      defaultLayout="mobile"
+      panelMode="side"
+      className="hidden min-h-0 min-w-0 flex-1 border-l border-white/10 bg-[#0a0a0a] lg:flex"
+    />
   );
 }

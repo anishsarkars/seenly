@@ -17,6 +17,7 @@ import WhatsNewPanel from '@/components/dashboard/WhatsNewPanel';
 import { useDashboardSidebar } from '@/components/dashboard/useDashboardSidebar';
 import { useDashboardPreview } from '@/components/dashboard/useDashboardPreview';
 import SeenlyLogo from '@/components/SeenlyLogo';
+import SiteFooter from '@/components/SiteFooter';
 import { formatVideoDurationLimit } from '@/lib/video-limits';
 import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
 import { hasUnreadUpdates, SEENLY_UPDATES_VERSION } from '@/lib/seenly-updates';
@@ -206,8 +207,8 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   };
 
   return (
-    <div className={shell}>
-      <div className="flex h-dvh max-h-dvh flex-col overflow-hidden lg:flex-row">
+    <div className={`${shell} flex min-h-dvh flex-col`}>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
         {/* Nav sidebar — resizable & closable */}
         <aside
           className={`relative hidden h-full shrink-0 flex-col overflow-hidden border-r border-white/10 transition-[width] duration-200 lg:flex ${
@@ -602,6 +603,12 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           )}
         </div>
       </div>
+      <SiteFooter
+        variant="member"
+        compact
+        username={profile?.user?.username}
+        className="shrink-0"
+      />
     </div>
   );
 }
