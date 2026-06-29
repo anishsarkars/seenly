@@ -136,8 +136,8 @@ export default function OnboardingClient() {
           try {
             const existing = await getUserProfile(signedInUser.id);
             if (existing?.user?.username) {
-              setAuthSuccessMsg('Welcome back! Redirecting to your dashboard...');
-              setTimeout(() => { router.replace('/dashboard'); }, 600);
+              // Redirect to public profile page
+              router.replace(`/${existing.user.username}`);
               return;
             }
           } catch {}
@@ -331,8 +331,8 @@ export default function OnboardingClient() {
     
     setTimeout(() => {
       setIsUploading(false);
-      // Redirect to dashboard — profile is now live at seenly.tech/[username]
-      router.push('/dashboard');
+      // Redirect to public profile page after publishing
+      router.push(`/${username}`);
     }, 500);
   };
 
