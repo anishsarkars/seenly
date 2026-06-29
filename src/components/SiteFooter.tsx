@@ -11,6 +11,7 @@ export type SiteFooterVariant =
 
 interface SiteFooterProps {
   compact?: boolean;
+  minimal?: boolean;
   className?: string;
   variant?: SiteFooterVariant;
   username?: string | null;
@@ -60,11 +61,35 @@ function linksForVariant(variant: SiteFooterVariant, username?: string | null): 
 
 export default function SiteFooter({
   compact = false,
+  minimal = false,
   className = '',
   variant = 'guest',
   username = null,
 }: SiteFooterProps) {
   const links = linksForVariant(variant, username);
+
+  if (minimal) {
+    return (
+      <footer
+        className={`shrink-0 border-t border-white/[0.06] pt-3 pb-1 ${className}`}
+      >
+        <div className="flex items-center justify-between gap-3 text-[10px]">
+          <SeenlyLogo size="sm" showBeta />
+          <a
+            href="https://x.com/anishsarkars"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group font-medium text-white/50 transition-colors hover:text-white/80"
+          >
+            <span className="text-white/30 group-hover:text-white/45">by</span>{' '}
+            <span className="underline decoration-white/20 underline-offset-2 group-hover:decoration-white/50">
+              Anish
+            </span>
+          </a>
+        </div>
+      </footer>
+    );
+  }
 
   return (
     <footer
