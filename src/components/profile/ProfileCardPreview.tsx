@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
 import { isPersistedMediaUrl } from '@/lib/storage';
+import { panel } from '@/lib/platform-ui';
 
 interface ProfileCardPreviewProps {
   username: string;
@@ -26,45 +28,43 @@ export default function ProfileCardPreview({
   const hasVideo = videoUrl && isPersistedMediaUrl(videoUrl);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] text-neutral-500">Preview</span>
+    <div className={`${panel} overflow-hidden p-4`}>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <span className="text-xs font-medium uppercase tracking-widest text-white/40">Live preview</span>
         <Link
           href={`/${username}`}
           target="_blank"
-          className="text-[11px] text-neutral-500 transition-colors hover:text-neutral-300"
+          className="inline-flex items-center gap-1 text-xs text-white/50 transition-colors hover:text-white"
         >
-          Open
+          Open <ArrowUpRight className="h-3 w-3" />
         </Link>
       </div>
 
-      <div className="flex items-center gap-2.5">
-        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.06]">
+      <div className="flex items-center gap-3">
+        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-white/10 bg-black">
           {avatar ? (
             <img src={avatar} alt={displayName} className="h-full w-full object-cover" />
           ) : (
-            <span className="flex h-full w-full items-center justify-center text-[10px] text-neutral-500">
+            <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-white/40">
               {username.slice(0, 2).toUpperCase()}
             </span>
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-xs text-neutral-200">{displayName}</p>
-          {headline && <p className="truncate text-[11px] text-neutral-500">{headline}</p>}
+          <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+          {headline && <p className="truncate text-xs text-white/50">{headline}</p>}
         </div>
       </div>
 
-      <div className="relative aspect-video overflow-hidden rounded-xl bg-white/[0.04]">
+      <div className="relative mt-4 aspect-video overflow-hidden rounded-lg border border-white/10 bg-black">
         {hasVideo && thumbnailUrl ? (
-          <img src={thumbnailUrl} alt="" className="h-full w-full object-cover opacity-80" />
+          <img src={thumbnailUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full items-center justify-center text-[10px] text-neutral-600">
-            No video
-          </div>
+          <div className="flex h-full items-center justify-center text-xs text-white/30">No video yet</div>
         )}
       </div>
 
-      <p className="truncate text-[10px] text-neutral-600">seenly.tech/{username}</p>
+      <p className="mt-3 truncate text-[11px] font-mono text-white/35">seenly.tech/{username}</p>
     </div>
   );
 }

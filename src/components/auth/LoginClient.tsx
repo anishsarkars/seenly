@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { signInWithOAuth } from '@/lib/auth-client';
+import { signInWithGoogle } from '@/lib/auth-client';
 
 function GoogleIcon() {
   return (
@@ -31,10 +31,10 @@ export default function LoginClient() {
     }
   }, [searchParams]);
 
-  const handleOAuth = async (provider: 'google' | 'github') => {
+  const handleGoogleSignIn = async () => {
     setError('');
     setLoading(true);
-    const { error: authError } = await signInWithOAuth(supabase, provider, '/onboarding');
+    const { error: authError } = await signInWithGoogle(supabase, '/onboarding');
     if (authError) {
       setError(authError.message);
       setLoading(false);
@@ -63,7 +63,7 @@ export default function LoginClient() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black px-6 text-white">
+    <div className="flex min-h-screen items-center justify-center bg-black font-geist px-6 text-white selection:bg-white selection:text-black">
       <div className="w-full max-w-md space-y-8">
         <div className="space-y-2 text-center">
           <Link href="/" className="text-xl font-semibold tracking-tight">Seenly</Link>
@@ -75,19 +75,11 @@ export default function LoginClient() {
           <button
             type="button"
             disabled={loading}
-            onClick={() => handleOAuth('google')}
-            className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-white/10 bg-white px-4 py-3 text-sm font-medium text-black transition-colors hover:bg-zinc-200 disabled:opacity-50"
+            onClick={handleGoogleSignIn}
+            className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-white/10 bg-white px-4 py-3 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-50"
           >
             <GoogleIcon />
             Continue with Google
-          </button>
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => handleOAuth('github')}
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium transition-colors hover:bg-white/10 disabled:opacity-50"
-          >
-            Continue with GitHub
           </button>
         </div>
 

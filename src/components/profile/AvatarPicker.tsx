@@ -1,6 +1,7 @@
 'use client';
 
 import { PROFILE_AVATARS } from '@/lib/profile-avatars';
+import { label } from '@/lib/platform-ui';
 
 interface AvatarPickerProps {
   value: string;
@@ -11,7 +12,7 @@ interface AvatarPickerProps {
 export default function AvatarPicker({ value, onChange, compact = false }: AvatarPickerProps) {
   return (
     <div className="space-y-2">
-      <label className="text-xs text-neutral-500">Avatar</label>
+      <label className={label}>Avatar</label>
       <div className={`grid grid-cols-4 ${compact ? 'gap-2' : 'gap-3'}`}>
         {PROFILE_AVATARS.map((avatar) => {
           const selected = value === avatar.src;
@@ -20,10 +21,10 @@ export default function AvatarPicker({ value, onChange, compact = false }: Avata
               key={avatar.id}
               type="button"
               onClick={() => onChange(avatar.src)}
-              className={`aspect-square overflow-hidden rounded-xl transition-all ${
+              className={`aspect-square overflow-hidden rounded-lg border transition-all ${
                 selected
-                  ? 'ring-1 ring-neutral-400'
-                  : 'opacity-70 hover:opacity-100'
+                  ? 'border-white/40 ring-1 ring-white/20'
+                  : 'border-white/10 opacity-80 hover:opacity-100'
               }`}
               aria-label={`Choose ${avatar.label} avatar`}
               aria-pressed={selected}

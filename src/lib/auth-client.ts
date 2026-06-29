@@ -5,13 +5,12 @@ export function getAuthCallbackUrl(next = '/onboarding') {
   return `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
 }
 
-export async function signInWithOAuth(
+export async function signInWithGoogle(
   supabase: SupabaseClient,
-  provider: 'google' | 'github',
   next = '/onboarding'
 ) {
   return supabase.auth.signInWithOAuth({
-    provider,
+    provider: 'google',
     options: { redirectTo: getAuthCallbackUrl(next) },
   });
 }

@@ -23,7 +23,7 @@ import AvatarPicker from '@/components/profile/AvatarPicker';
 import Confetti from '@/components/Confetti';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { signInWithOAuth } from '@/lib/auth-client';
+import { signInWithGoogle } from '@/lib/auth-client';
 
 export default function OnboardingClient() {
   const router = useRouter();
@@ -126,10 +126,10 @@ export default function OnboardingClient() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
-  const handleOAuthSignIn = async (provider: 'google' | 'github') => {
+  const handleGoogleSignIn = async () => {
     setAuthError('');
     setOauthLoading(true);
-    const { error } = await signInWithOAuth(supabase, provider, '/onboarding');
+    const { error } = await signInWithGoogle(supabase, '/onboarding');
     if (error) {
       setAuthError(error.message);
       setOauthLoading(false);
@@ -533,7 +533,7 @@ export default function OnboardingClient() {
                         <button
                           type="button"
                           disabled={oauthLoading}
-                          onClick={() => handleOAuthSignIn('google')}
+                          onClick={handleGoogleSignIn}
                           className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-white/10 bg-white px-4 py-3 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-50"
                         >
                           <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -543,14 +543,6 @@ export default function OnboardingClient() {
                             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                           </svg>
                           Continue with Google
-                        </button>
-                        <button
-                          type="button"
-                          disabled={oauthLoading}
-                          onClick={() => handleOAuthSignIn('github')}
-                          className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-white/10 disabled:opacity-50"
-                        >
-                          Continue with GitHub
                         </button>
 
                         <div className="relative flex py-1 items-center">
