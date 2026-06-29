@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Menu, X, MapPin, Play } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import { getUserProfile } from '@/db/actions';
 
 const steps = [
   {
@@ -43,7 +45,26 @@ const steps = [
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authState, setAuthState] = useState<'loading' | 'guest' | 'member'>('loading');
+  const [profileUsername, setProfileUsername] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) {
+        setAuthState('guest');
+        return;
+      }
+      const profile = await getUserProfile(user.id);
+      if (profile?.user?.username) {
+        setProfileUsername(profile.user.username);
+        setAuthState('member');
+      } else {
+        setAuthState('guest');
+      }
+    });
+  }, []);
 
   // 3D floating tilt animation on mouse move
   useEffect(() => {
@@ -120,12 +141,21 @@ export default function Home() {
           </div>
 
           <div className="flex items-center">
-            <button
-              disabled
-              className="hidden md:block rounded-lg bg-gray-400 px-5 py-2 text-sm font-medium text-gray-700 cursor-not-allowed"
-            >
-              Join Beta (Closed)
-            </button>
+            {authState === 'member' ? (
+              <a
+                href="/dashboard"
+                className="hidden rounded-lg bg-white px-5 py-2 text-sm font-semibold text-black transition-transform hover:scale-105 md:block"
+              >
+                Dashboard
+              </a>
+            ) : authState === 'guest' ? (
+              <a
+                href="/onboarding"
+                className="hidden rounded-lg bg-white px-5 py-2 text-sm font-semibold text-black transition-transform hover:scale-105 md:block"
+              >
+                Get Started
+              </a>
+            ) : null}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="relative h-10 w-10 flex items-center justify-center text-white focus:outline-none md:hidden z-50 active:scale-90 transition-transform"
@@ -156,11 +186,11 @@ export default function Home() {
               </a>
               <div>
                 <a
-                  href="/onboarding"
+                  href={authState === 'member' ? '/dashboard' : '/onboarding'}
                   onClick={() => setMobileMenuOpen(false)}
                   className="mt-6 inline-block rounded-full bg-white px-8 py-3.5 text-base font-medium text-black hover:scale-105 transition-transform"
                 >
-                  Get Started
+                  {authState === 'member' ? 'Dashboard' : 'Get Started'}
                 </a>
               </div>
             </nav>
@@ -193,19 +223,41 @@ export default function Home() {
 
             {/* Action Buttons */}
             <div className="flex animate-[fadeSlideUp_0.8s_ease_0.8s_both] w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-              <a
-                href="/onboarding"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-105 sm:w-auto"
-              >
-                Create Your Intro
-                <ArrowRight className="h-3.5 w-3.5" />
-              </a>
-              <button
-                onClick={() => alert('Demo video player modal!')}
-                className="w-full rounded-lg border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/8 hover:text-white sm:w-auto"
-              >
-                ▶ Watch Demo
-              </button>
+              {authState === 'member' ? (
+                <>
+                  <a
+                    href="/dashboard"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-105 sm:w-auto"
+                  >
+                    Dashboard
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </a>
+                  {profileUsername && (
+                    <a
+                      href={`/${profileUsername}`}
+                      className="w-full rounded-lg border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/8 hover:text-white sm:w-auto text-center"
+                    >
+                      View Live Profile
+                    </a>
+                  )}
+                </>
+              ) : (
+                <>
+                  <a
+                    href="/onboarding"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-105 sm:w-auto"
+                  >
+                    Create Your Intro
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </a>
+                  <button
+                    onClick={() => alert('Demo video player modal!')}
+                    className="w-full rounded-lg border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/8 hover:text-white sm:w-auto"
+                  >
+                    ▶ Watch Demo
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

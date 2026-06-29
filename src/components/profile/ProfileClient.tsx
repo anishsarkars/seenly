@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { 
   FileText, Share2, MapPin, ExternalLink, 
-  Mail, Phone, Globe
+  Mail, Phone, Globe, LayoutDashboard, Pencil
 } from 'lucide-react';
 import { logAnalyticEvent } from '@/db/actions';
 
@@ -14,13 +15,33 @@ interface ProfileClientProps {
     projects: any[];
     socials: any;
   };
+  isOwner?: boolean;
 }
 
-export default function ProfileClient({ profileData }: ProfileClientProps) {
+export default function ProfileClient({ profileData, isOwner = false }: ProfileClientProps) {
   const { user, experiences, projects, socials } = profileData;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasLoggedPlay, setHasLoggedPlay] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+
+  useEffect(() => {
+    if (user.thumbnailUrl) {
+      const img = new Image();
+      img.src = user.thumbnailUrl;
+    }
+
+    if (user.videoUrl) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'video';
+      link.href = user.videoUrl;
+      document.head.appendChild(link);
+      return () => {
+        document.head.removeChild(link);
+      };
+    }
+  }, [user.thumbnailUrl, user.videoUrl]);
 
   // Log page view on mount
   useEffect(() => {
@@ -74,6 +95,28 @@ export default function ProfileClient({ profileData }: ProfileClientProps) {
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-white selection:text-black py-16 md:py-24">
+      {isOwner && (
+        <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-black/85 px-2 py-2 shadow-2xl backdrop-blur-md">
+          <span className="rounded-full bg-emerald-400/15 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
+            Live
+          </span>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-semibold text-black transition-transform hover:scale-105"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit Profile
+          </Link>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-xs font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <LayoutDashboard className="h-3.5 w-3.5" />
+            Dashboard
+          </Link>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
         
         {/* Profile Card Sidebar */}
@@ -170,24 +213,35 @@ export default function ProfileClient({ profileData }: ProfileClientProps) {
         <div className="md:col-span-8 space-y-10">
           
           {/* Intro video */}
-          <div className="relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950 shadow-2xl">
-            <div className="aspect-video w-full">
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-2xl">
+            <div className="aspect-video w-full relative bg-black">
               {user.videoUrl ? (
-                <video
-                  ref={videoRef}
-                  src={user.videoUrl}
-                  poster={user.thumbnailUrl || undefined}
-                  className="h-full w-full object-cover"
-                  controls
-                  playsInline
-                  preload="metadata"
-                  onPlay={() => {
-                    if (!hasLoggedPlay) {
-                      logAnalyticEvent(user.id, 'plays');
-                      setHasLoggedPlay(true);
-                    }
-                  }}
-                />
+                <>
+                  {user.thumbnailUrl && !videoReady && (
+                    <img
+                      src={user.thumbnailUrl}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover"
+                      fetchPriority="high"
+                    />
+                  )}
+                  <video
+                    ref={videoRef}
+                    src={user.videoUrl}
+                    poster={user.thumbnailUrl || undefined}
+                    className="relative h-full w-full object-cover"
+                    controls
+                    playsInline
+                    preload="auto"
+                    onLoadedData={() => setVideoReady(true)}
+                    onPlay={() => {
+                      if (!hasLoggedPlay) {
+                        logAnalyticEvent(user.id, 'plays');
+                        setHasLoggedPlay(true);
+                      }
+                    }}
+                  />
+                </>
               ) : (
                 <div className="flex h-full items-center justify-center text-sm text-zinc-500">
                   No intro video uploaded yet.

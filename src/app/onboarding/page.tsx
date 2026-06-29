@@ -11,7 +11,7 @@ export default async function OnboardingPage() {
   if (user) {
     const profile = await getUserProfile(user.id);
     if (profile?.user?.username) {
-      redirect(`/${profile.user.username}`);
+      redirect('/dashboard');
     }
   }
 

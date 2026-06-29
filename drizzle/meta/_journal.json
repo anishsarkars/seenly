@@ -8,6 +8,13 @@
       "when": 1782711733429,
       "tag": "0000_solid_hercules",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782800000000,
+      "tag": "0001_add_profile_columns",
+      "breakpoints": true
     }
   ]
 }

@@ -10,6 +10,7 @@ import {
 import { saveOnboardingData, isUsernameUnique, getUserProfile, getUsernameSuggestions } from '@/db/actions';
 import { validateUsername } from '@/lib/username';
 import { captureVideoThumbnail, uploadProfileResume, uploadProfileThumbnail, uploadProfileVideo } from '@/lib/storage';
+import Confetti from '@/components/Confetti';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
@@ -141,7 +142,7 @@ export default function OnboardingClient() {
             const existing = await getUserProfile(signedInUser.id);
             if (existing?.user?.username) {
               // Redirect to public profile page
-              router.replace(`/${existing.user.username}`);
+              router.replace('/dashboard');
               return;
             }
           } catch {}
@@ -398,7 +399,7 @@ export default function OnboardingClient() {
       }
 
       setUploadProgress(100);
-      router.push(`/${username}`);
+      setStep(9);
     } catch (err: any) {
       alert(err.message || 'Failed to publish profile. Please try again.');
     } finally {
@@ -423,24 +424,24 @@ export default function OnboardingClient() {
   };
 
   return (
-    <div className="flex min-h-screen bg-black text-white selection:bg-white selection:text-black">
-      
+    <div className="flex min-h-screen bg-black font-geist text-white selection:bg-white selection:text-black">
+      <Confetti active={step === 9} />
+
       {/* Onboarding Input Column */}
-      <div className="flex-1 max-w-xl mx-auto px-6 py-12 md:py-20 flex flex-col justify-between border-r border-zinc-900 bg-zinc-950/20 backdrop-blur-3xl">
+      <div className="flex flex-1 flex-col justify-between border-white/10 px-5 py-10 md:px-8 md:py-14 lg:max-w-lg lg:border-r">
         
         {/* Top Branding / Step Progress */}
         <div>
-          <div className="flex items-center gap-2 mb-8">
-            <div className="h-8 w-8 rounded-lg bg-white flex items-center justify-center text-black font-black text-lg">S</div>
-            <span className="font-semibold tracking-wider text-sm text-zinc-400">SEENLY</span>
+          <div className="mb-10 flex items-center gap-3">
+            <span className="text-lg font-semibold tracking-tight text-white">Seenly</span>
           </div>
 
           {/* Progress Indicator */}
           {step < 9 && (
-            <div className="mb-12">
-              <div className="flex justify-between items-center text-xs text-zinc-500 mb-2">
-                <span>STEP {step} OF 8</span>
-                <span className="font-semibold text-zinc-300">
+            <div className="mb-10 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium uppercase tracking-widest text-white/40">Step {step} of 8</span>
+                <span className="font-medium text-white/70">
                   {step === 1 && "Create Account"}
                   {step === 2 && "Choose Username"}
                   {step === 3 && "Record Introduction"}
@@ -451,7 +452,7 @@ export default function OnboardingClient() {
                   {step === 8 && "Resume PDF"}
                 </span>
               </div>
-              <div className="h-[2px] w-full bg-zinc-800 rounded-full overflow-hidden">
+              <div className="h-px w-full overflow-hidden rounded-full bg-white/10">
                 <motion.div 
                   className="h-full bg-white"
                   initial={{ width: '0%' }}
@@ -464,7 +465,7 @@ export default function OnboardingClient() {
         </div>
 
         {/* Dynamic Form Area */}
-        <div className="flex-1 flex flex-col justify-center">
+        <div className="flex flex-1 flex-col justify-center py-6">
           <AnimatePresence mode="wait">
             {authLoading ? (
               <div className="flex justify-center items-center py-12 text-zinc-500 gap-2">
@@ -488,7 +489,7 @@ export default function OnboardingClient() {
 
                     {sessionUser ? (
                       <div className="space-y-6">
-                        <div className="p-4 rounded-xl border border-zinc-850 bg-zinc-900/40 flex items-center justify-between">
+                        <div className="p-4 rounded-lg border border-zinc-850 bg-zinc-900/40 flex items-center justify-between">
                           <div>
                             <p className="text-xs text-zinc-500 font-semibold uppercase">SIGNED IN AS</p>
                             <p className="text-sm font-medium text-white">{sessionUser.email}</p>
@@ -505,7 +506,7 @@ export default function OnboardingClient() {
                         </div>
                         <button 
                           onClick={() => setStep(2)}
-                          className="w-full bg-white text-black py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm animate-pulse"
+                          className="w-full bg-white text-black py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm animate-pulse"
                         >
                           Continue to Username <ArrowRight className="h-4 w-4" />
                         </button>
@@ -519,7 +520,7 @@ export default function OnboardingClient() {
                             placeholder="you@example.com" 
                             value={emailInput}
                             onChange={(e) => setEmailInput(e.target.value)}
-                            className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-white outline-none transition-all"
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:border-white outline-none transition-all"
                           />
                         </div>
 
@@ -530,7 +531,7 @@ export default function OnboardingClient() {
                             placeholder="••••••••" 
                             value={passwordInput}
                             onChange={(e) => setPasswordInput(e.target.value)}
-                            className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-white outline-none transition-all"
+                            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:border-white outline-none transition-all"
                           />
                         </div>
 
@@ -539,7 +540,7 @@ export default function OnboardingClient() {
 
                         <button 
                           type="submit"
-                          className="w-full bg-white text-black py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm"
+                          className="w-full bg-white text-black py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm"
                         >
                           {authMode === 'signup' ? 'Create Account' : 'Sign In'} <ArrowRight className="h-4 w-4" />
                         </button>
@@ -564,7 +565,7 @@ export default function OnboardingClient() {
                             setSessionUser({ id: '00000000-0000-0000-0000-000000000000', email: 'demo@seenly.tech' });
                             setStep(2);
                           }}
-                          className="w-full border border-zinc-850 hover:bg-zinc-900 text-zinc-300 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all text-xs"
+                          className="w-full border border-zinc-850 hover:bg-zinc-900 text-zinc-300 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all text-xs"
                         >
                           Skip Authentication (Mock Local Mode)
                         </button>
@@ -587,8 +588,8 @@ export default function OnboardingClient() {
                   <p className="text-zinc-400 text-sm">Every engineer, designer, and builder needs one link to show who they are.</p>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-stretch rounded-xl border border-zinc-800 bg-zinc-900/50 overflow-hidden focus-within:border-white transition-all">
-                    <span className="flex items-center px-4 bg-zinc-900 border-r border-zinc-800 text-zinc-500 text-sm">seenly.tech/</span>
+                  <div className="flex items-stretch rounded-lg border border-white/10 bg-white/5 overflow-hidden focus-within:border-white transition-all">
+                    <span className="flex items-center px-4 bg-zinc-900 border-r border-white/10 text-zinc-500 text-sm">seenly.tech/</span>
                     <input 
                       type="text" 
                       placeholder="username" 
@@ -614,7 +615,7 @@ export default function OnboardingClient() {
                             key={suggestion}
                             type="button"
                             onClick={() => setUsername(suggestion)}
-                            className="rounded-full border border-zinc-800 px-3 py-1 text-zinc-400 transition-colors hover:border-zinc-600 hover:text-white"
+                            className="rounded-full border border-white/10 px-3 py-1 text-zinc-400 transition-colors hover:border-zinc-600 hover:text-white"
                           >
                             {suggestion}
                           </button>
@@ -626,7 +627,7 @@ export default function OnboardingClient() {
                 <button 
                   disabled={!usernameValid}
                   onClick={() => setStep(3)}
-                  className="w-full bg-white text-black py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50 disabled:hover:bg-white transition-all"
+                  className="w-full bg-white text-black py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 disabled:opacity-50 disabled:hover:bg-white transition-all"
                 >
                   Continue <ArrowRight className="h-4 w-4" />
                     </button>
@@ -647,7 +648,7 @@ export default function OnboardingClient() {
                   <p className="text-zinc-400 text-sm">Explain who you are, what you build, and what you're looking for in under 60 seconds.</p>
                 </div>
 
-                <div className="flex gap-4 p-1 bg-zinc-900/80 rounded-lg border border-zinc-800">
+                <div className="flex gap-4 p-1 bg-zinc-900/80 rounded-lg border border-white/10">
                   <button 
                     onClick={() => setVideoMethod('record')}
                     className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all ${videoMethod === 'record' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'}`}
@@ -663,14 +664,14 @@ export default function OnboardingClient() {
                 </div>
 
                 {videoMethod === 'record' ? (
-                  <div className="relative aspect-video rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden flex flex-col justify-center items-center">
+                  <div className="relative aspect-video rounded-lg bg-zinc-900 border border-white/10 overflow-hidden flex flex-col justify-center items-center">
                     {cameraError ? (
                       <div className="text-center p-6 space-y-3.5 max-w-sm z-10">
                         <span className="text-2xl">⚠️</span>
                         <p className="text-xs text-zinc-350 leading-relaxed font-medium">{cameraError}</p>
                         <button 
                           onClick={startCamera}
-                          className="bg-white/10 hover:bg-white/20 border border-zinc-800 text-zinc-200 px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+                          className="bg-white/10 hover:bg-white/20 border border-white/10 text-zinc-200 px-4 py-2 rounded-lg text-xs font-semibold transition-all"
                         >
                           Retry Camera Setup
                         </button>
@@ -711,7 +712,7 @@ export default function OnboardingClient() {
 
                         {/* Prompts Overlay */}
                         {!isRecording && (
-                          <div className="absolute bottom-24 bg-black/80 border border-zinc-800 px-4 py-2 rounded-xl text-center max-w-[85%] mx-auto backdrop-blur-md">
+                          <div className="absolute bottom-24 bg-black/80 border border-white/10 px-4 py-2 rounded-lg text-center max-w-[85%] mx-auto backdrop-blur-md">
                             <p className="text-xs font-medium text-zinc-300">Prompt: "Who are you and what do you build?"</p>
                           </div>
                         )}
@@ -726,7 +727,7 @@ export default function OnboardingClient() {
                               setRecordedBlob(null);
                               startCamera();
                             }}
-                            className="bg-black/80 hover:bg-black border border-zinc-800 text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-md"
+                            className="bg-black/80 hover:bg-black border border-white/10 text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-md"
                           >
                             <RefreshCw className="h-3 w-3" /> Re-record
                           </button>
@@ -735,7 +736,7 @@ export default function OnboardingClient() {
                     )}
                   </div>
                 ) : (
-                  <div className="border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-900/30 rounded-xl p-8 flex flex-col items-center justify-center transition-all cursor-pointer relative">
+                  <div className="border border-dashed border-white/10 hover:border-zinc-700 bg-zinc-900/30 rounded-lg p-8 flex flex-col items-center justify-center transition-all cursor-pointer relative">
                     <input 
                       type="file" 
                       accept="video/mp4,video/quicktime,video/webm" 
@@ -751,14 +752,14 @@ export default function OnboardingClient() {
                             setVideoPreviewUrl(null);
                             setRecordedBlob(null);
                           }}
-                          className="absolute top-2 right-2 bg-black/80 border border-zinc-800 text-xs px-2 py-1 rounded-md"
+                          className="absolute top-2 right-2 bg-black/80 border border-white/10 text-xs px-2 py-1 rounded-md"
                         >
                           Remove
                         </button>
                       </div>
                     ) : (
                       <div className="text-center space-y-4">
-                        <div className="h-12 w-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto">
+                        <div className="h-12 w-12 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center mx-auto">
                           <Upload className="h-5 w-5 text-zinc-400" />
                         </div>
                         <div className="space-y-1">
@@ -773,14 +774,14 @@ export default function OnboardingClient() {
                 <div className="flex gap-4">
                       <button 
                     onClick={() => setStep(2)}
-                    className="flex-1 border border-zinc-800 hover:bg-zinc-900 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
+                    className="flex-1 border border-white/10 hover:bg-zinc-900 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
                   >
                       <ArrowLeft className="h-4 w-4" /> Back
                     </button>
                     <button 
                       disabled={!videoPreviewUrl}
                       onClick={() => setStep(4)}
-                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm disabled:opacity-50"
+                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm disabled:opacity-50"
                     >
                       Continue <ArrowRight className="h-4 w-4" />
                     </button>
@@ -810,7 +811,7 @@ export default function OnboardingClient() {
                       placeholder="e.g. Anish" 
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-white outline-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:border-white outline-none transition-all"
                     />
                   </div>
                   
@@ -821,7 +822,7 @@ export default function OnboardingClient() {
                       placeholder="e.g. AI Engineer / Product Designer" 
                       value={headline}
                       onChange={(e) => setHeadline(e.target.value)}
-                      className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-white outline-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:border-white outline-none transition-all"
                     />
                   </div>
 
@@ -832,7 +833,7 @@ export default function OnboardingClient() {
                       placeholder="e.g. San Francisco, CA" 
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
-                      className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-white outline-none transition-all"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:border-white outline-none transition-all"
                     />
                   </div>
 
@@ -847,7 +848,7 @@ export default function OnboardingClient() {
                       maxLength={200}
                       rows={3}
                       onChange={(e) => setBio(e.target.value)}
-                      className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:border-white outline-none transition-all resize-none"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm focus:border-white outline-none transition-all resize-none"
                     />
                   </div>
                 </div>
@@ -855,14 +856,14 @@ export default function OnboardingClient() {
                 <div className="flex gap-4">
                       <button 
                     onClick={() => setStep(3)}
-                    className="flex-1 border border-zinc-800 hover:bg-zinc-900 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
+                    className="flex-1 border border-white/10 hover:bg-zinc-900 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
                   >
                       <ArrowLeft className="h-4 w-4" /> Back
                     </button>
                     <button 
                       disabled={!fullName || !headline}
                       onClick={() => setStep(5)}
-                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm disabled:opacity-50"
+                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm disabled:opacity-50"
                     >
                       Continue <ArrowRight className="h-4 w-4" />
                     </button>
@@ -886,7 +887,7 @@ export default function OnboardingClient() {
 
                 <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
                   {experiences.map((exp, idx) => (
-                    <div key={idx} className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 space-y-3 relative">
+                    <div key={idx} className="p-4 rounded-lg border border-white/10 bg-zinc-900/30 space-y-3 relative">
                       {experiences.length > 1 && (
                         <button 
                           onClick={() => removeExperience(idx)}
@@ -907,7 +908,7 @@ export default function OnboardingClient() {
                               updated[idx].company = e.target.value;
                               setExperiences(updated);
                             }}
-                            className="w-full bg-zinc-900/50 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
+                            className="w-full bg-white/5 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
                           />
                         </div>
                         <div className="space-y-1.5">
@@ -921,7 +922,7 @@ export default function OnboardingClient() {
                               updated[idx].role = e.target.value;
                               setExperiences(updated);
                             }}
-                            className="w-full bg-zinc-900/50 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
+                            className="w-full bg-white/5 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
                           />
                         </div>
                       </div>
@@ -936,7 +937,7 @@ export default function OnboardingClient() {
                             updated[idx].duration = e.target.value;
                             setExperiences(updated);
                           }}
-                          className="w-full bg-zinc-900/50 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
+                          className="w-full bg-white/5 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
                         />
                       </div>
                     </div>
@@ -944,7 +945,7 @@ export default function OnboardingClient() {
                   
                   <button 
                     onClick={addExperience}
-                    className="w-full border border-dashed border-zinc-800 hover:border-zinc-700 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all text-xs text-zinc-400 hover:text-white"
+                    className="w-full border border-dashed border-white/10 hover:border-zinc-700 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all text-xs text-zinc-400 hover:text-white"
                   >
                     <Plus className="h-4 w-4" /> Add Experience
                   </button>
@@ -953,13 +954,13 @@ export default function OnboardingClient() {
                 <div className="flex gap-4">
                       <button 
                     onClick={() => setStep(4)}
-                    className="flex-1 border border-zinc-800 hover:bg-zinc-900 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
+                    className="flex-1 border border-white/10 hover:bg-zinc-900 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
                   >
                       <ArrowLeft className="h-4 w-4" /> Back
                     </button>
                     <button 
                       onClick={() => setStep(6)}
-                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm"
+                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm"
                     >
                       Continue <ArrowRight className="h-4 w-4" />
                     </button>
@@ -983,7 +984,7 @@ export default function OnboardingClient() {
 
                 <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
                   {projects.map((proj, idx) => (
-                    <div key={idx} className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/30 space-y-3 relative">
+                    <div key={idx} className="p-4 rounded-lg border border-white/10 bg-zinc-900/30 space-y-3 relative">
                       {projects.length > 1 && (
                         <button 
                           onClick={() => removeProject(idx)}
@@ -1003,7 +1004,7 @@ export default function OnboardingClient() {
                             updated[idx].title = e.target.value;
                             setProjects(updated);
                           }}
-                          className="w-full bg-zinc-900/50 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
+                          className="w-full bg-white/5 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -1017,7 +1018,7 @@ export default function OnboardingClient() {
                             updated[idx].description = e.target.value;
                             setProjects(updated);
                           }}
-                          className="w-full bg-zinc-900/50 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
+                          className="w-full bg-white/5 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
@@ -1032,7 +1033,7 @@ export default function OnboardingClient() {
                               updated[idx].website = e.target.value;
                               setProjects(updated);
                             }}
-                            className="w-full bg-zinc-900/50 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
+                            className="w-full bg-white/5 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
                           />
                         </div>
                         <div className="space-y-1.5">
@@ -1046,7 +1047,7 @@ export default function OnboardingClient() {
                               updated[idx].github = e.target.value;
                               setProjects(updated);
                             }}
-                            className="w-full bg-zinc-900/50 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
+                            className="w-full bg-white/5 border border-zinc-850 rounded-lg px-3 py-2 text-xs focus:border-white outline-none"
                           />
                         </div>
                       </div>
@@ -1055,7 +1056,7 @@ export default function OnboardingClient() {
                   
                   <button 
                     onClick={addProject}
-                    className="w-full border border-dashed border-zinc-800 hover:border-zinc-700 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all text-xs text-zinc-400 hover:text-white"
+                    className="w-full border border-dashed border-white/10 hover:border-zinc-700 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all text-xs text-zinc-400 hover:text-white"
                   >
                     <Plus className="h-4 w-4" /> Add Project
                   </button>
@@ -1064,13 +1065,13 @@ export default function OnboardingClient() {
                 <div className="flex gap-4">
                       <button 
                     onClick={() => setStep(5)}
-                    className="flex-1 border border-zinc-800 hover:bg-zinc-900 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
+                    className="flex-1 border border-white/10 hover:bg-zinc-900 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
                   >
                       <ArrowLeft className="h-4 w-4" /> Back
                     </button>
                     <button 
                       onClick={() => setStep(7)}
-                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm"
+                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm"
                     >
                       Continue <ArrowRight className="h-4 w-4" />
                     </button>
@@ -1100,7 +1101,7 @@ export default function OnboardingClient() {
                       placeholder="anish@gmail.com" 
                       value={socials.email}
                       onChange={(e) => setSocials({...socials, email: e.target.value})}
-                      className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2.5 text-xs focus:border-white outline-none"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs focus:border-white outline-none"
                     />
                   </div>
                   <div className="space-y-1">
@@ -1110,7 +1111,7 @@ export default function OnboardingClient() {
                       placeholder="https://linkedin.com/in/username" 
                       value={socials.linkedin}
                       onChange={(e) => setSocials({...socials, linkedin: e.target.value})}
-                      className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2.5 text-xs focus:border-white outline-none"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs focus:border-white outline-none"
                     />
                   </div>
                   <div className="space-y-1">
@@ -1120,7 +1121,7 @@ export default function OnboardingClient() {
                       placeholder="https://github.com/username" 
                       value={socials.github}
                       onChange={(e) => setSocials({...socials, github: e.target.value})}
-                      className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2.5 text-xs focus:border-white outline-none"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs focus:border-white outline-none"
                     />
                   </div>
                   <div className="space-y-1">
@@ -1130,7 +1131,7 @@ export default function OnboardingClient() {
                       placeholder="https://mywebsite.com" 
                       value={socials.portfolio}
                       onChange={(e) => setSocials({...socials, portfolio: e.target.value})}
-                      className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2.5 text-xs focus:border-white outline-none"
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-xs focus:border-white outline-none"
                     />
                   </div>
                 </div>
@@ -1138,13 +1139,13 @@ export default function OnboardingClient() {
                 <div className="flex gap-4">
                       <button 
                     onClick={() => setStep(6)}
-                    className="flex-1 border border-zinc-800 hover:bg-zinc-900 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
+                    className="flex-1 border border-white/10 hover:bg-zinc-900 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
                   >
                       <ArrowLeft className="h-4 w-4" /> Back
                     </button>
                     <button 
                       onClick={() => setStep(8)}
-                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm"
+                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm"
                     >
                       Continue <ArrowRight className="h-4 w-4" />
                     </button>
@@ -1166,7 +1167,7 @@ export default function OnboardingClient() {
                   <p className="text-zinc-400 text-sm">Add your resume PDF so recruiters can download it (optional).</p>
                 </div>
 
-                <div className="border border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-900/30 rounded-xl p-8 flex flex-col items-center justify-center transition-all cursor-pointer relative">
+                <div className="border border-dashed border-white/10 hover:border-zinc-700 bg-zinc-900/30 rounded-lg p-8 flex flex-col items-center justify-center transition-all cursor-pointer relative">
                   <input 
                     type="file" 
                     accept="application/pdf" 
@@ -1174,7 +1175,7 @@ export default function OnboardingClient() {
                     className="absolute inset-0 opacity-0 cursor-pointer"
                   />
                   <div className="text-center space-y-4">
-                    <div className="h-12 w-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto">
+                    <div className="h-12 w-12 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center mx-auto">
                       <FileText className="h-5 w-5 text-zinc-400" />
                     </div>
                     <div className="space-y-1">
@@ -1196,19 +1197,19 @@ export default function OnboardingClient() {
                 <div className="flex gap-4">
                       <button 
                     onClick={() => setStep(7)}
-                    className="flex-1 border border-zinc-800 hover:bg-zinc-900 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
+                    className="flex-1 border border-white/10 hover:bg-zinc-900 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
                   >
                       <ArrowLeft className="h-4 w-4" /> Back
                     </button>
                     <button 
                       disabled={isUploading}
                       onClick={handlePublish}
-                      className="flex-1 bg-emerald-500 text-white hover:bg-emerald-400 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm"
+                      className="flex-1 rounded-lg bg-white py-3 text-sm font-semibold text-black transition-transform hover:scale-105 disabled:opacity-50"
                     >
                       {isUploading ? (
-                        <span className="flex items-center gap-1.5"><RefreshCw className="h-4 w-4 animate-spin" /> Publishing...</span>
+                        <span className="flex items-center justify-center gap-1.5"><RefreshCw className="h-4 w-4 animate-spin" /> Publishing {uploadProgress}%</span>
                       ) : (
-                        <span className="flex items-center gap-1.5">Publish Profile <Sparkles className="h-4 w-4" /></span>
+                        <span className="flex items-center justify-center gap-1.5">Publish Profile <Sparkles className="h-4 w-4" /></span>
                       )}
                     </button>
                   </div>
@@ -1221,31 +1222,35 @@ export default function OnboardingClient() {
                   key="step9"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="space-y-6 text-center py-8"
+                className="space-y-8 py-8 text-center"
               >
-                <div className="h-16 w-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-400/10 text-emerald-400">
                   <CheckCircle className="h-8 w-8" />
                 </div>
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tight">Your profile is live!</h1>
-                  <p className="text-zinc-400 text-sm">Congratulations. Recruiters can now see who you are in 60 seconds.</p>
+                <div className="space-y-3">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/60">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                    You&apos;re live
+                  </span>
+                  <h1 className="text-3xl font-bold leading-tight tracking-tight sm:text-4xl">Your profile is live!</h1>
+                  <p className="text-sm text-white/50">Share your link with recruiters and track views from your dashboard.</p>
                 </div>
 
-                <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/50 text-center select-all cursor-pointer hover:border-zinc-700 transition-all">
-                  <span className="text-xs text-zinc-500 block mb-1">YOUR DIRECT PROFILE LINK</span>
+                <div className="rounded-lg border border-white/10 bg-white/5 px-4 py-4 text-center">
+                  <span className="mb-1 block text-[10px] font-medium uppercase tracking-widest text-white/40">Your link</span>
                   <span className="text-sm font-semibold text-white">seenly.tech/{username}</span>
                 </div>
 
-                <div className="flex gap-4 pt-4">
+                <div className="flex flex-col gap-3 pt-2 sm:flex-row">
                   <button 
                     onClick={() => router.push(`/${username}`)}
-                    className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm"
+                    className="flex-1 rounded-lg bg-white py-3 text-sm font-semibold text-black transition-transform hover:scale-105"
                   >
-                    View Public Profile
+                    View Live Profile
                   </button>
                   <button 
                     onClick={() => router.push('/dashboard')}
-                    className="flex-1 border border-zinc-800 hover:bg-zinc-900 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all text-sm text-zinc-300"
+                    className="flex-1 rounded-lg border border-white/15 py-3 text-sm font-medium text-white/70 transition-all hover:bg-white/8 hover:text-white"
                   >
                     Go to Dashboard
                   </button>
@@ -1260,12 +1265,11 @@ export default function OnboardingClient() {
       </div>
 
       {/* Live Preview Sidebar (Right Column) */}
-      <div className="hidden lg:flex flex-1 bg-zinc-950 items-center justify-center p-8 relative overflow-hidden">
-        {/* Glow backdrop */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-white/[0.01] rounded-full blur-[120px] pointer-events-none" />
+      <div className="relative hidden flex-1 items-center justify-center overflow-hidden bg-black p-8 lg:flex">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)]" />
 
         {/* Live Preview Mobile Device Mockup */}
-        <div className="relative w-[360px] h-[720px] rounded-[48px] border-[8px] border-zinc-800 bg-black shadow-2xl overflow-hidden flex flex-col justify-between">
+        <div className="relative w-[360px] h-[720px] rounded-[48px] border-[8px] border-white/10 bg-black shadow-2xl overflow-hidden flex flex-col justify-between">
           
           {/* Top Notch/Dynamic Island */}
           <div className="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-5 rounded-full bg-black z-30" />
@@ -1297,7 +1301,7 @@ export default function OnboardingClient() {
             </div>
 
             {/* Video Box */}
-            <div className="mt-5 aspect-video w-full rounded-xl bg-zinc-900 border border-zinc-850 overflow-hidden relative flex flex-col justify-center items-center">
+            <div className="mt-5 aspect-video w-full rounded-lg bg-zinc-900 border border-zinc-850 overflow-hidden relative flex flex-col justify-center items-center">
               {videoPreviewUrl ? (
                 <video src={videoPreviewUrl} className="w-full h-full object-cover" muted loop autoPlay />
               ) : (
@@ -1321,7 +1325,7 @@ export default function OnboardingClient() {
               <div className="space-y-2">
                 {experiences.some(e => e.company) ? (
                   experiences.map((exp, i) => exp.company ? (
-                    <div key={i} className="p-2 rounded-lg bg-zinc-900/50 border border-zinc-850 flex justify-between items-center">
+                    <div key={i} className="p-2 rounded-lg bg-white/5 border border-zinc-850 flex justify-between items-center">
                       <div>
                         <p className="text-[10px] font-medium text-white">{exp.role}</p>
                         <p className="text-[8px] text-zinc-500">{exp.company}</p>
@@ -1341,7 +1345,7 @@ export default function OnboardingClient() {
               <div className="space-y-2">
                 {projects.some(p => p.title) ? (
                   projects.map((proj, i) => proj.title ? (
-                    <div key={i} className="p-2 rounded-lg bg-zinc-900/50 border border-zinc-850">
+                    <div key={i} className="p-2 rounded-lg bg-white/5 border border-zinc-850">
                       <p className="text-[10px] font-medium text-white">{proj.title}</p>
                       <p className="text-[8px] text-zinc-500 leading-tight">{proj.description}</p>
                     </div>

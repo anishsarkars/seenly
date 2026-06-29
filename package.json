@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "drizzle-kit migrate",
+    "db:migrate:profile": "node scripts/apply-profile-migration.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

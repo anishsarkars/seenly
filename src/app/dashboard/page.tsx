@@ -17,7 +17,7 @@ export default async function DashboardPage() {
   const profileData = await getUserProfile(user.id);
   
   // If user signed up but hasn't completed onboarding details, redirect to onboarding
-  if (!profileData) {
+  if (!profileData?.user?.username) {
     redirect('/onboarding');
   }
 

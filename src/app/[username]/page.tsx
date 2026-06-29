@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getProfileByUsername } from '@/db/actions';
 import ProfileClient from '@/components/profile/ProfileClient';
+import { createClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
@@ -49,7 +50,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     notFound();
   }
 
-  if (profileData.user.isPublic === false) {
+  if (!profileData) {
+    notFound();
+  }
+
+  const supabase = await createClient();
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const isOwner = authUser?.id === profileData.user.id;
+
+  if (profileData.user.isPublic === false && !isOwner) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-black px-6 text-center text-white">
         <h1 className="text-2xl font-bold tracking-tight">This profile is private.</h1>
@@ -60,5 +69,5 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     );
   }
 
-  return <ProfileClient profileData={profileData} />;
+  return <ProfileClient profileData={profileData} isOwner={isOwner} />;
 }

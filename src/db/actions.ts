@@ -324,7 +324,29 @@ export async function saveOnboardingData(userId: string, data: any) {
     return { success: true };
   } catch (error) {
     console.error('Failed to save onboarding data:', error);
-    return { success: false, error: String(error) };
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (
+      message.includes('full_name') ||
+      message.includes('is_public') ||
+      message.includes('updated_at') ||
+      message.includes('column') ||
+      message.includes('does not exist')
+    ) {
+      return {
+        success: false,
+        error: 'Database setup is incomplete. Run drizzle/0001_add_profile_columns.sql in your Supabase SQL editor, then try again.',
+      };
+    }
+
+    if (message.includes('unique') || message.includes('duplicate')) {
+      return {
+        success: false,
+        error: 'That username or email is already taken. Choose a different username.',
+      };
+    }
+
+    return { success: false, error: 'Could not save your profile. Please try again.' };
   }
 }
 
