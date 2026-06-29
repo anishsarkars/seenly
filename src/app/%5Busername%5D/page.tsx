@@ -3,6 +3,8 @@ import { getProfileByUsername } from '@/db/actions';
 import ProfileClient from '@/components/profile/ProfileClient';
 import { notFound } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 interface ProfilePageProps {
   params: Promise<{ username: string }>;
 }

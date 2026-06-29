@@ -315,7 +315,7 @@ export default function OnboardingClient() {
     
     setTimeout(() => {
       setIsUploading(false);
-      setStep(9); // publish step
+      router.push('/dashboard');
     }, 500);
   };
 
