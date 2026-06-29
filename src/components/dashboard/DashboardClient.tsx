@@ -11,7 +11,9 @@ import {
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
 import { createClient } from '@/utils/supabase/client';
-import { captureVideoThumbnail, uploadProfileThumbnail, uploadProfileVideo } from '@/lib/storage';
+import { captureVideoThumbnail, uploadProfileThumbnail, uploadProfileVideo, validateVideoFile } from '@/lib/storage';
+import ProfileCardPreview from '@/components/profile/ProfileCardPreview';
+import { formatVideoDurationLimit } from '@/lib/video-limits';
 import { useRouter } from 'next/navigation';
 
 interface DashboardClientProps {
@@ -83,8 +85,14 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     const file = e.target.files?.[0];
     if (!file || !profile?.user?.id) return;
 
-    if (file.size > 50 * 1024 * 1024) {
-      alert('Video must be 50MB or smaller.');
+    if (file.size > 150 * 1024 * 1024) {
+      alert('Video must be 150MB or smaller.');
+      return;
+    }
+
+    const validation = await validateVideoFile(file);
+    if (!validation.ok) {
+      alert(validation.error);
       return;
     }
 
@@ -186,7 +194,8 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Navigation Sidebar */}
-        <nav className="lg:col-span-3 flex lg:flex-col gap-2 p-1 bg-zinc-950 border border-zinc-900 rounded-2xl sticky lg:top-24 overflow-x-auto">
+        <nav className="lg:col-span-3 space-y-4">
+          <div className="flex lg:flex-col gap-2 p-1 bg-zinc-950 border border-zinc-900 rounded-2xl sticky lg:top-24 overflow-x-auto">
           <button 
             onClick={() => setActiveTab('analytics')}
             className={`flex items-center gap-3 px-4 py-3 text-xs font-bold tracking-wide rounded-xl transition-all w-full text-left whitespace-nowrap ${activeTab === 'analytics' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
@@ -211,6 +220,18 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           >
             <Settings className="h-4 w-4" /> Account Settings
           </button>
+          </div>
+
+          <ProfileCardPreview
+            username={profile?.user?.username}
+            fullName={fullName}
+            headline={headline}
+            location={location}
+            bio={bio}
+            videoUrl={profile?.user?.videoUrl}
+            thumbnailUrl={profile?.user?.thumbnailUrl}
+            avatar={profile?.user?.avatar}
+          />
         </nav>
 
         {/* Dynamic Display Panel */}
@@ -460,7 +481,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           {activeTab === 'video' && (
             <div className="p-6 rounded-2xl border border-zinc-900 bg-zinc-950 space-y-6">
               <h2 className="text-lg font-bold">Replace Introduction Video</h2>
-              <p className="text-zinc-500 text-xs">Update your 60-second video. Your old video will be replaced instantly.</p>
+              <p className="text-zinc-500 text-xs">Update your intro video ({formatVideoDurationLimit()}). Your old video will be replaced instantly.</p>
               
               <div className="border border-dashed border-zinc-850 hover:border-zinc-800 rounded-2xl p-12 text-center space-y-4 bg-zinc-900/20">
                 <div className="h-12 w-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto">
@@ -468,7 +489,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-zinc-300">Drag or click to choose a new video</p>
-                  <p className="text-xs text-zinc-550">Supports MP4 or WEBM (max 50MB, 60 seconds)</p>
+                  <p className="text-xs text-zinc-550">Supports MP4 or WEBM (max 150MB, {formatVideoDurationLimit()})</p>
                 </div>
                 <input
                   type="file"

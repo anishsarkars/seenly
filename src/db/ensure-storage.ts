@@ -16,8 +16,8 @@ export async function ensureStorageBuckets() {
     try {
       await db.execute(sql`
         INSERT INTO storage.buckets (id, name, public, file_size_limit)
-        VALUES (${bucket}, ${bucket}, true, 52428800)
-        ON CONFLICT (id) DO UPDATE SET public = true, file_size_limit = 52428800
+        VALUES (${bucket}, ${bucket}, true, 157286400)
+        ON CONFLICT (id) DO UPDATE SET public = true, file_size_limit = 157286400
       `);
     } catch (error) {
       console.warn(`Bucket ensure skipped for ${bucket}:`, error);

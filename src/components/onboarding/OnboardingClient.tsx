@@ -15,7 +15,9 @@ import {
   uploadProfileResume,
   uploadProfileThumbnail,
   uploadProfileVideo,
+  validateVideoFile,
 } from '@/lib/storage';
+import { MAX_VIDEO_DURATION_SEC, formatVideoDurationLimit } from '@/lib/video-limits';
 import Confetti from '@/components/Confetti';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
@@ -282,9 +284,9 @@ export default function OnboardingClient() {
 
     timerRef.current = setInterval(() => {
       setRecordTime((prev) => {
-        if (prev >= 60) {
+        if (prev >= MAX_VIDEO_DURATION_SEC) {
           stopRecording();
-          return 60;
+          return MAX_VIDEO_DURATION_SEC;
         }
         return prev + 1;
       });
@@ -306,29 +308,20 @@ export default function OnboardingClient() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 50 * 1024 * 1024) {
-      alert('File size exceeds 50MB limit.');
+    if (!file.type.startsWith('video/')) {
+      alert('Please upload a video file.');
       return;
     }
 
-    if (!file.type.startsWith('video/')) {
-      alert('Please upload an MP4 video file.');
+    const validation = await validateVideoFile(file);
+    if (!validation.ok) {
+      alert(validation.error);
       return;
     }
 
     const url = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.src = url;
-    video.onloadedmetadata = () => {
-      if (video.duration > 60) {
-        alert('Video must be 60 seconds or shorter.');
-        URL.revokeObjectURL(url);
-        return;
-      }
-      setVideoPreviewUrl(url);
-      setRecordedBlob(file);
-    };
+    setVideoPreviewUrl(url);
+    setRecordedBlob(file);
   };
 
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -650,7 +643,7 @@ export default function OnboardingClient() {
               >
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tight">Record your Intro.</h1>
-                  <p className="text-zinc-400 text-sm">Explain who you are, what you build, and what you're looking for in under 60 seconds.</p>
+                  <p className="text-zinc-400 text-sm">Explain who you are, what you build, and what you&apos;re looking for in {formatVideoDurationLimit()}.</p>
                 </div>
 
                 <div className="flex gap-4 p-1 bg-zinc-900/80 rounded-lg border border-white/10">
@@ -689,7 +682,7 @@ export default function OnboardingClient() {
                         {isRecording ? (
                           <div className="absolute top-4 left-4 bg-red-500/80 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 animate-pulse">
                             <span className="h-2 w-2 rounded-full bg-white" />
-                            0:{recordTime.toString().padStart(2, '0')} / 1:00
+                            {Math.floor(recordTime / 60)}:{(recordTime % 60).toString().padStart(2, '0')} / 3:00
                           </div>
                         ) : (
                           <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-zinc-300 px-3 py-1 rounded-full text-xs font-medium border border-white/10">
@@ -769,7 +762,7 @@ export default function OnboardingClient() {
                         </div>
                         <div className="space-y-1">
                           <p className="text-sm font-medium text-zinc-300">Drag and drop your video file</p>
-                          <p className="text-xs text-zinc-500">MP4, MOV or WEBM up to 250MB (max 60 seconds)</p>
+                          <p className="text-xs text-zinc-500">MP4, MOV or WEBM up to 150MB ({formatVideoDurationLimit()})</p>
                         </div>
                       </div>
                     )}

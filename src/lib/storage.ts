@@ -1,3 +1,5 @@
+import { MAX_VIDEO_DURATION_SEC, MAX_VIDEO_SIZE_BYTES } from '@/lib/video-limits';
+
 export async function uploadFile(
   file: Blob,
   kind: 'video' | 'thumbnail' | 'resume' | 'avatar',
@@ -29,6 +31,11 @@ export function isPersistedMediaUrl(url?: string | null) {
   return !!url && url.startsWith('http') && !url.startsWith('blob:');
 }
 
+function formatDurationLimit(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  return minutes === 1 ? '1 minute' : `${minutes} minutes`;
+}
+
 async function getMediaDuration(src: string): Promise<number> {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
@@ -46,16 +53,19 @@ async function getMediaDuration(src: string): Promise<number> {
   });
 }
 
-export async function validateVideoFile(file: Blob, maxSeconds = 120): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (file.size > 50 * 1024 * 1024) {
-    return { ok: false, error: 'Video must be 50MB or smaller.' };
+export async function validateVideoFile(
+  file: Blob,
+  maxSeconds = MAX_VIDEO_DURATION_SEC
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (file.size > MAX_VIDEO_SIZE_BYTES) {
+    return { ok: false, error: 'Video must be 150MB or smaller.' };
   }
 
   const url = URL.createObjectURL(file);
   try {
     const duration = await getMediaDuration(url);
     if (duration > maxSeconds) {
-      return { ok: false, error: `Video must be ${maxSeconds} seconds or shorter.` };
+      return { ok: false, error: `Video must be ${formatDurationLimit(maxSeconds)} or shorter.` };
     }
     return { ok: true };
   } catch {

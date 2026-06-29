@@ -14,7 +14,7 @@ type UploadKind = keyof typeof BUCKETS;
 
 async function ensureBuckets(admin: NonNullable<ReturnType<typeof createAdminClient>>) {
   for (const bucket of Object.values(BUCKETS)) {
-    await admin.storage.createBucket(bucket, { public: true, fileSizeLimit: 52428800 }).catch(() => {});
+    await admin.storage.createBucket(bucket, { public: true, fileSizeLimit: 157286400 }).catch(() => {});
   }
 }
 
@@ -52,8 +52,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid upload request.' }, { status: 400 });
     }
 
-    if (kind === 'video' && file.size > 50 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Video must be 50MB or smaller.' }, { status: 400 });
+    if (kind === 'video' && file.size > 150 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Video must be 150MB or smaller.' }, { status: 400 });
     }
 
     if (kind === 'resume' && file.size > 10 * 1024 * 1024) {
