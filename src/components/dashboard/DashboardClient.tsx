@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area 
 } from 'recharts';
 import { 
   TrendingUp, Play, Download, Eye, Edit3, Film, Settings, 
   Map, Globe, Trash2, Plus, ArrowUpRight, Copy, Check, Sparkles, 
-  Mail, FileText, MapPin, Save
+  Mail, FileText, MapPin, Save, X
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
 import { createClient } from '@/utils/supabase/client';
@@ -15,7 +15,7 @@ import { captureVideoThumbnail, uploadProfileThumbnail, uploadProfileVideo, vali
 import ProfileCardPreview from '@/components/profile/ProfileCardPreview';
 import AvatarPicker from '@/components/profile/AvatarPicker';
 import { formatVideoDurationLimit } from '@/lib/video-limits';
-import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
+import { resolveProfileAvatarSelection, AVATAR_UPDATE_BANNER_KEY } from '@/lib/profile-avatars';
 import { useRouter } from 'next/navigation';
 
 interface DashboardClientProps {
@@ -32,6 +32,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [showAvatarBanner, setShowAvatarBanner] = useState(false);
 
   // Edit form states
   const [fullName, setFullName] = useState(profile?.user?.fullName || profile?.user?.username || '');
@@ -45,6 +46,22 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [socials, setSocials] = useState(profile?.socials || {
     linkedin: '', github: '', portfolio: '', twitter: '', website: '', email: '', phone: ''
   });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !localStorage.getItem(AVATAR_UPDATE_BANNER_KEY)) {
+      setShowAvatarBanner(true);
+    }
+  }, []);
+
+  const dismissAvatarBanner = () => {
+    localStorage.setItem(AVATAR_UPDATE_BANNER_KEY, '1');
+    setShowAvatarBanner(false);
+  };
+
+  const tryNewAvatars = () => {
+    setActiveTab('edit');
+    dismissAvatarBanner();
+  };
 
   const handleCopyLink = () => {
     const link = `${window.location.origin}/${profile?.user?.username}`;
@@ -193,6 +210,39 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           </div>
         </div>
       </header>
+
+      {showAvatarBanner && (
+        <div className="border-b border-emerald-500/20 bg-gradient-to-r from-emerald-950/60 via-zinc-950 to-zinc-950">
+          <div className="max-w-6xl mx-auto px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3 min-w-0">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/20">
+                <Sparkles className="h-4 w-4 text-emerald-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white">New clay-style avatars are here</p>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Pick from 4 illustrated portraits — male &amp; female styles. Try one on your profile now.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 sm:ml-4">
+              <button
+                onClick={tryNewAvatars}
+                className="bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+              >
+                Try it
+              </button>
+              <button
+                onClick={dismissAvatarBanner}
+                className="p-2 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-900 transition-all"
+                aria-label="Dismiss"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Console Content */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

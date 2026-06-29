@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="mayaSkin" x1="100" y1="58" x2="100" y2="130" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD8C4"/>
+      <stop offset="1" stop-color="#E8AD8F"/>
+    </linearGradient>
+    <linearGradient id="mayaHair" x1="100" y1="30" x2="100" y2="160" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3A2218"/>
+      <stop offset="1" stop-color="#1E1008"/>
+    </linearGradient>
+    <linearGradient id="mayaShirt" x1="100" y1="138" x2="100" y2="200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FECDD3"/>
+      <stop offset="1" stop-color="#F9A8B4"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="#F97316"/>
+  <ellipse cx="100" cy="188" rx="72" ry="28" fill="#000" opacity="0.12"/>
+  <path d="M38 188c6-28 28-44 62-44s56 16 62 44" fill="url(#mayaShirt)"/>
+  <path d="M48 130c-6-38 10-72 52-72s58 34 52 72c-14-18-36-28-52-28s-38 10-52 28z" fill="url(#mayaHair)"/>
+  <ellipse cx="100" cy="102" rx="42" ry="46" fill="url(#mayaSkin)"/>
+  <path d="M58 78c12-22 28-32 42-32s30 10 42 32" fill="url(#mayaHair)"/>
+  <path d="M82 94h-8" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M118 94h-8" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M98 100v8" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M98 108h6" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M94 114h12" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse cx="100" cy="78" rx="34" ry="9" fill="#FFF" opacity="0.1"/>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="zaraSkin" x1="100" y1="58" x2="100" y2="130" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE0CC"/>
+      <stop offset="1" stop-color="#E8B598"/>
+    </linearGradient>
+    <linearGradient id="zaraHair" x1="100" y1="28" x2="100" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4A2820"/>
+      <stop offset="1" stop-color="#241410"/>
+    </linearGradient>
+    <linearGradient id="zaraShirt" x1="100" y1="138" x2="100" y2="200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#99F6E4"/>
+      <stop offset="1" stop-color="#5EEAD4"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="#9333EA"/>
+  <ellipse cx="100" cy="188" rx="72" ry="28" fill="#000" opacity="0.12"/>
+  <path d="M38 188c6-28 28-44 62-44s56 16 62 44" fill="url(#zaraShirt)"/>
+  <ellipse cx="100" cy="104" rx="43" ry="47" fill="url(#zaraSkin)"/>
+  <ellipse cx="100" cy="62" rx="40" ry="24" fill="url(#zaraHair)"/>
+  <circle cx="100" cy="34" r="18" fill="url(#zaraHair)"/>
+  <path d="M62 88c6-16 18-24 38-24s32 8 38 24" fill="url(#zaraHair)"/>
+  <path d="M82 94h-8" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M118 94h-8" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M98 100v8" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M98 108h6" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M93 114c3 2 11 2 14 0" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <ellipse cx="100" cy="80" rx="35" ry="8" fill="#FFF" opacity="0.1"/>
+</svg>

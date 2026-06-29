@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="alexSkin" x1="100" y1="58" x2="100" y2="130" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD4BC"/>
+      <stop offset="1" stop-color="#E8A882"/>
+    </linearGradient>
+    <linearGradient id="alexHair" x1="100" y1="28" x2="100" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3D2314"/>
+      <stop offset="1" stop-color="#1A0F0A"/>
+    </linearGradient>
+    <linearGradient id="alexShirt" x1="100" y1="138" x2="100" y2="200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D6E8F5"/>
+      <stop offset="1" stop-color="#A8C8DE"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="#E8553D"/>
+  <ellipse cx="100" cy="188" rx="72" ry="28" fill="#000" opacity="0.12"/>
+  <path d="M38 188c6-28 28-44 62-44s56 16 62 44" fill="url(#alexShirt)"/>
+  <ellipse cx="100" cy="102" rx="46" ry="50" fill="url(#alexSkin)"/>
+  <path d="M54 72c8-28 32-42 46-42s38 14 46 42c-12-8-28-12-46-12s-34 4-46 12z" fill="url(#alexHair)"/>
+  <path d="M58 68c10-18 26-26 42-26s32 8 42 26" fill="#2A1810" opacity="0.35"/>
+  <path d="M82 92h-8" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M118 92h-8" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M98 98v8" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M98 106h6" stroke="#1A1A1A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M92 112h16" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M96 116c2 3 6 3 8 0" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <ellipse cx="100" cy="78" rx="38" ry="10" fill="#FFF" opacity="0.08"/>
+</svg>
