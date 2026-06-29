@@ -7,14 +7,16 @@ export const PROFILE_AVATARS = [
 
 export type ProfileAvatarId = (typeof PROFILE_AVATARS)[number]['id'];
 
-export const DEFAULT_PROFILE_AVATAR = PROFILE_AVATARS[0].src;
+export type ProfileAvatarSrc = (typeof PROFILE_AVATARS)[number]['src'];
+
+export const DEFAULT_PROFILE_AVATAR: ProfileAvatarSrc = PROFILE_AVATARS[0].src;
 
 export function isPresetAvatar(url?: string | null) {
   if (!url) return false;
   return PROFILE_AVATARS.some((a) => url === a.src || url.endsWith(a.src));
 }
 
-export function resolveProfileAvatarSelection(url?: string | null) {
+export function resolveProfileAvatarSelection(url?: string | null): string {
   if (!url) return DEFAULT_PROFILE_AVATAR;
   const match = PROFILE_AVATARS.find((a) => url === a.src || url.endsWith(`/${a.id}.svg`));
   if (match) return match.src;

@@ -50,7 +50,7 @@ export default function OnboardingClient() {
   const [headline, setHeadline] = useState('');
   const [location, setLocation] = useState('');
   const [bio, setBio] = useState('');
-  const [selectedAvatar, setSelectedAvatar] = useState(DEFAULT_PROFILE_AVATAR);
+  const [selectedAvatar, setSelectedAvatar] = useState<string>(DEFAULT_PROFILE_AVATAR);
   
   // Video states
   const [videoMethod, setVideoMethod] = useState<'record' | 'upload'>('record');

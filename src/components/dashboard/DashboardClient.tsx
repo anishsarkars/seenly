@@ -38,7 +38,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [headline, setHeadline] = useState(profile?.user?.headline || '');
   const [location, setLocation] = useState(profile?.user?.location || '');
   const [bio, setBio] = useState(profile?.user?.bio || '');
-  const [avatar, setAvatar] = useState(() => resolveProfileAvatarSelection(profile?.user?.avatar));
+  const [avatar, setAvatar] = useState<string>(() => resolveProfileAvatarSelection(profile?.user?.avatar));
   
   const [experiences, setExperiences] = useState<any[]>(profile?.experiences || []);
   const [projects, setProjects] = useState<any[]>(profile?.projects || []);
