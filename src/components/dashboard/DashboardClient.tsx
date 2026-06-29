@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area 
 } from 'recharts';
 import { 
   TrendingUp, Play, Download, Eye, Edit3, Film, Settings, 
   Map, Globe, Trash2, Plus, ArrowUpRight, Copy, Check, Sparkles, 
-  Mail, FileText, MapPin, Save, X
+  Mail, FileText, MapPin, Save
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
 import { createClient } from '@/utils/supabase/client';
@@ -15,7 +15,7 @@ import { captureVideoThumbnail, uploadProfileThumbnail, uploadProfileVideo, vali
 import ProfileCardPreview from '@/components/profile/ProfileCardPreview';
 import AvatarPicker from '@/components/profile/AvatarPicker';
 import { formatVideoDurationLimit } from '@/lib/video-limits';
-import { resolveProfileAvatarSelection, AVATAR_UPDATE_BANNER_KEY } from '@/lib/profile-avatars';
+import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
 import { useRouter } from 'next/navigation';
 
 interface DashboardClientProps {
@@ -32,7 +32,6 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
-  const [showAvatarBanner, setShowAvatarBanner] = useState(false);
 
   // Edit form states
   const [fullName, setFullName] = useState(profile?.user?.fullName || profile?.user?.username || '');
@@ -46,22 +45,6 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [socials, setSocials] = useState(profile?.socials || {
     linkedin: '', github: '', portfolio: '', twitter: '', website: '', email: '', phone: ''
   });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem(AVATAR_UPDATE_BANNER_KEY)) {
-      setShowAvatarBanner(true);
-    }
-  }, []);
-
-  const dismissAvatarBanner = () => {
-    localStorage.setItem(AVATAR_UPDATE_BANNER_KEY, '1');
-    setShowAvatarBanner(false);
-  };
-
-  const tryNewAvatars = () => {
-    setActiveTab('edit');
-    dismissAvatarBanner();
-  };
 
   const handleCopyLink = () => {
     const link = `${window.location.origin}/${profile?.user?.username}`;
@@ -210,31 +193,6 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           </div>
         </div>
       </header>
-
-      {showAvatarBanner && (
-        <div className="border-b border-zinc-900/80">
-          <div className="max-w-6xl mx-auto px-6 py-1.5 flex items-center justify-between gap-4">
-            <p className="text-[11px] text-zinc-500">
-              New avatars available.{' '}
-              <button
-                type="button"
-                onClick={tryNewAvatars}
-                className="text-zinc-400 hover:text-white transition-colors"
-              >
-                Pick one →
-              </button>
-            </p>
-            <button
-              type="button"
-              onClick={dismissAvatarBanner}
-              className="text-zinc-600 hover:text-zinc-400 transition-colors"
-              aria-label="Dismiss"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Main Console Content */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

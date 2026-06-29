@@ -1,20 +1,23 @@
 export const PROFILE_AVATARS = [
-  { id: 'sunny', label: 'Sunny', kind: 'smile' as const, src: '/avatars/sunny.svg' },
-  { id: 'bloom', label: 'Bloom', kind: 'smile' as const, src: '/avatars/bloom.svg' },
-  { id: 'leo', label: 'Leo', kind: 'portrait' as const, gender: 'male' as const, src: '/avatars/leo.svg' },
-  { id: 'nova', label: 'Nova', kind: 'portrait' as const, gender: 'female' as const, src: '/avatars/nova.svg' },
+  { id: 'ink', label: 'Ink', src: '/avatars/ink.svg' },
+  { id: 'ash', label: 'Ash', src: '/avatars/ash.svg' },
+  { id: 'mist', label: 'Mist', src: '/avatars/mist.svg' },
+  { id: 'pale', label: 'Pale', src: '/avatars/pale.svg' },
 ] as const;
 
-/** Maps legacy avatar paths to the current set. */
 const LEGACY_AVATAR_MAP: Record<string, string> = {
-  '/avatars/ember.svg': '/avatars/sunny.svg',
-  '/avatars/ocean.svg': '/avatars/leo.svg',
-  '/avatars/forest.svg': '/avatars/nova.svg',
-  '/avatars/violet.svg': '/avatars/bloom.svg',
-  '/avatars/alex.svg': '/avatars/leo.svg',
-  '/avatars/marco.svg': '/avatars/leo.svg',
-  '/avatars/maya.svg': '/avatars/nova.svg',
-  '/avatars/zara.svg': '/avatars/bloom.svg',
+  '/avatars/ember.svg': '/avatars/ink.svg',
+  '/avatars/ocean.svg': '/avatars/ash.svg',
+  '/avatars/forest.svg': '/avatars/mist.svg',
+  '/avatars/violet.svg': '/avatars/pale.svg',
+  '/avatars/alex.svg': '/avatars/ink.svg',
+  '/avatars/marco.svg': '/avatars/ash.svg',
+  '/avatars/maya.svg': '/avatars/mist.svg',
+  '/avatars/zara.svg': '/avatars/pale.svg',
+  '/avatars/sunny.svg': '/avatars/ink.svg',
+  '/avatars/bloom.svg': '/avatars/pale.svg',
+  '/avatars/leo.svg': '/avatars/ash.svg',
+  '/avatars/nova.svg': '/avatars/mist.svg',
 };
 
 export type ProfileAvatarId = (typeof PROFILE_AVATARS)[number]['id'];
@@ -22,8 +25,6 @@ export type ProfileAvatarId = (typeof PROFILE_AVATARS)[number]['id'];
 export type ProfileAvatarSrc = (typeof PROFILE_AVATARS)[number]['src'];
 
 export const DEFAULT_PROFILE_AVATAR: ProfileAvatarSrc = PROFILE_AVATARS[0].src;
-
-export const AVATAR_UPDATE_BANNER_KEY = 'seenly-avatar-v2-dismissed';
 
 export function isPresetAvatar(url?: string | null) {
   if (!url) return false;
