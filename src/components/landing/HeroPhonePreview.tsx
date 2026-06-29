@@ -10,10 +10,10 @@ const HERO_SCALE = HERO_PHONE_WIDTH / PHONE_OUTER_WIDTH;
 
 const DEMO_PROFILE: ProfileViewData = {
   user: {
-    username: 'jordanlee',
-    fullName: 'Jordan Lee',
-    headline: 'Product Designer · Builder',
-    location: 'San Francisco',
+    username: 'anish',
+    fullName: 'Anish',
+    headline: 'Builder · Product & Engineering',
+    location: 'India',
     avatar: DEFAULT_PROFILE_AVATAR,
     videoUrl: undefined,
     thumbnailUrl:
@@ -21,11 +21,11 @@ const DEMO_PROFILE: ProfileViewData = {
     resumeUrl: '#',
   },
   experiences: [
-    { role: 'Senior Designer', company: 'Stripe', duration: '2022–now' },
-    { role: 'Product Designer', company: 'Figma', duration: '2020–2022' },
+    { role: 'Founder', company: 'Seenly', duration: '2025–now' },
+    { role: 'Software Engineer', company: 'Startup', duration: '2023–2025' },
   ],
   projects: [
-    { title: 'Design System', description: 'Scalable UI kit for fast-moving teams.', website: '', github: '' },
+    { title: 'Seenly', description: 'Video-first professional profiles.', website: '', github: '' },
   ],
   socials: { linkedin: '#', github: '#', twitter: '#' },
 };
