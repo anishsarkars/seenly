@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
+import { ensureStorageBuckets } from '@/db/ensure-storage';
 
 const BUCKETS = {
   video: 'videos',
@@ -67,15 +68,31 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const storageClient = admin ?? supabase;
 
+    // Create buckets via Postgres (works without service role key on Vercel)
+    await ensureStorageBuckets();
+
     if (admin) {
       await ensureBuckets(admin);
     }
 
-    const { error } = await storageClient.storage.from(bucket).upload(path, buffer, {
+    let uploadResult = await storageClient.storage.from(bucket).upload(path, buffer, {
       upsert: true,
       contentType,
       cacheControl: '3600',
     });
+
+    // Retry once after ensuring buckets if the first attempt failed
+    if (uploadResult.error?.message?.toLowerCase().includes('bucket not found')) {
+      await ensureStorageBuckets();
+      if (admin) await ensureBuckets(admin);
+      uploadResult = await storageClient.storage.from(bucket).upload(path, buffer, {
+        upsert: true,
+        contentType,
+        cacheControl: '3600',
+      });
+    }
+
+    const { error } = uploadResult;
 
     if (error) {
       console.error('Storage upload failed:', error);

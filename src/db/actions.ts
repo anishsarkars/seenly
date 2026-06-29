@@ -5,6 +5,7 @@ import { users, experiences, projects, socials, analytics, profileViews } from '
 import { eq } from 'drizzle-orm';
 import { suggestUsernames, validateUsername } from '@/lib/username';
 import { ensureProfileSchema } from './ensure-schema';
+import { ensureStorageBuckets } from './ensure-storage';
 
 // Mock in-memory database fallback for easy developer review/testing
 const mockStore: {
@@ -252,6 +253,7 @@ export async function saveOnboardingData(userId: string, data: any) {
 
   try {
     await ensureProfileSchema();
+    await ensureStorageBuckets();
 
     await db.insert(users).values({
       id: userId,
