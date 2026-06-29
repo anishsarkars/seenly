@@ -1,16 +1,20 @@
 export const PROFILE_AVATARS = [
-  { id: 'alex', label: 'Alex', gender: 'male' as const, src: '/avatars/alex.svg' },
-  { id: 'marco', label: 'Marco', gender: 'male' as const, src: '/avatars/marco.svg' },
-  { id: 'maya', label: 'Maya', gender: 'female' as const, src: '/avatars/maya.svg' },
-  { id: 'zara', label: 'Zara', gender: 'female' as const, src: '/avatars/zara.svg' },
+  { id: 'sunny', label: 'Sunny', kind: 'smile' as const, src: '/avatars/sunny.svg' },
+  { id: 'bloom', label: 'Bloom', kind: 'smile' as const, src: '/avatars/bloom.svg' },
+  { id: 'leo', label: 'Leo', kind: 'portrait' as const, gender: 'male' as const, src: '/avatars/leo.svg' },
+  { id: 'nova', label: 'Nova', kind: 'portrait' as const, gender: 'female' as const, src: '/avatars/nova.svg' },
 ] as const;
 
-/** Maps legacy avatar paths to the new clay-style set. */
+/** Maps legacy avatar paths to the current set. */
 const LEGACY_AVATAR_MAP: Record<string, string> = {
-  '/avatars/ember.svg': '/avatars/alex.svg',
-  '/avatars/ocean.svg': '/avatars/marco.svg',
-  '/avatars/forest.svg': '/avatars/maya.svg',
-  '/avatars/violet.svg': '/avatars/zara.svg',
+  '/avatars/ember.svg': '/avatars/sunny.svg',
+  '/avatars/ocean.svg': '/avatars/leo.svg',
+  '/avatars/forest.svg': '/avatars/nova.svg',
+  '/avatars/violet.svg': '/avatars/bloom.svg',
+  '/avatars/alex.svg': '/avatars/leo.svg',
+  '/avatars/marco.svg': '/avatars/leo.svg',
+  '/avatars/maya.svg': '/avatars/nova.svg',
+  '/avatars/zara.svg': '/avatars/bloom.svg',
 };
 
 export type ProfileAvatarId = (typeof PROFILE_AVATARS)[number]['id'];
