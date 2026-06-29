@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Monitor, Smartphone } from 'lucide-react';
+import { Monitor, Smartphone, Lock, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProfileView, { type ProfileViewData } from '@/components/profile/ProfileView';
 
 const DESKTOP_PREVIEW_WIDTH = 896;
-const PHONE_OUTER_WIDTH = 304;
+const PHONE_OUTER_WIDTH = 320;
 
 interface ProfileLivePreviewProps {
   profileData: ProfileViewData;
@@ -13,6 +13,30 @@ interface ProfileLivePreviewProps {
   defaultLayout?: 'mobile' | 'desktop';
   className?: string;
   alwaysVisible?: boolean;
+}
+
+function StatusBar() {
+  return (
+    <div className="flex items-center justify-between px-5 pt-2.5 pb-1 text-[11px] font-semibold text-white">
+      <span>9:41</span>
+      <div className="flex items-center gap-1.5">
+        <svg className="h-2.5 w-3.5" viewBox="0 0 16 12" fill="currentColor" aria-hidden>
+          <rect x="0" y="8" width="2.5" height="4" rx="0.5" opacity="0.4" />
+          <rect x="4" y="5" width="2.5" height="7" rx="0.5" opacity="0.6" />
+          <rect x="8" y="2" width="2.5" height="10" rx="0.5" opacity="0.8" />
+          <rect x="12" y="0" width="2.5" height="12" rx="0.5" />
+        </svg>
+        <svg className="h-2.5 w-3.5" viewBox="0 0 16 12" fill="currentColor" aria-hidden>
+          <path d="M8 2C5.5 2 3.2 3 1.5 4.7L0 3.2C2.2 1.2 5 0 8 0s5.8 1.2 8 3.2l-1.5 1.5C12.8 3 10.5 2 8 2zm0 3c-1.5 0-2.9.6-3.9 1.6L2.6 5.1C4.1 3.6 6 2.7 8 2.7s3.9.9 5.4 2.4l-1.5 1.5C10.9 5.6 9.5 5 8 5zm0 3c-.8 0-1.5.3-2.1.9L8 11l2.1-2.1c-.6-.6-1.3-.9-2.1-.9z" />
+        </svg>
+        <svg className="h-3 w-5" viewBox="0 0 24 12" fill="none" aria-hidden>
+          <rect x="0.5" y="0.5" width="20" height="11" rx="2.5" stroke="currentColor" strokeOpacity="0.35" />
+          <rect x="2" y="2" width="14" height="8" rx="1.5" fill="currentColor" />
+          <rect x="21" y="4" width="2.5" height="4" rx="1" fill="currentColor" strokeOpacity="0.4" />
+        </svg>
+      </div>
+    </div>
+  );
 }
 
 function PhoneFrame({
@@ -25,7 +49,7 @@ function PhoneFrame({
   const scaledWidth = PHONE_OUTER_WIDTH * scale;
 
   return (
-    <div className="mx-auto shrink-0" style={{ width: scaledWidth }}>
+    <div className="mx-auto shrink-0 pb-2" style={{ width: scaledWidth }}>
       <div
         style={{
           width: PHONE_OUTER_WIDTH,
@@ -33,15 +57,31 @@ function PhoneFrame({
           transformOrigin: 'top center',
         }}
       >
-        <div className="rounded-[3rem] border-[8px] border-zinc-800 bg-zinc-900 shadow-2xl ring-1 ring-white/10">
-          <div className="relative overflow-hidden rounded-[2.25rem] bg-black">
-            <div className="pointer-events-none absolute left-1/2 top-2.5 z-20 h-[22px] w-[92px] -translate-x-1/2 rounded-full bg-black" />
-            <div className="max-h-[min(calc(100dvh-9rem),700px)] overflow-y-auto overscroll-contain pt-9 [-ms-overflow-style:none] [scrollbar-width:thin]">
+        {/* Device shell */}
+        <div className="relative rounded-[3.25rem] bg-gradient-to-b from-[#4a4a4c] via-[#2c2c2e] to-[#1c1c1e] p-[3px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.08)_inset]">
+          {/* Side buttons */}
+          <div className="absolute -left-[2px] top-[88px] h-8 w-[3px] rounded-l bg-[#3a3a3c]" />
+          <div className="absolute -left-[2px] top-[130px] h-14 w-[3px] rounded-l bg-[#3a3a3c]" />
+          <div className="absolute -left-[2px] top-[172px] h-14 w-[3px] rounded-l bg-[#3a3a3c]" />
+          <div className="absolute -right-[2px] top-[120px] h-20 w-[3px] rounded-r bg-[#3a3a3c]" />
+
+          <div className="overflow-hidden rounded-[3.1rem] border border-black/80 bg-black">
+            <StatusBar />
+
+            {/* Dynamic Island */}
+            <div className="relative flex justify-center pb-1">
+              <div className="h-[26px] w-[108px] rounded-full bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]" />
+            </div>
+
+            {/* Screen */}
+            <div className="max-h-[min(calc(100dvh-11rem),680px)] overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {children}
             </div>
-          </div>
-          <div className="flex justify-center py-2.5">
-            <div className="h-1 w-[100px] rounded-full bg-zinc-700" />
+
+            {/* Home indicator */}
+            <div className="flex justify-center bg-black py-2">
+              <div className="h-[5px] w-[120px] rounded-full bg-white/30" />
+            </div>
           </div>
         </div>
       </div>
@@ -56,17 +96,35 @@ function DesktopFrame({
   username?: string;
   children: React.ReactNode;
 }) {
+  const url = `seenly.tech/${username || 'username'}`;
+
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-xl">
-      <div className="flex items-center gap-1.5 border-b border-white/10 bg-white/[0.03] px-3 py-2.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
-        <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
-        <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
-        <span className="ml-2 min-w-0 flex-1 truncate rounded-md bg-black/40 px-2 py-0.5 text-center text-[10px] text-white/35">
-          seenly.tech/{username || 'username'}
-        </span>
+    <div className="w-full overflow-hidden rounded-xl border border-white/10 bg-[#202124] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.6)]">
+      {/* Window title bar / tabs */}
+      <div className="flex items-end gap-0.5 bg-[#35363a] px-2 pt-2">
+        <div className="flex min-w-0 max-w-[200px] items-center gap-2 rounded-t-lg border border-b-0 border-white/10 bg-[#202124] px-3 py-2">
+          <div className="h-3 w-3 shrink-0 rounded-full bg-white/20" />
+          <span className="truncate text-[10px] text-white/60">{url}</span>
+          <span className="text-[10px] text-white/25">×</span>
+        </div>
+        <div className="mb-2 ml-1 text-sm leading-none text-white/25">+</div>
       </div>
-      <div className="max-h-[min(calc(100dvh-9rem),720px)] overflow-y-auto overscroll-contain bg-black">
+
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 border-b border-white/10 bg-[#202124] px-3 py-2">
+        <div className="flex items-center gap-1 text-white/30">
+          <ChevronLeft className="h-3.5 w-3.5" />
+          <ChevronRight className="h-3.5 w-3.5" />
+          <RotateCw className="h-3 w-3" />
+        </div>
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-[#35363a] px-3 py-1.5">
+          <Lock className="h-3 w-3 shrink-0 text-emerald-400/80" strokeWidth={2} />
+          <span className="truncate text-[11px] text-white/55">{url}</span>
+        </div>
+      </div>
+
+      {/* Viewport */}
+      <div className="max-h-[min(calc(100dvh-11rem),720px)] overflow-y-auto overscroll-contain bg-black [-ms-overflow-style:none] [scrollbar-width:thin]">
         {children}
       </div>
     </div>
@@ -123,9 +181,7 @@ export default function ProfileLivePreview({
     return () => ro.disconnect();
   }, [layout, profileData]);
 
-  const visibilityClass = alwaysVisible
-    ? 'flex'
-    : 'hidden lg:flex';
+  const visibilityClass = alwaysVisible ? 'flex' : 'hidden lg:flex';
 
   return (
     <div className={`${visibilityClass} h-full min-h-0 min-w-0 flex-col overflow-hidden ${className}`}>
@@ -133,13 +189,13 @@ export default function ProfileLivePreview({
         <span className="truncate text-[10px] font-semibold uppercase tracking-widest text-white/40">
           Live preview
         </span>
-        <div className="flex shrink-0 rounded-lg border border-white/10 p-0.5">
+        <div className="flex shrink-0 rounded-lg border border-white/10 bg-white/[0.03] p-0.5">
           <button
             type="button"
             onClick={() => setLayout('mobile')}
             className={`inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors sm:gap-1.5 sm:px-2.5 sm:text-[11px] ${
               layout === 'mobile'
-                ? 'bg-white/10 text-white'
+                ? 'bg-white/12 text-white shadow-sm'
                 : 'text-white/45 hover:text-white/70'
             }`}
             aria-pressed={layout === 'mobile'}
@@ -152,7 +208,7 @@ export default function ProfileLivePreview({
             onClick={() => setLayout('desktop')}
             className={`inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-[10px] font-medium transition-colors sm:gap-1.5 sm:px-2.5 sm:text-[11px] ${
               layout === 'desktop'
-                ? 'bg-white/10 text-white'
+                ? 'bg-white/12 text-white shadow-sm'
                 : 'text-white/45 hover:text-white/70'
             }`}
             aria-pressed={layout === 'desktop'}
@@ -165,18 +221,11 @@ export default function ProfileLivePreview({
 
       <div
         ref={scrollAreaRef}
-        className="relative flex flex-1 min-h-0 items-start justify-center overflow-y-auto overflow-x-hidden p-2 sm:p-4"
+        className="relative flex flex-1 min-h-0 items-start justify-center overflow-y-auto overflow-x-hidden bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.04)_0%,transparent_65%)] p-3 sm:p-4"
       >
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)]" />
-
         {layout === 'mobile' ? (
           <PhoneFrame scale={phoneScale}>
-            <ProfileView
-              profileData={profileData}
-              preview
-              layout="mobile"
-              embedded
-            />
+            <ProfileView profileData={profileData} preview layout="mobile" embedded />
           </PhoneFrame>
         ) : (
           <div ref={desktopContainerRef} className="relative z-10 w-full min-w-0 max-w-full">
@@ -193,12 +242,7 @@ export default function ProfileLivePreview({
                     transformOrigin: 'top left',
                   }}
                 >
-                  <ProfileView
-                    profileData={profileData}
-                    preview
-                    layout="desktop"
-                    embedded
-                  />
+                  <ProfileView profileData={profileData} preview layout="desktop" embedded />
                 </div>
               </div>
             </DesktopFrame>

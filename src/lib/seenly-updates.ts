@@ -1,4 +1,4 @@
-export const SEENLY_UPDATES_VERSION = '2026-07-02';
+export const SEENLY_UPDATES_VERSION = '2026-07-03';
 
 export function hasUnreadUpdates(lastSeenVersion: string | null) {
   if (!lastSeenVersion) return true;

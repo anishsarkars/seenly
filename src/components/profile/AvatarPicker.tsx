@@ -13,7 +13,7 @@ export default function AvatarPicker({ value, onChange, compact = false }: Avata
   return (
     <div className="space-y-2">
       <label className={label}>Avatar</label>
-      <div className={`grid grid-cols-4 ${compact ? 'gap-2' : 'gap-3'}`}>
+      <div className={`grid grid-cols-3 ${compact ? 'gap-2' : 'gap-2.5'}`}>
         {PROFILE_AVATARS.map((avatar) => {
           const selected = value === avatar.src;
           return (
@@ -21,10 +21,10 @@ export default function AvatarPicker({ value, onChange, compact = false }: Avata
               key={avatar.id}
               type="button"
               onClick={() => onChange(avatar.src)}
-              className={`aspect-square overflow-hidden rounded-full border-2 bg-white ring-1 ring-white/10 transition-all ${
+              className={`aspect-square overflow-hidden rounded-full border-2 transition-all ${
                 selected
-                  ? 'border-white/50 ring-2 ring-white/15'
-                  : 'border-transparent opacity-90 hover:opacity-100'
+                  ? 'border-white/60 ring-2 ring-white/20 scale-[1.02]'
+                  : 'border-transparent opacity-85 hover:opacity-100 hover:border-white/20'
               }`}
               aria-label={`Choose ${avatar.label} avatar`}
               aria-pressed={selected}
