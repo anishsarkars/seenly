@@ -221,7 +221,7 @@ export default function LoginClient() {
         </div>
       </div>
       </div>
-      <SiteFooter compact />
+      <SiteFooter variant="login" compact />
     </div>
   );
 }

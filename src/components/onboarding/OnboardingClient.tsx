@@ -1304,7 +1304,7 @@ export default function OnboardingClient() {
           </AnimatePresence>
         </div>
 
-        <SiteFooter compact className="mt-auto shrink-0 border-t-0 bg-transparent px-0 pb-0 pt-4" />
+        <SiteFooter variant="onboarding-flow" compact className="mt-auto shrink-0 border-t-0 bg-transparent px-0 pb-0 pt-4" />
       </div>
 
       <OnboardingProfilePreview

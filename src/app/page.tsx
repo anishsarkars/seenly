@@ -132,6 +132,15 @@ export default function Home() {
           />
         </video>
 
+        {/* Soft fade into page content */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-48 bg-gradient-to-b from-transparent via-black/50 to-black sm:h-56" />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-32 animate-[heroFadePulse_10s_ease-in-out_infinite] opacity-70"
+          style={{
+            background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 55%, rgb(0,0,0) 100%)',
+          }}
+        />
+
         {/* Navbar (z-30) */}
         <header className="relative z-30 flex items-center justify-between px-5 py-5 sm:px-6 md:px-12 lg:px-16">
           <div className="flex items-center gap-8">
@@ -184,26 +193,61 @@ export default function Home() {
         </header>
 
         {/* Mobile Menu */}
-        <div className={`absolute inset-x-0 top-0 z-20 overflow-hidden bg-black/98 backdrop-blur-xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${mobileMenuOpen ? 'min-h-[100dvh] opacity-100' : 'h-0 opacity-0 pointer-events-none'}`}>
-          <div className="flex h-full flex-col justify-center px-8">
-            <nav className={`flex flex-col gap-6 transition-all duration-500 delay-100 transform ${mobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+        <div
+          className={`absolute inset-x-0 top-0 z-20 overflow-hidden bg-black/98 backdrop-blur-xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            mobileMenuOpen ? 'min-h-[100dvh] opacity-100' : 'h-0 opacity-0 pointer-events-none'
+          }`}
+        >
+          <div
+            className={`flex min-h-[100dvh] flex-col px-6 pt-[4.75rem] pb-10 transition-all duration-500 delay-75 sm:px-8 ${
+              mobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+            }`}
+          >
+            <nav className="flex flex-1 flex-col justify-center gap-0">
               <a
                 href="#how-it-works"
                 onClick={() => setMobileMenuOpen(false)}
-                className="text-3xl font-medium text-white/90 hover:text-white transition-colors"
+                className="border-b border-white/[0.06] py-5 text-2xl font-medium tracking-tight text-white/90 transition-colors hover:text-white"
               >
                 How it Works
               </a>
-              <div>
+              {authState === 'guest' && (
                 <a
-                  href={authState === 'member' ? '/dashboard' : authState === 'onboarding' ? '/onboarding' : '/onboarding'}
+                  href="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="mt-6 inline-block rounded-full bg-white px-8 py-3.5 text-base font-medium text-black hover:scale-105 transition-transform"
+                  className="border-b border-white/[0.06] py-5 text-2xl font-medium tracking-tight text-white/90 transition-colors hover:text-white"
                 >
-                  {authState === 'member' ? 'Dashboard' : authState === 'onboarding' ? 'Continue Setup' : 'Get Started'}
+                  Sign in
                 </a>
-              </div>
+              )}
+              {authState === 'member' && profileUsername && (
+                <a
+                  href={`/${profileUsername}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="border-b border-white/[0.06] py-5 text-2xl font-medium tracking-tight text-white/90 transition-colors hover:text-white"
+                >
+                  View profile
+                </a>
+              )}
             </nav>
+
+            <a
+              href={
+                authState === 'member'
+                  ? '/dashboard'
+                  : authState === 'onboarding'
+                    ? '/onboarding'
+                    : '/onboarding'
+              }
+              onClick={() => setMobileMenuOpen(false)}
+              className="mt-8 flex w-full items-center justify-center rounded-full bg-white px-8 py-4 text-base font-semibold text-black transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {authState === 'member'
+                ? 'Dashboard'
+                : authState === 'onboarding'
+                  ? 'Continue Setup'
+                  : 'Get Started'}
+            </a>
           </div>
         </div>
 
@@ -231,18 +275,8 @@ export default function Home() {
               Record a 60-second intro, build your profile, and share one link with every recruiter.
             </p>
 
-            {/* Username claim */}
-            {authState === 'guest' && (
-              <div className="animate-[fadeSlideUp_0.8s_ease_0.7s_both] w-full max-w-xl">
-                <UsernameClaimBar
-                  title=""
-                  className="!max-w-none space-y-3"
-                />
-              </div>
-            )}
-
             {/* Action Buttons */}
-            <div className="flex animate-[fadeSlideUp_0.8s_ease_0.8s_both] w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="flex animate-[fadeSlideUp_0.8s_ease_0.7s_both] w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
               {authState === 'member' ? (
                 <>
                   <a
@@ -413,11 +447,25 @@ export default function Home() {
             0%, 100% { transform: perspective(900px) rotateY(-4deg) rotateX(2deg) translateY(0px); }
             50% { transform: perspective(900px) rotateY(-4deg) rotateX(2deg) translateY(-10px); }
           }
+          @keyframes heroFadePulse {
+            0%, 100% { opacity: 0.45; }
+            50% { opacity: 0.85; }
+          }
+          @keyframes sectionGlow {
+            0%, 100% { opacity: 0.35; transform: scaleX(0.92); }
+            50% { opacity: 0.9; transform: scaleX(1); }
+          }
         `}</style>
       </section>
 
+      {/* Subtle animated divider */}
+      <div className="relative h-px w-full overflow-hidden bg-black">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+        <div className="absolute inset-y-0 left-1/2 h-full w-2/3 -translate-x-1/2 animate-[sectionGlow_6s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/15 to-transparent blur-[0.5px]" />
+      </div>
+
       {/* HOW IT WORKS SECTION */}
-      <section id="how-it-works" className="relative border-t border-zinc-900 bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-36 lg:px-16">
+      <section id="how-it-works" className="relative bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-36 lg:px-16">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-16 text-center sm:gap-20 md:gap-24">
           <div className="space-y-4 sm:space-y-5">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/60">
@@ -442,8 +490,6 @@ export default function Home() {
             ))}
           </div>
 
-          <UsernameClaimBar className="px-2" />
-
           <div className="w-full max-w-md rounded-full border border-white/10 bg-white/5 px-5 py-3 text-center text-sm leading-relaxed text-white/50 backdrop-blur-sm sm:w-auto sm:px-6">
             From one intro to your{' '}
             <span className="font-semibold text-white/80">seenly.tech</span>
@@ -452,7 +498,29 @@ export default function Home() {
         </div>
       </section>
 
-      <SiteFooter />
+      {/* Claim username — bottom CTA above footer */}
+      {authState === 'guest' && (
+        <section className="relative overflow-hidden bg-black px-5 py-16 sm:px-6 sm:py-24 md:px-12">
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black via-black/80 to-transparent"
+            aria-hidden
+          />
+          <div className="relative mx-auto max-w-xl">
+            <UsernameClaimBar className="px-1" />
+          </div>
+        </section>
+      )}
+
+      <SiteFooter
+        variant={
+          authState === 'member'
+            ? 'member'
+            : authState === 'onboarding'
+              ? 'onboarding'
+              : 'guest'
+        }
+        username={profileUsername}
+      />
 
     </div>
   );

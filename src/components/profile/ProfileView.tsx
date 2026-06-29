@@ -522,7 +522,7 @@ export default function ProfileView({
               </Link>
             </div>
           </footer>
-          <SiteFooter compact />
+          <SiteFooter variant="profile" compact />
         </>
       )}
     </div>
