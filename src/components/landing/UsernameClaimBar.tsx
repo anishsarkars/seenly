@@ -9,11 +9,13 @@ import { validateUsername } from '@/lib/username';
 interface UsernameClaimBarProps {
   className?: string;
   title?: string;
+  hero?: boolean;
 }
 
 export default function UsernameClaimBar({
   className = '',
   title = "Claim your Seenly link before it's taken",
+  hero = false,
 }: UsernameClaimBarProps) {
   const router = useRouter();
   const [username, setUsername] = useState('');
@@ -72,14 +74,20 @@ export default function UsernameClaimBar({
   };
 
   return (
-    <div className={`mx-auto w-full max-w-xl space-y-4 ${className}`}>
+    <div className={`mx-auto w-full max-w-xl ${hero ? 'space-y-2' : 'space-y-4'} ${className}`}>
       {title ? (
-        <h2 className="text-center text-xl font-bold tracking-tight text-white sm:text-2xl md:text-3xl">
+        <h2 className={`font-bold tracking-tight text-white ${hero ? 'text-left text-lg sm:text-xl' : 'text-center text-xl sm:text-2xl md:text-3xl'}`}>
           {title}
         </h2>
       ) : null}
 
-      <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/[0.06] p-2 sm:flex-row sm:items-center sm:rounded-full sm:p-1.5 sm:pl-5">
+      <div
+        className={`flex flex-col gap-2 p-2 sm:flex-row sm:items-center sm:p-1.5 sm:pl-5 ${
+          hero
+            ? 'rounded-2xl border border-white/20 bg-black/50 backdrop-blur-md sm:rounded-full'
+            : 'rounded-2xl border border-white/10 bg-white/[0.06] sm:rounded-full'
+        }`}
+      >
         <div className="flex min-w-0 flex-1 items-center gap-1 px-2 sm:px-0">
           <span className="shrink-0 text-sm text-white/45">seenly.tech/</span>
           <input
@@ -111,7 +119,7 @@ export default function UsernameClaimBar({
 
       {message && (
         <p
-          className={`text-center text-xs ${
+          className={`text-xs ${hero ? 'text-left' : 'text-center'} ${
             status === 'available'
               ? 'text-emerald-400/90'
               : status === 'taken' || status === 'invalid'

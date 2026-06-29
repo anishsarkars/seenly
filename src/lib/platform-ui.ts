@@ -18,3 +18,6 @@ export const label = 'text-xs font-medium text-white/50';
 export const sectionTitle = 'text-lg font-semibold tracking-tight text-white';
 
 export const muted = 'text-sm text-white/50';
+
+/** Horizontal page padding — use on marketing & auth shells */
+export const pagePx = 'px-5 sm:px-6 md:px-12 lg:px-16';

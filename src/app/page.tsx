@@ -50,7 +50,7 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authState, setAuthState] = useState<'loading' | 'guest' | 'member' | 'onboarding'>('loading');
   const [profileUsername, setProfileUsername] = useState<string | null>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -69,47 +69,59 @@ export default function Home() {
     });
   }, []);
 
-  // 3D floating tilt animation on mouse move
+  // Subtle tilt on phone mockup — only while hovering the card
   useEffect(() => {
     const card = cardRef.current;
     if (!card) return;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
 
     let animFrame: number;
     let currentX = 0;
     let currentY = 0;
     let targetX = 0;
     let targetY = 0;
+    let hovering = false;
 
     const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
 
     const animate = () => {
-      currentX = lerp(currentX, targetX, 0.08);
-      currentY = lerp(currentY, targetY, 0.08);
-      card.style.transform = `perspective(900px) rotateY(${currentX}deg) rotateX(${currentY}deg) translateZ(10px)`;
+      currentX = lerp(currentX, targetX, 0.045);
+      currentY = lerp(currentY, targetY, 0.045);
+      card.style.transform = `perspective(900px) rotateY(${currentX}deg) rotateX(${currentY}deg)`;
       animFrame = requestAnimationFrame(animate);
     };
 
     const onMouseMove = (e: MouseEvent) => {
+      if (!hovering) return;
       const rect = card.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
-      targetX = ((e.clientX - cx) / rect.width) * 14;
-      targetY = -((e.clientY - cy) / rect.height) * 14;
+      targetX = ((e.clientX - cx) / rect.width) * 5;
+      targetY = -((e.clientY - cy) / rect.height) * 5;
     };
 
-    const onMouseLeave = () => {
+    const onEnter = () => {
+      hovering = true;
+    };
+
+    const onLeave = () => {
+      hovering = false;
       targetX = 0;
       targetY = 0;
     };
 
     animFrame = requestAnimationFrame(animate);
-    window.addEventListener('mousemove', onMouseMove);
-    card.addEventListener('mouseleave', onMouseLeave);
+    card.addEventListener('mouseenter', onEnter);
+    card.addEventListener('mouseleave', onLeave);
+    card.addEventListener('mousemove', onMouseMove);
 
     return () => {
       cancelAnimationFrame(animFrame);
-      window.removeEventListener('mousemove', onMouseMove);
-      card.removeEventListener('mouseleave', onMouseLeave);
+      card.removeEventListener('mouseenter', onEnter);
+      card.removeEventListener('mouseleave', onLeave);
+      card.removeEventListener('mousemove', onMouseMove);
     };
   }, []);
 
@@ -132,14 +144,8 @@ export default function Home() {
           />
         </video>
 
-        {/* Soft fade into page content */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-48 bg-gradient-to-b from-transparent via-black/50 to-black sm:h-56" />
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-32 animate-[heroFadePulse_10s_ease-in-out_infinite] opacity-70"
-          style={{
-            background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 55%, rgb(0,0,0) 100%)',
-          }}
-        />
+        {/* Thin bottom blend into next section — video stays clear */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-20 bg-gradient-to-b from-transparent to-black sm:h-24" />
 
         {/* Navbar (z-30) */}
         <header className="relative z-30 flex items-center justify-between px-5 py-5 sm:px-6 md:px-12 lg:px-16">
@@ -255,28 +261,55 @@ export default function Home() {
         <main className="relative z-10 flex flex-1 items-center justify-between px-5 pb-10 pt-4 sm:px-6 md:px-12 lg:px-20">
 
           {/* LEFT: Text */}
-          <div className="flex w-full max-w-xl flex-col justify-center gap-5 lg:w-auto [text-shadow:0_2px_24px_rgba(0,0,0,0.85)]">
+          <div className="flex w-full max-w-xl flex-col justify-center gap-5 lg:w-auto">
             {/* Badge */}
             <div className="animate-[fadeSlideUp_0.8s_ease_0.2s_both]">
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/60 backdrop-blur-md">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/70 backdrop-blur-sm">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                 Personal Video Pitch
               </span>
             </div>
 
             {/* Heading */}
-            <h1 className="animate-[fadeSlideUp_0.8s_ease_0.4s_both] text-4xl font-bold leading-[1.06] tracking-tight text-white sm:text-5xl md:text-6xl">
+            <h1 className="animate-[fadeSlideUp_0.8s_ease_0.4s_both] text-4xl font-bold leading-[1.06] tracking-tight text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.55)] sm:text-5xl md:text-6xl">
               Your Resume Tells.<br />
-              <span className="text-white/60">Your Intro Shows.</span>
+              <span className="text-white/75">Your Intro Shows.</span>
             </h1>
 
             {/* Description */}
-            <p className="max-w-sm animate-[fadeSlideUp_0.8s_ease_0.6s_both] text-sm leading-relaxed text-white/50 md:text-base">
+            <p className="max-w-sm animate-[fadeSlideUp_0.8s_ease_0.6s_both] text-sm leading-relaxed text-white/75 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)] md:text-base">
               Record a 60-second intro, build your profile, and share one link with every recruiter.
             </p>
 
+            {/* Username claim — guests only */}
+            {authState === 'guest' && (
+              <div className="animate-[fadeSlideUp_0.8s_ease_0.65s_both] w-full">
+                <UsernameClaimBar hero title="" className="!max-w-none" />
+              </div>
+            )}
+
+            {authState === 'member' && profileUsername && (
+              <div className="animate-[fadeSlideUp_0.8s_ease_0.65s_both]">
+                <a
+                  href={`/${profileUsername}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-sm text-white/80 backdrop-blur-sm transition-colors hover:border-white/25 hover:text-white"
+                >
+                  <span className="text-white/45">seenly.tech/</span>
+                  <span className="font-semibold text-white">{profileUsername}</span>
+                </a>
+              </div>
+            )}
+
+            {authState === 'onboarding' && (
+              <div className="animate-[fadeSlideUp_0.8s_ease_0.65s_both]">
+                <p className="text-sm text-white/60 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+                  Pick up where you left off — finish your profile in a few steps.
+                </p>
+              </div>
+            )}
+
             {/* Action Buttons */}
-            <div className="flex animate-[fadeSlideUp_0.8s_ease_0.7s_both] w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="flex animate-[fadeSlideUp_0.8s_ease_0.75s_both] w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
               {authState === 'member' ? (
                 <>
                   <a
@@ -325,14 +358,15 @@ export default function Home() {
             </div>
           </div>
 
-          {/* RIGHT: 3D Animated Phone Profile Card — far right */}
+          {/* RIGHT: Phone profile mockup */}
           <div className="hidden items-center justify-end pr-4 lg:flex xl:pr-16">
-            <a href="/anish" className="relative block w-[210px] animate-[fadeSlideUp_0.9s_ease_0.5s_both] xl:w-[230px]">
-            <div
+            <a
               ref={cardRef}
+              href="/anish"
+              className="relative block w-[210px] animate-[fadeSlideUp_0.9s_ease_0.5s_both] xl:w-[230px]"
               style={{ willChange: 'transform' }}
-              className="relative"
             >
+            <div className="relative">
               {/* Ambient glow behind */}
               <div className="absolute inset-x-0 inset-y-8 bg-white/[0.02] blur-3xl rounded-full pointer-events-none" />
 
@@ -446,10 +480,6 @@ export default function Home() {
           @keyframes float {
             0%, 100% { transform: perspective(900px) rotateY(-4deg) rotateX(2deg) translateY(0px); }
             50% { transform: perspective(900px) rotateY(-4deg) rotateX(2deg) translateY(-10px); }
-          }
-          @keyframes heroFadePulse {
-            0%, 100% { opacity: 0.45; }
-            50% { opacity: 0.85; }
           }
           @keyframes sectionGlow {
             0%, 100% { opacity: 0.35; transform: scaleX(0.92); }
