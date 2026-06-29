@@ -7,7 +7,7 @@ import {
   FileText, CheckCircle, Plus, Trash2, ArrowRight, ArrowLeft, RefreshCw, 
   Play, Square, Sparkles, Upload, Volume2, VolumeX, Shield, UserCheck
 } from 'lucide-react';
-import { saveOnboardingData, isUsernameUnique } from '@/db/actions';
+import { saveOnboardingData, isUsernameUnique, getUserProfile } from '@/db/actions';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
@@ -76,10 +76,20 @@ export default function OnboardingClient() {
 
   // Auth check & state management
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
         setSessionUser(user);
         setSocials(prev => ({ ...prev, email: user.email || '' }));
+        // If user already has a published profile, send them straight to dashboard
+        try {
+          const existing = await getUserProfile(user.id);
+          if (existing?.user?.username) {
+            router.replace('/dashboard');
+            return;
+          }
+        } catch {}
+        // Otherwise advance past the account creation step
+        setStep(2);
       }
       setAuthLoading(false);
     });
@@ -112,19 +122,29 @@ export default function OnboardingClient() {
         });
         if (error) throw error;
         setAuthSuccessMsg('Account created! Proceeding to onboarding...');
-        setTimeout(() => {
-          setStep(2);
-        }, 800);
+        setTimeout(() => { setStep(2); }, 800);
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: emailInput,
           password: passwordInput,
         });
         if (error) throw error;
-        setAuthSuccessMsg('Logged in successfully!');
-        setTimeout(() => {
-          setStep(2);
-        }, 800);
+
+        // Check if user already has a published profile → skip onboarding
+        const signedInUser = data.user;
+        if (signedInUser) {
+          try {
+            const existing = await getUserProfile(signedInUser.id);
+            if (existing?.user?.username) {
+              setAuthSuccessMsg('Welcome back! Redirecting to your dashboard...');
+              setTimeout(() => { router.replace('/dashboard'); }, 600);
+              return;
+            }
+          } catch {}
+        }
+
+        setAuthSuccessMsg('Logged in! Proceeding to setup...');
+        setTimeout(() => { setStep(2); }, 800);
       }
     } catch (err: any) {
       setAuthError(err.message || 'Authentication failed.');
@@ -283,13 +303,9 @@ export default function OnboardingClient() {
     setIsUploading(true);
     setUploadProgress(10);
     
-    // Simulate upload/save process
     const interval = setInterval(() => {
       setUploadProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          return 90;
-        }
+        if (prev >= 90) { clearInterval(interval); return 90; }
         return prev + 15;
       });
     }, 200);
@@ -315,6 +331,7 @@ export default function OnboardingClient() {
     
     setTimeout(() => {
       setIsUploading(false);
+      // Redirect to dashboard — profile is now live at seenly.tech/[username]
       router.push('/dashboard');
     }, 500);
   };

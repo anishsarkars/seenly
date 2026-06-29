@@ -134,12 +134,14 @@ export async function getUserProfile(userId: string) {
     };
   } catch (error) {
     console.error('Failed to get user profile:', error);
-    const user = mockStore.users[safeId] || mockStore.users[SEED_MOCK_USER_ID];
+    // Only fall back to mock if it's genuinely a mock/dev user, never for real auth users
+    const mockUser = mockStore.users[safeId];
+    if (!mockUser) return null;
     return {
-      user,
-      experiences: mockStore.experiences[user.id] || [],
-      projects: mockStore.projects[user.id] || [],
-      socials: mockStore.socials[user.id] || {},
+      user: mockUser,
+      experiences: mockStore.experiences[mockUser.id] || [],
+      projects: mockStore.projects[mockUser.id] || [],
+      socials: mockStore.socials[mockUser.id] || {},
     };
   }
 }
