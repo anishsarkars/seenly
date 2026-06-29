@@ -290,12 +290,20 @@ export default function Home() {
             50% { opacity: 0.9; transform: scaleX(1); }
           }
           @keyframes claimColorDrift {
-            0%, 100% { opacity: 0.55; transform: scale(0.97); }
-            50% { opacity: 0.9; transform: scale(1.03); }
+            0%, 100% { opacity: 0.5; transform: scale(0.96); }
+            50% { opacity: 0.85; transform: scale(1.05); }
           }
           @keyframes claimColorDriftAlt {
-            0%, 100% { opacity: 0.45; transform: scale(1.02); }
-            50% { opacity: 0.75; transform: scale(0.96); }
+            0%, 100% { opacity: 0.4; transform: scale(1.03) translate(0, 0); }
+            50% { opacity: 0.7; transform: scale(0.94) translate(1%, -1%); }
+          }
+          @keyframes claimGradientRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          @keyframes claimGradientPulse {
+            0%, 100% { opacity: 0.25; }
+            50% { opacity: 0.45; }
           }
         `}</style>
       </section>
@@ -343,16 +351,31 @@ export default function Home() {
       {/* Claim username — bottom CTA above footer */}
       {authState === 'guest' && (
         <section className="relative overflow-hidden border-t border-white/[0.06] bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-32 lg:px-16">
-          {/* Very subtle colorful glow */}
+          {/* Animated gradient glow */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-            <div className="absolute left-1/2 top-1/2 h-[480px] w-[480px] -translate-x-1/2 -translate-y-1/2 animate-[claimColorDrift_20s_ease-in-out_infinite] rounded-full bg-emerald-500/[0.06] blur-[160px]" />
-            <div className="absolute left-[54%] top-[50%] h-80 w-80 -translate-x-1/2 -translate-y-1/2 animate-[claimColorDriftAlt_24s_ease-in-out_infinite_4s] rounded-full bg-violet-500/[0.05] blur-[140px]" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70" />
+            <div className="absolute left-1/2 top-1/2 h-[min(100vw,640px)] w-[min(100vw,640px)] -translate-x-1/2 -translate-y-1/2">
+              <div
+                className="absolute inset-0 animate-[claimGradientRotate_28s_linear_infinite] rounded-full opacity-50 blur-[80px]"
+                style={{
+                  background:
+                    'conic-gradient(from 0deg, transparent 0%, rgba(16,185,129,0.35) 12%, transparent 28%, rgba(139,92,246,0.28) 42%, transparent 58%, rgba(56,189,248,0.22) 72%, transparent 88%)',
+                }}
+              />
+            </div>
+            <div className="absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 animate-[claimColorDrift_14s_ease-in-out_infinite] rounded-full bg-emerald-500/10 blur-[120px]" />
+            <div className="absolute left-[42%] top-[48%] h-72 w-72 -translate-x-1/2 -translate-y-1/2 animate-[claimColorDriftAlt_18s_ease-in-out_infinite_2s] rounded-full bg-violet-500/10 blur-[100px]" />
+            <div className="absolute left-[58%] top-[52%] h-64 w-64 -translate-x-1/2 -translate-y-1/2 animate-[claimColorDrift_16s_ease-in-out_infinite_4s] rounded-full bg-sky-400/8 blur-[90px]" />
+            <div className="absolute inset-0 animate-[claimGradientPulse_10s_ease-in-out_infinite] bg-[radial-gradient(ellipse_70%_55%_at_50%_50%,rgba(255,255,255,0.06),transparent_70%)]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/20 to-black/65" />
           </div>
 
           <div className="relative mx-auto flex min-h-[min(280px,45vh)] max-w-4xl flex-col items-center justify-center px-2">
             <div className="relative w-full max-w-xl">
-              <div className="relative rounded-2xl border border-white/[0.08] bg-black/50 px-5 py-10 backdrop-blur-sm sm:px-8 sm:py-12">
+              <div
+                className="pointer-events-none absolute -inset-px animate-[claimColorDrift_12s_ease-in-out_infinite] rounded-2xl bg-gradient-to-r from-emerald-500/20 via-violet-500/15 to-sky-400/15 blur-xl"
+                aria-hidden
+              />
+              <div className="relative rounded-2xl border border-white/[0.1] bg-black/55 px-5 py-10 shadow-[0_0_60px_-15px_rgba(16,185,129,0.2)] backdrop-blur-md sm:px-8 sm:py-12">
                 <UsernameClaimBar variant="cta" className="relative w-full px-0" />
               </div>
             </div>
