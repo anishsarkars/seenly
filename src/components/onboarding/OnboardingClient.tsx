@@ -456,7 +456,7 @@ export default function OnboardingClient() {
   };
 
   return (
-    <div className="flex h-dvh max-h-dvh overflow-hidden bg-black font-geist text-white selection:bg-white selection:text-black">
+    <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-black font-geist text-white selection:bg-white selection:text-black lg:flex-row">
       <Confetti active={step === 9} />
 
       {/* Onboarding Input Column */}

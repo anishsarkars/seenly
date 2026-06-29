@@ -3,33 +3,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Monitor, Smartphone, Lock, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProfileView, { type ProfileViewData } from '@/components/profile/ProfileView';
+import PhoneFrame, { PHONE_OUTER_WIDTH } from '@/components/profile/PhoneFrame';
 
 const DESKTOP_PREVIEW_WIDTH = 896;
-const PHONE_OUTER_WIDTH = 320;
-
-function StatusBar() {
-  return (
-    <div className="flex items-center justify-between px-5 pt-2.5 pb-1 text-[11px] font-semibold text-white">
-      <span>9:41</span>
-      <div className="flex items-center gap-1.5">
-        <svg className="h-2.5 w-3.5" viewBox="0 0 16 12" fill="currentColor" aria-hidden>
-          <rect x="0" y="8" width="2.5" height="4" rx="0.5" opacity="0.4" />
-          <rect x="4" y="5" width="2.5" height="7" rx="0.5" opacity="0.6" />
-          <rect x="8" y="2" width="2.5" height="10" rx="0.5" opacity="0.8" />
-          <rect x="12" y="0" width="2.5" height="12" rx="0.5" />
-        </svg>
-        <svg className="h-2.5 w-3.5" viewBox="0 0 16 12" fill="currentColor" aria-hidden>
-          <path d="M8 2C5.5 2 3.2 3 1.5 4.7L0 3.2C2.2 1.2 5 0 8 0s5.8 1.2 8 3.2l-1.5 1.5C12.8 3 10.5 2 8 2zm0 3c-1.5 0-2.9.6-3.9 1.6L2.6 5.1C4.1 3.6 6 2.7 8 2.7s3.9.9 5.4 2.4l-1.5 1.5C10.9 5.6 9.5 5 8 5zm0 3c-.8 0-1.5.3-2.1.9L8 11l2.1-2.1c-.6-.6-1.3-.9-2.1-.9z" />
-        </svg>
-        <svg className="h-3 w-5" viewBox="0 0 24 12" fill="none" aria-hidden>
-          <rect x="0.5" y="0.5" width="20" height="11" rx="2.5" stroke="currentColor" strokeOpacity="0.35" />
-          <rect x="2" y="2" width="14" height="8" rx="1.5" fill="currentColor" />
-          <rect x="21" y="4" width="2.5" height="4" rx="1" fill="currentColor" strokeOpacity="0.4" />
-        </svg>
-      </div>
-    </div>
-  );
-}
 
 interface ProfileLivePreviewProps {
   profileData: ProfileViewData;
@@ -38,58 +14,6 @@ interface ProfileLivePreviewProps {
   className?: string;
   alwaysVisible?: boolean;
   panelMode?: 'side' | 'bottom';
-}
-
-function PhoneFrame({
-  children,
-  scale,
-  compact,
-}: {
-  children: React.ReactNode;
-  scale: number;
-  compact?: boolean;
-}) {
-  const outerWidth = compact ? 280 : PHONE_OUTER_WIDTH;
-  const scaledWidth = outerWidth * scale;
-
-  return (
-    <div className="mx-auto shrink-0 pb-2" style={{ width: scaledWidth }}>
-      <div
-        style={{
-          width: outerWidth,
-          transform: `scale(${scale})`,
-          transformOrigin: 'top center',
-        }}
-      >
-        <div className={`relative bg-gradient-to-b from-[#4a4a4c] via-[#2c2c2e] to-[#1c1c1e] p-[3px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.08)_inset] ${compact ? 'rounded-[2.75rem]' : 'rounded-[3.25rem]'}`}>
-          {/* Side buttons */}
-          <div className="absolute -left-[2px] top-[88px] h-8 w-[3px] rounded-l bg-[#3a3a3c]" />
-          <div className="absolute -left-[2px] top-[130px] h-14 w-[3px] rounded-l bg-[#3a3a3c]" />
-          <div className="absolute -left-[2px] top-[172px] h-14 w-[3px] rounded-l bg-[#3a3a3c]" />
-          <div className="absolute -right-[2px] top-[120px] h-20 w-[3px] rounded-r bg-[#3a3a3c]" />
-
-          <div className="overflow-hidden rounded-[3.1rem] border border-black/80 bg-black">
-            <StatusBar />
-
-            {/* Dynamic Island */}
-            <div className="relative flex justify-center pb-1">
-              <div className="h-[26px] w-[108px] rounded-full bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]" />
-            </div>
-
-            {/* Screen */}
-            <div className="max-h-[min(calc(100dvh-11rem),680px)] overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {children}
-            </div>
-
-            {/* Home indicator */}
-            <div className="flex justify-center bg-black py-2">
-              <div className="h-[5px] w-[120px] rounded-full bg-white/30" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function DesktopFrame({
@@ -226,10 +150,23 @@ export default function ProfileLivePreview({
 
       <div
         ref={scrollAreaRef}
-        className="relative flex flex-1 min-h-0 items-start justify-center overflow-y-auto overflow-x-hidden bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.04)_0%,transparent_65%)] p-3 sm:p-4"
+        className={`relative flex flex-1 min-h-0 items-start justify-center overflow-y-auto overflow-x-hidden p-3 sm:p-5 ${
+          panelMode === 'bottom'
+            ? 'bg-[#050505]'
+            : 'bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.05)_0%,transparent_65%)] bg-[#0a0a0a]'
+        }`}
       >
         {layout === 'mobile' ? (
-          <PhoneFrame scale={phoneScale} compact={panelMode === 'bottom'}>
+          <PhoneFrame
+            scale={phoneScale}
+            compact={panelMode === 'bottom'}
+            className="pb-2"
+            maxScreenHeight={
+              panelMode === 'bottom'
+                ? 'min(calc(100dvh - 14rem), 520px)'
+                : 'min(calc(100dvh - 11rem), 680px)'
+            }
+          >
             <ProfileView profileData={profileData} preview layout="mobile" embedded />
           </PhoneFrame>
         ) : (

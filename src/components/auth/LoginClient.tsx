@@ -103,31 +103,31 @@ export default function LoginClient() {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col overflow-hidden bg-black font-geist text-white selection:bg-white selection:text-black">
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-      <div className="hidden w-[42%] max-w-md shrink-0 flex-col justify-between border-r border-white/10 p-10 lg:flex xl:p-14">
-        <SeenlyLogo size="lg" />
-        <div className="space-y-4">
-          <h1 className="text-3xl font-semibold leading-tight tracking-tight xl:text-4xl">
-            Show who you are,
-            <br />
-            <span className="text-white/50">not just what&apos;s on paper.</span>
-          </h1>
-          <p className="max-w-xs text-sm leading-relaxed text-white/45">
-            Sign in to manage your video profile, track views, and share one link everywhere.
-          </p>
-        </div>
-        <p className="text-xs text-white/25">seenly.tech</p>
-      </div>
-
-      <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-5 py-8 sm:px-8">
-        <div className="w-full max-w-sm space-y-6">
-          <div className="space-y-2 lg:hidden">
-            <SeenlyLogo size="md" />
-            <p className="text-sm text-white/45">Sign in to your profile</p>
+    <div className="flex min-h-dvh flex-col bg-black font-geist text-white selection:bg-white selection:text-black">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:overflow-hidden">
+        <div className="hidden w-[42%] max-w-md shrink-0 flex-col justify-between border-r border-white/10 p-10 lg:flex xl:p-14">
+          <SeenlyLogo size="lg" />
+          <div className="space-y-4">
+            <h1 className="text-3xl font-semibold leading-tight tracking-tight xl:text-4xl">
+              Show who you are,
+              <br />
+              <span className="text-white/50">not just what&apos;s on paper.</span>
+            </h1>
+            <p className="max-w-xs text-sm leading-relaxed text-white/45">
+              Sign in to manage your video profile, track views, and share one link everywhere.
+            </p>
           </div>
+          <p className="text-xs text-white/25">seenly.tech</p>
+        </div>
 
-          <div className={`${panel} space-y-5 p-6 sm:p-7`}>
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-5 py-8 sm:px-8">
+          <div className="w-full max-w-sm space-y-6">
+            <div className="space-y-2 lg:hidden">
+              <SeenlyLogo size="md" />
+              <p className="text-sm text-white/45">Sign in to your profile</p>
+            </div>
+
+            <div className={`${panel} space-y-5 p-6 sm:p-7`}>
             <div className="space-y-1">
               <h2 className="text-xl font-semibold tracking-tight">Welcome back</h2>
               <p className="text-sm text-white/45">Continue with Google, email & password, or a magic link.</p>
@@ -221,7 +221,8 @@ export default function LoginClient() {
         </div>
       </div>
       </div>
-      <SiteFooter variant="login" compact />
+
+      <SiteFooter variant="login" compact className="shrink-0 border-t border-white/[0.06]" />
     </div>
   );
 }

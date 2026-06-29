@@ -314,6 +314,20 @@ export default function ProfileView({
                     }}
                   />
                 </>
+              ) : preview && user.thumbnailUrl ? (
+                <div className="relative h-full w-full">
+                  <img
+                    src={user.thumbnailUrl}
+                    alt=""
+                    className="h-full w-full object-cover opacity-90"
+                  />
+                  <div className="absolute inset-0 bg-black/20" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 shadow-lg">
+                      <div className="ml-0.5 h-0 w-0 border-y-[7px] border-l-[11px] border-y-transparent border-l-black" />
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="flex h-full items-center justify-center px-6 text-center text-sm text-zinc-500">
                   No intro video uploaded yet.

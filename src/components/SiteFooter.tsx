@@ -96,8 +96,8 @@ export default function SiteFooter({
       className={`shrink-0 border-t border-white/[0.06] bg-black px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 sm:px-6 ${className}`}
     >
       <div
-        className={`mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 ${
-          compact ? 'gap-3 text-center' : 'sm:flex-row'
+        className={`mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-5 sm:px-6 sm:flex-row ${
+          compact ? 'gap-3 sm:gap-4' : ''
         }`}
       >
         <div className="flex items-center gap-2">

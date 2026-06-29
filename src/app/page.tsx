@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Menu, X, MapPin, Play } from 'lucide-react';
+import { ArrowRight, Menu, X } from 'lucide-react';
 import SeenlyLogo from '@/components/SeenlyLogo';
 import UsernameClaimBar from '@/components/landing/UsernameClaimBar';
+import HeroPhonePreview from '@/components/landing/HeroPhonePreview';
 import SiteFooter from '@/components/SiteFooter';
 import { createClient } from '@/utils/supabase/client';
 import { getUserProfile } from '@/db/actions';
@@ -69,7 +70,7 @@ export default function Home() {
     });
   }, []);
 
-  // Subtle tilt on phone mockup — only while hovering the card
+  // Subtle cursor-follow tilt on hero phone mockup
   useEffect(() => {
     const card = cardRef.current;
     if (!card) return;
@@ -82,46 +83,40 @@ export default function Home() {
     let currentY = 0;
     let targetX = 0;
     let targetY = 0;
-    let hovering = false;
 
     const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
 
     const animate = () => {
-      currentX = lerp(currentX, targetX, 0.045);
-      currentY = lerp(currentY, targetY, 0.045);
+      currentX = lerp(currentX, targetX, 0.06);
+      currentY = lerp(currentY, targetY, 0.06);
       card.style.transform = `perspective(900px) rotateY(${currentX}deg) rotateX(${currentY}deg)`;
       animFrame = requestAnimationFrame(animate);
     };
 
     const onMouseMove = (e: MouseEvent) => {
-      if (!hovering) return;
       const rect = card.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
-      targetX = ((e.clientX - cx) / rect.width) * 5;
-      targetY = -((e.clientY - cy) / rect.height) * 5;
-    };
-
-    const onEnter = () => {
-      hovering = true;
+      const distX = (e.clientX - cx) / rect.width;
+      const distY = (e.clientY - cy) / rect.height;
+      const proximity = Math.min(1, Math.hypot(distX, distY) * 1.4);
+      targetX = distX * 7 * proximity;
+      targetY = -distY * 7 * proximity;
     };
 
     const onLeave = () => {
-      hovering = false;
       targetX = 0;
       targetY = 0;
     };
 
     animFrame = requestAnimationFrame(animate);
-    card.addEventListener('mouseenter', onEnter);
+    window.addEventListener('mousemove', onMouseMove);
     card.addEventListener('mouseleave', onLeave);
-    card.addEventListener('mousemove', onMouseMove);
 
     return () => {
       cancelAnimationFrame(animFrame);
-      card.removeEventListener('mouseenter', onEnter);
+      window.removeEventListener('mousemove', onMouseMove);
       card.removeEventListener('mouseleave', onLeave);
-      card.removeEventListener('mousemove', onMouseMove);
     };
   }, []);
 
@@ -358,120 +353,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* RIGHT: Phone profile mockup */}
-          <div className="hidden items-center justify-end pr-4 lg:flex xl:pr-16">
-            <a
-              ref={cardRef}
-              href="/anish"
-              className="relative block w-[210px] animate-[fadeSlideUp_0.9s_ease_0.5s_both] xl:w-[230px]"
-              style={{ willChange: 'transform' }}
-            >
-            <div className="relative">
-              {/* Ambient glow behind */}
-              <div className="absolute inset-x-0 inset-y-8 bg-white/[0.02] blur-3xl rounded-full pointer-events-none" />
-
-              {/* Phone frame */}
-              <div
-                className="relative rounded-[2.4rem] border border-white/[0.08] overflow-hidden"
-                style={{ aspectRatio: '9/19.5', background: 'linear-gradient(160deg,#141414 0%,#0a0a0a 100%)', boxShadow: '0 40px 90px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)' }}
-              >
-                {/* Dynamic Island */}
-                <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-12 h-3 bg-black rounded-full z-20 flex items-center justify-center gap-1">
-                  <div className="h-1 w-1 rounded-full bg-zinc-700" />
-                  <div className="h-1 w-1 rounded-full bg-zinc-800" />
-                </div>
-
-                {/* Screen content */}
-                <div className="absolute inset-0 flex flex-col overflow-hidden">
-
-                  {/* Status bar */}
-                  <div className="flex justify-between items-center px-4 pt-6 pb-1.5 text-[7px] text-white/20 font-medium">
-                    <span>9:41</span>
-                    <div className="flex items-center gap-1">
-                      <div className="h-1 w-1 rounded-full bg-emerald-500/60 animate-pulse" />
-                      <span className="text-[5.5px] uppercase tracking-widest text-white/15">seenly</span>
-                    </div>
-                  </div>
-
-                  <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2.5 scrollbar-none">
-                    {/* Avatar + name */}
-                    <div className="flex flex-col items-center pt-1 pb-0.5 space-y-1">
-                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-rose-400 to-red-600 flex items-center justify-center text-white font-bold text-[10px] ring-2 ring-white/5">
-                        JT
-                      </div>
-                      <div className="text-center space-y-0.5">
-                        <p className="text-white text-[10px] font-semibold leading-tight">John Timber</p>
-                        <p className="text-white/35 text-[7px]">Designer & Builder</p>
-                        <div className="flex items-center justify-center gap-0.5">
-                          <MapPin className="h-1.5 w-1.5 text-white/20" />
-                          <span className="text-white/20 text-[6px]">New York</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Video preview */}
-                    <div className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
-                      <img
-                        src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=320&h=180&q=80"
-                        alt="Profile intro"
-                        className="w-full h-full object-cover opacity-70"
-                      />
-                      <div className="absolute inset-0 bg-black/20" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="h-6 w-6 rounded-full bg-white/95 flex items-center justify-center">
-                          <Play className="h-2.5 w-2.5 fill-black ml-0.5" />
-                        </div>
-                      </div>
-                      <div className="absolute bottom-1.5 left-2 text-[6px] text-white/60 font-medium">0:60 intro</div>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="h-px bg-white/5" />
-
-                    {/* Experience */}
-                    <div className="space-y-1">
-                      <p className="text-[6px] font-bold text-white/20 uppercase tracking-widest">Experience</p>
-                      <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg px-2.5 py-1.5 flex items-center gap-2">
-                        <div className="h-5 w-5 rounded-md bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                          <span className="text-[7px] font-bold text-white/60">G</span>
-                        </div>
-                        <div>
-                          <p className="text-white text-[8px] font-semibold">SWE III</p>
-                          <p className="text-white/30 text-[6px]">Google · 2023–now</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Skills row */}
-                    <div className="space-y-1">
-                      <p className="text-[6px] font-bold text-white/20 uppercase tracking-widest">Skills</p>
-                      <div className="flex flex-wrap gap-1">
-                        {['React', 'TypeScript', 'Figma'].map(s => (
-                          <span key={s} className="text-[6px] text-white/40 bg-white/[0.04] border border-white/[0.06] px-1.5 py-0.5 rounded">{s}</span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Profile link */}
-                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg px-2.5 py-1.5">
-                      <p className="text-[6px] text-white/20 mb-0.5">Profile</p>
-                      <p className="text-[7px] text-white/50 font-mono">seenly.tech/johntimber</p>
-                    </div>
-
-                  </div>
-
-                  {/* Bottom bar */}
-                  <div className="flex justify-center pb-2.5 pt-1">
-                    <div className="w-10 h-0.5 bg-white/15 rounded-full" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Glow under phone */}
-              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-24 h-6 bg-white/[0.04] blur-xl rounded-full" />
-            </div>
-            </a>
-          </div>
+          <HeroPhonePreview cardRef={cardRef} />
 
         </main>
 
@@ -496,6 +378,10 @@ export default function Home() {
           @keyframes claimGlowRing {
             0%, 100% { opacity: 0.3; transform: scale(0.98); }
             50% { opacity: 0.7; transform: scale(1.02); }
+          }
+          @keyframes claimGradientSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
           }
         `}</style>
       </section>
@@ -560,19 +446,28 @@ export default function Home() {
             <div className="absolute h-36 w-72 animate-[claimGlow_11s_ease-in-out_infinite_1.5s] rounded-full bg-violet-400/[0.06] blur-[64px]" />
           </div>
 
-          <div className="relative mx-auto flex min-h-[min(320px,50vh)] max-w-4xl flex-col items-center justify-center">
+          <div className="relative mx-auto flex min-h-[min(320px,50vh)] max-w-4xl flex-col items-center justify-center px-2">
             <div className="relative w-full max-w-xl">
-              {/* Glow ring behind card */}
               <div
-                className="pointer-events-none absolute -inset-6 animate-[claimGlowRing_5s_ease-in-out_infinite] rounded-[2rem] bg-gradient-to-b from-white/[0.12] via-emerald-400/[0.08] to-transparent blur-2xl"
+                className="pointer-events-none absolute -inset-8 animate-[claimGlowRing_5s_ease-in-out_infinite] rounded-[2.5rem] bg-gradient-to-b from-emerald-400/20 via-white/10 to-violet-400/10 blur-3xl"
                 aria-hidden
               />
-              <div className="relative rounded-3xl border border-white/[0.1] bg-black/50 px-6 py-10 shadow-[0_0_80px_-12px_rgba(255,255,255,0.12)] backdrop-blur-md sm:px-10 sm:py-12">
+              <div className="relative overflow-hidden rounded-3xl p-[1px]">
                 <div
-                  className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent"
+                  className="pointer-events-none absolute -inset-[100%] animate-[claimGradientSpin_10s_linear_infinite] opacity-80"
+                  style={{
+                    background:
+                      'conic-gradient(from 0deg, transparent 0%, rgba(16,185,129,0.45) 18%, transparent 36%, rgba(255,255,255,0.25) 54%, transparent 72%, rgba(139,92,246,0.35) 88%, transparent 100%)',
+                  }}
                   aria-hidden
                 />
-                <UsernameClaimBar variant="cta" className="relative w-full px-0" />
+                <div className="relative rounded-[calc(1.5rem-1px)] border border-white/[0.08] bg-black/60 px-5 py-9 shadow-[0_0_100px_-20px_rgba(16,185,129,0.35)] backdrop-blur-md sm:px-9 sm:py-11">
+                  <div
+                    className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent"
+                    aria-hidden
+                  />
+                  <UsernameClaimBar variant="cta" className="relative w-full px-0" />
+                </div>
               </div>
             </div>
           </div>
