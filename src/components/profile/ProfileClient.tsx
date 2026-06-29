@@ -420,6 +420,25 @@ export default function ProfileClient({ profileData, isOwner = false }: ProfileC
         </div>
 
       </div>
+
+      <footer className={`border-t border-white/5 px-6 ${isOwner ? 'pb-28' : 'pb-10'} pt-8`}>
+        <div className="mx-auto max-w-4xl text-center">
+          <Link
+            href="/onboarding"
+            className="inline-flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-xs text-white/35 transition-colors hover:text-white/60"
+          >
+            <span>Built with</span>
+            <span className="font-medium text-white/55">seenly.tech</span>
+            <span className="text-white/25">·</span>
+            <span>
+              make yours with{' '}
+              <span className="font-medium text-white/55 underline decoration-white/20 underline-offset-2">
+                your username
+              </span>
+            </span>
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }
