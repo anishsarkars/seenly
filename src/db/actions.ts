@@ -24,7 +24,7 @@ const SEED_MOCK_USER_ID = '00000000-0000-0000-0000-000000000000';
 mockStore.users[SEED_MOCK_USER_ID] = {
   id: SEED_MOCK_USER_ID,
   username: 'anish',
-  email: 'anish@seenly.app',
+  email: 'anish@seenly.tech',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200&h=200',
   headline: 'AI Software Engineer & Product Creator',
   bio: 'Building the default professional profile for the AI era. Passionate about Next.js, AI workflows, and minimalist, high-fidelity user experiences.',
@@ -39,7 +39,7 @@ mockStore.experiences[SEED_MOCK_USER_ID] = [
   { id: '2', company: 'Vercel', role: 'Senior Next.js Developer', duration: '2022 - 2024' },
 ];
 mockStore.projects[SEED_MOCK_USER_ID] = [
-  { id: '1', title: 'Seenly platform', description: 'Video-first resume platform for modern professionals built using Next.js 15, Supabase, and Drizzle.', website: 'https://seenly.app', github: 'https://github.com' },
+  { id: '1', title: 'Seenly platform', description: 'Video-first resume platform for modern professionals built using Next.js 15, Supabase, and Drizzle.', website: 'https://seenly.tech', github: 'https://github.com' },
   { id: '2', title: 'AI Copilot', description: 'Next-generation IDE autocomplete extension using local LLMs.', website: 'https://github.com', github: 'https://github.com' },
 ];
 mockStore.socials[SEED_MOCK_USER_ID] = {
@@ -49,7 +49,7 @@ mockStore.socials[SEED_MOCK_USER_ID] = {
   portfolio: 'https://anish.dev',
   twitter: 'https://twitter.com/anish',
   website: 'https://anish.dev',
-  email: 'anish@seenly.app',
+  email: 'anish@seenly.tech',
   phone: '+1 (555) 0199',
 };
 mockStore.analytics[SEED_MOCK_USER_ID] = [

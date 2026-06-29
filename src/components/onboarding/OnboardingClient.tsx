@@ -296,7 +296,7 @@ export default function OnboardingClient() {
 
     const onboardingPayload = {
       username,
-      email: socials.email || `${username}@seenly.app`,
+      email: socials.email || `${username}@seenly.tech`,
       fullName,
       headline,
       location,
@@ -474,7 +474,7 @@ export default function OnboardingClient() {
                         <button 
                           type="button"
                           onClick={() => {
-                            setSessionUser({ id: '00000000-0000-0000-0000-000000000000', email: 'demo@seenly.app' });
+                            setSessionUser({ id: '00000000-0000-0000-0000-000000000000', email: 'demo@seenly.tech' });
                             setStep(2);
                           }}
                           className="w-full border border-zinc-850 hover:bg-zinc-900 text-zinc-300 py-2.5 rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all text-xs"
@@ -501,7 +501,7 @@ export default function OnboardingClient() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-stretch rounded-xl border border-zinc-800 bg-zinc-900/50 overflow-hidden focus-within:border-white transition-all">
-                    <span className="flex items-center px-4 bg-zinc-900 border-r border-zinc-800 text-zinc-500 text-sm">seenly.app/</span>
+                    <span className="flex items-center px-4 bg-zinc-900 border-r border-zinc-800 text-zinc-500 text-sm">seenly.tech/</span>
                     <input 
                       type="text" 
                       placeholder="username" 
@@ -1132,7 +1132,7 @@ export default function OnboardingClient() {
 
                 <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/50 text-center select-all cursor-pointer hover:border-zinc-700 transition-all">
                   <span className="text-xs text-zinc-500 block mb-1">YOUR DIRECT PROFILE LINK</span>
-                  <span className="text-sm font-semibold text-white">seenly.app/{username}</span>
+                  <span className="text-sm font-semibold text-white">seenly.tech/{username}</span>
                 </div>
 
                 <div className="flex gap-4 pt-4">
