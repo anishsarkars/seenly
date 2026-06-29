@@ -455,6 +455,14 @@ export default function Home() {
             0%, 100% { opacity: 0.35; transform: scaleX(0.92); }
             50% { opacity: 0.9; transform: scaleX(1); }
           }
+          @keyframes claimGlow {
+            0%, 100% { opacity: 0.35; transform: scale(0.92); }
+            50% { opacity: 0.75; transform: scale(1.05); }
+          }
+          @keyframes claimGlowAlt {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.12); }
+          }
         `}</style>
       </section>
 
@@ -500,13 +508,13 @@ export default function Home() {
 
       {/* Claim username — bottom CTA above footer */}
       {authState === 'guest' && (
-        <section className="relative overflow-hidden bg-black px-5 py-16 sm:px-6 sm:py-24 md:px-12">
-          <div
-            className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black via-black/80 to-transparent"
-            aria-hidden
-          />
-          <div className="relative mx-auto max-w-xl">
-            <UsernameClaimBar className="px-1" />
+        <section className="relative overflow-hidden bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-36 lg:px-16">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
+            <div className="h-56 w-full max-w-2xl animate-[claimGlow_9s_ease-in-out_infinite] rounded-full bg-white/[0.05] blur-3xl" />
+            <div className="absolute h-40 w-80 animate-[claimGlowAlt_7s_ease-in-out_infinite_0.5s] rounded-full bg-emerald-400/[0.07] blur-[72px]" />
+          </div>
+          <div className="relative mx-auto flex max-w-4xl flex-col items-center text-center">
+            <UsernameClaimBar className="w-full max-w-xl px-1" />
           </div>
         </section>
       )}

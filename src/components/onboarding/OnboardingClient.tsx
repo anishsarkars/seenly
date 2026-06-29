@@ -22,7 +22,6 @@ import { DEFAULT_PROFILE_AVATAR } from '@/lib/profile-avatars';
 import AvatarPicker from '@/components/profile/AvatarPicker';
 import OnboardingProfilePreview from '@/components/onboarding/OnboardingProfilePreview';
 import SeenlyLogo from '@/components/SeenlyLogo';
-import SiteFooter from '@/components/SiteFooter';
 import Confetti from '@/components/Confetti';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
@@ -461,7 +460,7 @@ export default function OnboardingClient() {
       <Confetti active={step === 9} />
 
       {/* Onboarding Input Column */}
-      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-white/10 px-5 py-6 md:px-7 md:py-8 lg:max-w-md lg:shrink-0 lg:border-r xl:max-w-lg">
+      <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden border-white/10 px-5 py-6 md:px-7 md:py-8 lg:max-w-md lg:border-r xl:max-w-lg">
         
         {/* Top Branding / Step Progress */}
         <div className="shrink-0">
@@ -1303,8 +1302,6 @@ export default function OnboardingClient() {
             )}
           </AnimatePresence>
         </div>
-
-        <SiteFooter variant="onboarding-flow" minimal className="mt-auto shrink-0 bg-transparent px-0 pb-0" />
       </div>
 
       <OnboardingProfilePreview

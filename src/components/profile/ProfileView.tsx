@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import SiteFooter from '@/components/SiteFooter';
 import {
   FileText, Share2, MapPin, ExternalLink,
   Mail, Phone, Globe,
@@ -505,25 +504,22 @@ export default function ProfileView({
       </div>
 
       {!embedded && (
-        <>
-          <footer className="px-6 pb-6 pt-10">
-            <div className="mx-auto max-w-4xl flex justify-center">
-              <Link
-                href="/onboarding"
-                className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/50 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/8 hover:text-white/70"
-              >
-                <span>Built with</span>
-                <span className="font-semibold text-white/80">seenly.tech</span>
-                <span className="hidden text-white/25 sm:inline">·</span>
-                <span>
-                  make yours with{' '}
-                  <span className="font-semibold text-white/80">your username</span>
-                </span>
-              </Link>
-            </div>
-          </footer>
-          <SiteFooter variant="profile" compact />
-        </>
+        <footer className="px-6 pb-12 pt-10">
+          <div className="mx-auto max-w-4xl flex justify-center">
+            <Link
+              href="/onboarding"
+              className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/50 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/8 hover:text-white/70"
+            >
+              <span>Built with</span>
+              <span className="font-semibold text-white/80">seenly.tech</span>
+              <span className="hidden text-white/25 sm:inline">·</span>
+              <span>
+                make yours with{' '}
+                <span className="font-semibold text-white/80">your username</span>
+              </span>
+            </Link>
+          </div>
+        </footer>
       )}
     </div>
   );
