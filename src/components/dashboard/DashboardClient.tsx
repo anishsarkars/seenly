@@ -91,9 +91,9 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     setIsUploadingVideo(true);
     try {
       const previewUrl = URL.createObjectURL(file);
-      const videoUrl = await uploadProfileVideo(supabase, profile.user.id, file);
+      const videoUrl = await uploadProfileVideo(file, file.name);
       const thumbnailBlob = await captureVideoThumbnail(previewUrl);
-      const thumbnailUrl = await uploadProfileThumbnail(supabase, profile.user.id, thumbnailBlob);
+      const thumbnailUrl = await uploadProfileThumbnail(thumbnailBlob);
       URL.revokeObjectURL(previewUrl);
 
       await saveOnboardingData(profile.user.id, {

@@ -4,6 +4,7 @@ import { db } from './index';
 import { users, experiences, projects, socials, analytics, profileViews } from './schema';
 import { eq } from 'drizzle-orm';
 import { suggestUsernames, validateUsername } from '@/lib/username';
+import { ensureProfileSchema } from './ensure-schema';
 
 // Mock in-memory database fallback for easy developer review/testing
 const mockStore: {
@@ -250,6 +251,8 @@ export async function saveOnboardingData(userId: string, data: any) {
   }
 
   try {
+    await ensureProfileSchema();
+
     await db.insert(users).values({
       id: userId,
       username: username?.toLowerCase().trim(),
@@ -330,8 +333,8 @@ export async function saveOnboardingData(userId: string, data: any) {
       message.includes('full_name') ||
       message.includes('is_public') ||
       message.includes('updated_at') ||
-      message.includes('column') ||
-      message.includes('does not exist')
+      message.includes('profile_views') ||
+      (message.includes('column') && message.includes('does not exist'))
     ) {
       return {
         success: false,

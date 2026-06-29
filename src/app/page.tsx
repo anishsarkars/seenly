@@ -45,7 +45,7 @@ const steps = [
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [authState, setAuthState] = useState<'loading' | 'guest' | 'member'>('loading');
+  const [authState, setAuthState] = useState<'loading' | 'guest' | 'member' | 'onboarding'>('loading');
   const [profileUsername, setProfileUsername] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +61,7 @@ export default function Home() {
         setProfileUsername(profile.user.username);
         setAuthState('member');
       } else {
-        setAuthState('guest');
+        setAuthState('onboarding');
       }
     });
   }, []);
@@ -148,6 +148,13 @@ export default function Home() {
               >
                 Dashboard
               </a>
+            ) : authState === 'onboarding' ? (
+              <a
+                href="/onboarding"
+                className="hidden rounded-lg bg-white px-5 py-2 text-sm font-semibold text-black transition-transform hover:scale-105 md:block"
+              >
+                Continue Setup
+              </a>
             ) : authState === 'guest' ? (
               <a
                 href="/onboarding"
@@ -186,11 +193,11 @@ export default function Home() {
               </a>
               <div>
                 <a
-                  href={authState === 'member' ? '/dashboard' : '/onboarding'}
+                  href={authState === 'member' ? '/dashboard' : authState === 'onboarding' ? '/onboarding' : '/onboarding'}
                   onClick={() => setMobileMenuOpen(false)}
                   className="mt-6 inline-block rounded-full bg-white px-8 py-3.5 text-base font-medium text-black hover:scale-105 transition-transform"
                 >
-                  {authState === 'member' ? 'Dashboard' : 'Get Started'}
+                  {authState === 'member' ? 'Dashboard' : authState === 'onboarding' ? 'Continue Setup' : 'Get Started'}
                 </a>
               </div>
             </nav>
@@ -240,6 +247,16 @@ export default function Home() {
                       View Live Profile
                     </a>
                   )}
+                </>
+              ) : authState === 'onboarding' ? (
+                <>
+                  <a
+                    href="/onboarding"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-105 sm:w-auto"
+                  >
+                    Continue Setup
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </a>
                 </>
               ) : (
                 <>

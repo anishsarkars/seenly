@@ -1,48 +1,84 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+export async function uploadFile(
+  file: Blob,
+  kind: 'video' | 'thumbnail' | 'resume' | 'avatar',
+  fileName?: string
+): Promise<string> {
+  const formData = new FormData();
+  formData.append('kind', kind);
+  formData.append('file', file, fileName || `${kind}.bin`);
 
-const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
-const MAX_RESUME_BYTES = 10 * 1024 * 1024;
+  const response = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData,
+  });
 
-export async function validateVideoFile(file: Blob): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (file.size > MAX_VIDEO_BYTES) {
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(payload.error || 'Upload failed.');
+  }
+
+  if (!payload.url || typeof payload.url !== 'string') {
+    throw new Error('Upload succeeded but no URL was returned.');
+  }
+
+  return payload.url;
+}
+
+export function isPersistedMediaUrl(url?: string | null) {
+  return !!url && url.startsWith('http') && !url.startsWith('blob:');
+}
+
+async function getMediaDuration(src: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      if (!Number.isFinite(duration) || duration <= 0) {
+        resolve(0);
+      } else {
+        resolve(duration);
+      }
+    };
+    video.onerror = () => reject(new Error('Could not read video metadata.'));
+    video.src = src;
+  });
+}
+
+export async function validateVideoFile(file: Blob, maxSeconds = 120): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (file.size > 50 * 1024 * 1024) {
     return { ok: false, error: 'Video must be 50MB or smaller.' };
   }
 
   const url = URL.createObjectURL(file);
   try {
     const duration = await getMediaDuration(url);
-    if (duration > 60) {
-      return { ok: false, error: 'Video must be 60 seconds or shorter.' };
+    if (duration > maxSeconds) {
+      return { ok: false, error: `Video must be ${maxSeconds} seconds or shorter.` };
     }
+    return { ok: true };
+  } catch {
+    // Recorded WebM blobs may not expose duration reliably in all browsers.
     return { ok: true };
   } finally {
     URL.revokeObjectURL(url);
   }
 }
 
-function getMediaDuration(src: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.onloadedmetadata = () => resolve(video.duration);
-    video.onerror = () => reject(new Error('Could not read video metadata.'));
-    video.src = src;
-  });
-}
-
 export async function captureVideoThumbnail(source: string): Promise<Blob> {
   const video = document.createElement('video');
   video.src = source;
-  video.crossOrigin = 'anonymous';
   video.muted = true;
   video.playsInline = true;
+  video.crossOrigin = 'anonymous';
 
   await new Promise<void>((resolve, reject) => {
     video.onloadeddata = () => resolve();
     video.onerror = () => reject(new Error('Could not load video for thumbnail.'));
   });
 
-  video.currentTime = Math.min(1, video.duration / 2);
+  video.currentTime = Math.min(1, Math.max(video.duration / 2, 0));
   await new Promise<void>((resolve) => {
     video.onseeked = () => resolve();
   });
@@ -69,47 +105,19 @@ export async function captureVideoThumbnail(source: string): Promise<Blob> {
   });
 }
 
-async function uploadBlob(
-  supabase: SupabaseClient,
-  bucket: string,
-  path: string,
-  file: Blob,
-  contentType: string
-) {
-  const { error } = await supabase.storage.from(bucket).upload(path, file, {
-    upsert: true,
-    contentType,
-  });
-
-  if (error) throw new Error(error.message);
-
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
-}
-
-export async function uploadProfileVideo(supabase: SupabaseClient, userId: string, file: Blob) {
+export async function uploadProfileVideo(file: Blob, fileName?: string) {
   const validation = await validateVideoFile(file);
   if (!validation.ok) throw new Error(validation.error);
-
-  const ext = file.type.includes('webm') ? 'webm' : 'mp4';
-  const contentType = file.type || (ext === 'webm' ? 'video/webm' : 'video/mp4');
-  return uploadBlob(supabase, 'videos', `${userId}/intro.${ext}`, file, contentType);
+  return uploadFile(file, 'video', fileName);
 }
 
-export async function uploadProfileThumbnail(supabase: SupabaseClient, userId: string, file: Blob) {
-  return uploadBlob(supabase, 'thumbnails', `${userId}/poster.jpg`, file, 'image/jpeg');
+export async function uploadProfileThumbnail(file: Blob) {
+  return uploadFile(file, 'thumbnail', 'poster.jpg');
 }
 
-export async function uploadProfileResume(supabase: SupabaseClient, userId: string, file: File) {
-  if (file.size > MAX_RESUME_BYTES) {
-    throw new Error('Resume must be 10MB or smaller.');
-  }
+export async function uploadProfileResume(file: File) {
   if (file.type !== 'application/pdf') {
     throw new Error('Resume must be a PDF file.');
   }
-  return uploadBlob(supabase, 'resumes', `${userId}/resume.pdf`, file, 'application/pdf');
-}
-
-export async function uploadProfileAvatar(supabase: SupabaseClient, userId: string, file: Blob) {
-  return uploadBlob(supabase, 'avatars', `${userId}/avatar.jpg`, file, 'image/jpeg');
+  return uploadFile(file, 'resume', file.name);
 }

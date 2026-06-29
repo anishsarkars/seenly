@@ -2,10 +2,11 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { 
-  FileText, Share2, MapPin, ExternalLink, 
-  Mail, Phone, Globe, LayoutDashboard, Pencil
+import {
+  FileText, Share2, MapPin, ExternalLink,
+  Mail, Phone, Globe, LayoutDashboard, Pencil,
 } from 'lucide-react';
+import { isPersistedMediaUrl } from '@/lib/storage';
 import { logAnalyticEvent } from '@/db/actions';
 
 interface ProfileClientProps {
@@ -215,7 +216,7 @@ export default function ProfileClient({ profileData, isOwner = false }: ProfileC
           {/* Intro video */}
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 shadow-2xl">
             <div className="aspect-video w-full relative bg-black">
-              {user.videoUrl ? (
+              {user.videoUrl && isPersistedMediaUrl(user.videoUrl) ? (
                 <>
                   {user.thumbnailUrl && !videoReady && (
                     <img
@@ -243,8 +244,10 @@ export default function ProfileClient({ profileData, isOwner = false }: ProfileC
                   />
                 </>
               ) : (
-                <div className="flex h-full items-center justify-center text-sm text-zinc-500">
-                  No intro video uploaded yet.
+                <div className="flex h-full items-center justify-center px-6 text-center text-sm text-zinc-500">
+                  {user.videoUrl?.startsWith('blob:')
+                    ? 'Video is still processing. Refresh in a moment or re-upload from your dashboard.'
+                    : 'No intro video uploaded yet.'}
                 </div>
               )}
             </div>

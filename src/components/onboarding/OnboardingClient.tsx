@@ -9,7 +9,13 @@ import {
 } from 'lucide-react';
 import { saveOnboardingData, isUsernameUnique, getUserProfile, getUsernameSuggestions } from '@/db/actions';
 import { validateUsername } from '@/lib/username';
-import { captureVideoThumbnail, uploadProfileResume, uploadProfileThumbnail, uploadProfileVideo } from '@/lib/storage';
+import {
+  captureVideoThumbnail,
+  isPersistedMediaUrl,
+  uploadProfileResume,
+  uploadProfileThumbnail,
+  uploadProfileVideo,
+} from '@/lib/storage';
 import Confetti from '@/components/Confetti';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
@@ -354,23 +360,22 @@ export default function OnboardingClient() {
 
       if (recordedBlob && videoPreviewUrl.startsWith('blob:')) {
         setUploadProgress(30);
-        try {
-          finalVideoUrl = await uploadProfileVideo(supabase, sessionUser.id, recordedBlob);
-          setUploadProgress(55);
-          const thumbnail = await captureVideoThumbnail(videoPreviewUrl);
-          finalThumbnailUrl = await uploadProfileThumbnail(supabase, sessionUser.id, thumbnail);
-        } catch (uploadError) {
-          console.warn('Storage upload unavailable, saving profile without cloud media.', uploadError);
-        }
+        finalVideoUrl = await uploadProfileVideo(
+          recordedBlob,
+          recordedBlob.type.includes('webm') ? 'intro.webm' : 'intro.mp4'
+        );
+        setUploadProgress(55);
+        const thumbnail = await captureVideoThumbnail(videoPreviewUrl);
+        finalThumbnailUrl = await uploadProfileThumbnail(thumbnail);
+      }
+
+      if (!isPersistedMediaUrl(finalVideoUrl)) {
+        throw new Error('Video upload failed. Check your connection and try again.');
       }
 
       if (resumeFile) {
         setUploadProgress(75);
-        try {
-          finalResumeUrl = await uploadProfileResume(supabase, sessionUser.id, resumeFile);
-        } catch (uploadError) {
-          console.warn('Resume upload unavailable.', uploadError);
-        }
+        finalResumeUrl = await uploadProfileResume(resumeFile);
       }
 
       const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName || username)}`;
