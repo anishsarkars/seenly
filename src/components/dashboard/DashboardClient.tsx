@@ -5,7 +5,7 @@ import { XAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import {
   TrendingUp, Play, Download, Eye, Edit3, Film, Settings,
   Globe, Plus, ArrowUpRight, Copy, Check, Sparkles, ChevronDown,
-  PanelLeftClose, PanelLeft, PanelRightClose, PanelRight,
+  PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, X, Smartphone,
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
 import { createClient } from '@/utils/supabase/client';
@@ -49,6 +49,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [hasUnreadWhatsNew, setHasUnreadWhatsNew] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const sidebar = useDashboardSidebar();
   const preview = useDashboardPreview();
 
@@ -62,6 +63,14 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     localStorage.setItem(WHATS_NEW_STORAGE_KEY, SEENLY_UPDATES_VERSION);
     setHasUnreadWhatsNew(false);
   }, [whatsNewOpen]);
+
+  useEffect(() => {
+    if (!mobilePreviewOpen) return;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobilePreviewOpen]);
 
   const toggleWhatsNew = () => {
     setWhatsNewOpen((prev) => !prev);
@@ -312,6 +321,15 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
               <h1 className={`${sectionTitle} truncate text-base sm:text-lg`}>{TAB_META[activeTab].label}</h1>
             </div>
             <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setMobilePreviewOpen(true)}
+                className={`${btnSecondary} inline-flex items-center gap-1.5 lg:hidden`}
+                aria-label="Open live preview"
+              >
+                <Smartphone className="h-3.5 w-3.5" strokeWidth={1.5} />
+                Preview
+              </button>
               {!preview.open && (
                 <button
                   type="button"
@@ -554,17 +572,30 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           </div>
           </div>
 
-          {/* Live preview — app-style bottom panel on mobile */}
-          <aside className="flex h-[min(38dvh,340px)] min-h-[200px] w-full shrink-0 flex-col overflow-hidden border-t border-white/10 lg:hidden">
-            <ProfileLivePreview
-              profileData={previewProfileData}
-              username={profile?.user?.username}
-              defaultLayout="mobile"
-              alwaysVisible
-              panelMode="bottom"
-              className="min-h-0 flex-1"
-            />
-          </aside>
+          {/* Mobile preview — full-screen overlay (no split layout) */}
+          {mobilePreviewOpen && (
+            <div className="fixed inset-0 z-50 flex flex-col bg-black lg:hidden">
+              <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3">
+                <span className="text-sm font-medium text-white">Live preview</span>
+                <button
+                  type="button"
+                  onClick={() => setMobilePreviewOpen(false)}
+                  className="rounded-lg p-1.5 text-white/50 transition-colors hover:bg-white/5 hover:text-white"
+                  aria-label="Close preview"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <ProfileLivePreview
+                profileData={previewProfileData}
+                username={profile?.user?.username}
+                defaultLayout="mobile"
+                alwaysVisible
+                panelMode="bottom"
+                className="min-h-0 flex-1"
+              />
+            </div>
+          )}
 
           {/* Resizable side preview on desktop */}
           {preview.open && (
