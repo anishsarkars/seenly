@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Menu, X, MapPin, Play } from 'lucide-react';
+import SeenlyLogo from '@/components/SeenlyLogo';
 import { createClient } from '@/utils/supabase/client';
 import { getUserProfile } from '@/db/actions';
 
@@ -132,7 +133,7 @@ export default function Home() {
         {/* Navbar (z-30) */}
         <header className="relative z-30 flex items-center justify-between px-5 py-5 sm:px-6 md:px-12 lg:px-16">
           <div className="flex items-center gap-8">
-            <span className="text-lg font-semibold tracking-tight text-white sm:text-xl">Seenly</span>
+            <SeenlyLogo size="md" />
             <nav className="hidden md:flex items-center gap-6">
               <a href="#how-it-works" className="text-sm text-white/70 hover:text-white transition-colors">
                 How it Works
@@ -441,7 +442,7 @@ export default function Home() {
       <footer className="border-t border-zinc-900 bg-black px-5 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6 md:px-12 lg:px-16">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold tracking-tight text-white">Seenly</span>
+            <SeenlyLogo size="sm" showBeta />
             <span className="text-xs text-zinc-600">© 2026</span>
           </div>
           <p className="text-xs text-zinc-500">

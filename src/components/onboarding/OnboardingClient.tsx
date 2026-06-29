@@ -20,6 +20,8 @@ import {
 import { MAX_VIDEO_DURATION_SEC, formatVideoDurationLimit } from '@/lib/video-limits';
 import { DEFAULT_PROFILE_AVATAR } from '@/lib/profile-avatars';
 import AvatarPicker from '@/components/profile/AvatarPicker';
+import OnboardingProfilePreview from '@/components/onboarding/OnboardingProfilePreview';
+import SeenlyLogo from '@/components/SeenlyLogo';
 import Confetti from '@/components/Confetti';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
@@ -450,7 +452,7 @@ export default function OnboardingClient() {
         {/* Top Branding / Step Progress */}
         <div className="shrink-0">
           <div className="mb-6 flex items-center gap-3">
-            <span className="text-lg font-semibold tracking-tight text-white">Seenly</span>
+            <SeenlyLogo size="md" />
           </div>
 
           {/* Progress Indicator */}
@@ -1290,107 +1292,19 @@ export default function OnboardingClient() {
 
       </div>
 
-      {/* Live Preview Sidebar (Right Column) */}
-      <div className="relative hidden h-full min-h-0 flex-1 items-center justify-center overflow-hidden bg-black p-6 lg:flex">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)]" />
-
-        {/* Live Preview Mobile Device Mockup — scales to viewport */}
-        <div
-          className="relative flex max-h-[min(72dvh,620px)] w-[min(280px,32vw)] flex-col overflow-hidden rounded-[40px] border-[6px] border-white/10 bg-black shadow-2xl"
-          style={{ aspectRatio: '9 / 19.5' }}
-        >
-          
-          {/* Top Notch/Dynamic Island */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-5 rounded-full bg-black z-30" />
-
-          {/* Screen Content */}
-          <div className="flex-1 flex flex-col overflow-y-auto px-4 py-8 relative">
-            <div className="absolute top-2 right-4 text-[10px] text-zinc-500 font-bold uppercase tracking-widest z-10 bg-black/40 px-2 py-0.5 rounded-full">
-              LIVE PREVIEW
-            </div>
-
-            {/* Profile Avatar / Username Header */}
-            <div className="flex flex-col items-center text-center mt-6 space-y-3">
-              <div className="h-14 w-14 rounded-full overflow-hidden bg-white ring-1 ring-white/10">
-                <img
-                  src={selectedAvatar}
-                  alt={fullName || 'Profile avatar'}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="space-y-0.5">
-                <h3 className="font-semibold text-sm text-white">{fullName || "Your Full Name"}</h3>
-                <p className="text-[10px] text-zinc-400">{headline || "Your Professional Headline"}</p>
-                <p className="text-[9px] text-zinc-500">{location || "Location"}</p>
-              </div>
-            </div>
-
-            {/* Video Box */}
-            <div className="mt-5 aspect-video w-full rounded-lg bg-zinc-900 border border-zinc-850 overflow-hidden relative flex flex-col justify-center items-center">
-              {videoPreviewUrl ? (
-                <video src={videoPreviewUrl} className="w-full h-full object-cover" muted loop autoPlay />
-              ) : (
-                <div className="text-center p-4">
-                  <Video className="h-6 w-6 text-zinc-600 mx-auto mb-2" />
-                  <p className="text-[10px] text-zinc-500">Intro Video Preview</p>
-                </div>
-              )}
-            </div>
-
-            {/* Short Bio */}
-            <div className="mt-4">
-              <p className="text-[11px] text-zinc-400 text-center leading-relaxed italic px-2">
-                "{bio || "Write a brief description about your expertise and drive."}"
-              </p>
-            </div>
-
-            {/* Experience timeline */}
-            <div className="mt-6 space-y-2">
-              <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Experience</h4>
-              <div className="space-y-2">
-                {experiences.some(e => e.company) ? (
-                  experiences.map((exp, i) => exp.company ? (
-                    <div key={i} className="p-2 rounded-lg bg-white/5 border border-zinc-850 flex justify-between items-center">
-                      <div>
-                        <p className="text-[10px] font-medium text-white">{exp.role}</p>
-                        <p className="text-[8px] text-zinc-500">{exp.company}</p>
-                      </div>
-                      <span className="text-[8px] text-zinc-500">{exp.duration}</span>
-                    </div>
-                  ) : null)
-                ) : (
-                  <p className="text-[9px] text-zinc-650 italic">No experience roles added yet.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Key Projects */}
-            <div className="mt-5 space-y-2">
-              <h4 className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">Projects</h4>
-              <div className="space-y-2">
-                {projects.some(p => p.title) ? (
-                  projects.map((proj, i) => proj.title ? (
-                    <div key={i} className="p-2 rounded-lg bg-white/5 border border-zinc-850">
-                      <p className="text-[10px] font-medium text-white">{proj.title}</p>
-                      <p className="text-[8px] text-zinc-500 leading-tight">{proj.description}</p>
-                    </div>
-                  ) : null)
-                ) : (
-                  <p className="text-[9px] text-zinc-650 italic">No projects listed yet.</p>
-                )}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Bottom Bar Device line */}
-          <div className="h-6 flex justify-center items-center">
-            <div className="w-24 h-1 rounded-full bg-zinc-800" />
-          </div>
-
-        </div>
-
-      </div>
+      <OnboardingProfilePreview
+        username={username}
+        fullName={fullName}
+        headline={headline}
+        location={location}
+        bio={bio}
+        selectedAvatar={selectedAvatar}
+        videoPreviewUrl={videoPreviewUrl}
+        resumeFile={resumeFile}
+        experiences={experiences}
+        projects={projects}
+        socials={socials}
+      />
 
     </div>
   );

@@ -1,18 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { XAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import {
   TrendingUp, Play, Download, Eye, Edit3, Film, Settings,
-  Globe, Plus, ArrowUpRight, Copy, Check,
+  Globe, Plus, ArrowUpRight, Copy, Check, Sparkles, ChevronDown,
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
 import { createClient } from '@/utils/supabase/client';
 import { captureVideoThumbnail, uploadProfileThumbnail, uploadProfileVideo, validateVideoFile } from '@/lib/storage';
-import ProfileCardPreview from '@/components/profile/ProfileCardPreview';
+import ProfileLivePreview from '@/components/profile/ProfileLivePreview';
+import type { ProfileViewData } from '@/components/profile/ProfileView';
 import AvatarPicker from '@/components/profile/AvatarPicker';
+import WhatsNewPanel from '@/components/dashboard/WhatsNewPanel';
+import SeenlyLogo from '@/components/SeenlyLogo';
 import { formatVideoDurationLimit } from '@/lib/video-limits';
 import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
+import { hasUnreadUpdates, SEENLY_UPDATES_VERSION } from '@/lib/seenly-updates';
 import { btnPrimary, btnSecondary, input, muted, panel, sectionTitle, shell } from '@/lib/platform-ui';
 import { useRouter } from 'next/navigation';
 
@@ -21,22 +25,42 @@ interface DashboardClientProps {
   initialAnalytics: any;
 }
 
+const WHATS_NEW_STORAGE_KEY = 'seenly-whats-new-seen';
+
 const TAB_META = {
   analytics: { label: 'Performance', icon: TrendingUp },
   edit: { label: 'Profile', icon: Edit3 },
   video: { label: 'Video', icon: Film },
   settings: { label: 'Settings', icon: Settings },
+  'whats-new': { label: "What's New", icon: Sparkles },
 } as const;
 
 export default function DashboardClient({ initialProfile, initialAnalytics }: DashboardClientProps) {
   const router = useRouter();
   const [supabase] = useState(() => createClient());
-  const [activeTab, setActiveTab] = useState<'analytics' | 'edit' | 'video' | 'settings'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'edit' | 'video' | 'settings' | 'whats-new'>('analytics');
   const [profile, setProfile] = useState(initialProfile);
   const [analytics, setAnalytics] = useState(initialAnalytics);
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [hasUnreadWhatsNew, setHasUnreadWhatsNew] = useState(false);
+  const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+
+  useEffect(() => {
+    const lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY);
+    setHasUnreadWhatsNew(hasUnreadUpdates(lastSeen));
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'whats-new' && !whatsNewOpen) return;
+    localStorage.setItem(WHATS_NEW_STORAGE_KEY, SEENLY_UPDATES_VERSION);
+    setHasUnreadWhatsNew(false);
+  }, [activeTab, whatsNewOpen]);
+
+  const toggleWhatsNew = () => {
+    setWhatsNewOpen((prev) => !prev);
+  };
 
   const [fullName, setFullName] = useState(profile?.user?.fullName || profile?.user?.username || '');
   const [headline, setHeadline] = useState(profile?.user?.headline || '');
@@ -50,16 +74,23 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     linkedin: '', github: '', portfolio: '', twitter: '', website: '', email: '', phone: '',
   });
 
-  const previewProps = {
-    username: profile?.user?.username,
-    fullName,
-    headline,
-    location,
-    bio,
-    videoUrl: profile?.user?.videoUrl,
-    thumbnailUrl: profile?.user?.thumbnailUrl,
-    avatar,
-  };
+  const previewProfileData = useMemo<ProfileViewData>(() => ({
+    user: {
+      id: profile?.user?.id,
+      username: profile?.user?.username,
+      fullName,
+      headline,
+      location,
+      bio,
+      avatar,
+      videoUrl: profile?.user?.videoUrl,
+      thumbnailUrl: profile?.user?.thumbnailUrl,
+      resumeUrl: profile?.user?.resumeUrl,
+    },
+    experiences,
+    projects,
+    socials,
+  }), [profile, fullName, headline, location, bio, avatar, experiences, projects, socials]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}/${profile?.user?.username}`);
@@ -156,6 +187,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const NavButton = ({ tab }: { tab: keyof typeof TAB_META }) => {
     const { label, icon: Icon } = TAB_META[tab];
     const active = activeTab === tab;
+    const showDot = tab === 'whats-new' && hasUnreadWhatsNew;
     return (
       <button
         type="button"
@@ -164,7 +196,12 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           active ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'
         }`}
       >
-        <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+        <span className="relative shrink-0">
+          <Icon className="h-4 w-4" strokeWidth={1.5} />
+          {showDot && (
+            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-black" />
+          )}
+        </span>
         {label}
       </button>
     );
@@ -176,13 +213,44 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
         {/* Nav sidebar */}
         <aside className="hidden h-full w-56 shrink-0 flex-col border-r border-white/10 lg:flex">
           <div className="shrink-0 px-5 py-5">
-            <a href="/" className="text-lg font-semibold tracking-tight text-white">Seenly</a>
+            <SeenlyLogo size="md" />
           </div>
           <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 min-h-0">
             <NavButton tab="analytics" />
             <NavButton tab="edit" />
             <NavButton tab="video" />
             <NavButton tab="settings" />
+
+            <button
+              type="button"
+              onClick={toggleWhatsNew}
+              className={`mt-2 flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                whatsNewOpen ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white/80'
+              }`}
+            >
+              <span className="relative shrink-0">
+                <Sparkles className="h-4 w-4" strokeWidth={1.5} />
+                {hasUnreadWhatsNew && (
+                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-black" />
+                )}
+              </span>
+              <span className="flex-1 text-left">What&apos;s New</span>
+              <ChevronDown
+                className={`h-3.5 w-3.5 shrink-0 transition-transform ${whatsNewOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {whatsNewOpen && (
+              <div className="max-h-72 overflow-y-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:thin]">
+                <WhatsNewPanel
+                  compact
+                  avatar={avatar}
+                  onAvatarChange={setAvatar}
+                  onApplyAvatar={handleSaveProfile}
+                  isSaving={isSaving}
+                />
+              </div>
+            )}
           </nav>
           <div className="shrink-0 border-t border-white/10 p-3">
             <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5">
@@ -201,10 +269,14 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           </div>
         </aside>
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {/* Header */}
           <header className="shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4 sm:px-8">
-            <h1 className={sectionTitle}>{TAB_META[activeTab].label}</h1>
+            <div className="flex min-w-0 items-center gap-3">
+              <SeenlyLogo size="sm" className="shrink-0 lg:hidden" />
+              <h1 className={`${sectionTitle} truncate`}>{TAB_META[activeTab].label}</h1>
+            </div>
             <div className="flex items-center gap-2">
               <button type="button" onClick={handleCopyLink} className={btnSecondary}>
                 {copied ? (
@@ -231,22 +303,21 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                className={`relative shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                   activeTab === tab ? 'bg-white/10 text-white' : 'text-white/50'
                 }`}
               >
                 {TAB_META[tab].label}
+                {tab === 'whats-new' && hasUnreadWhatsNew && (
+                  <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-400" />
+                )}
               </button>
             ))}
           </div>
 
-          {/* Content + preview */}
-          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-6 sm:px-8 xl:flex-row xl:items-start xl:gap-8">
-            <main className="min-w-0 flex-1 xl:max-w-2xl space-y-8">
-              {/* Mobile / tablet preview */}
-              <div className="xl:hidden">
-                <ProfileCardPreview {...previewProps} />
-              </div>
+          {/* Content */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-6 sm:px-8">
+            <main className="mx-auto min-w-0 w-full max-w-2xl space-y-8">
 
               {activeTab === 'analytics' && (
                 <>
@@ -409,15 +480,28 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                   ))}
                 </div>
               )}
-            </main>
 
-            {/* Desktop preview — sticky right column */}
-            <aside className="hidden w-full shrink-0 xl:block xl:w-64">
-              <div className="xl:sticky xl:top-6">
-                <ProfileCardPreview {...previewProps} />
-              </div>
-            </aside>
+              {activeTab === 'whats-new' && (
+                <WhatsNewPanel
+                  avatar={avatar}
+                  onAvatarChange={setAvatar}
+                  onApplyAvatar={handleSaveProfile}
+                  isSaving={isSaving}
+                />
+              )}
+            </main>
           </div>
+          </div>
+
+          {/* Live preview — fixed right column, xl+ only */}
+          <aside className="hidden min-h-0 w-[min(42vw,440px)] shrink-0 border-l border-white/10 xl:flex">
+            <ProfileLivePreview
+              profileData={previewProfileData}
+              username={profile?.user?.username}
+              defaultLayout="mobile"
+              className="flex-1"
+            />
+          </aside>
         </div>
       </div>
     </div>

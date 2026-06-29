@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import { getUserProfile } from '@/db/actions';
 import { signInWithGoogle } from '@/lib/auth-client';
+import SeenlyLogo from '@/components/SeenlyLogo';
 import { btnPrimary, btnSecondary, input, panel } from '@/lib/platform-ui';
 
 function GoogleIcon() {
@@ -20,9 +22,12 @@ function GoogleIcon() {
 }
 
 export default function LoginClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [supabase] = useState(() => createClient());
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authMethod, setAuthMethod] = useState<'password' | 'magic'>('password');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,6 +38,20 @@ export default function LoginClient() {
     }
   }, [searchParams]);
 
+  const redirectAfterAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      router.push('/onboarding');
+      return;
+    }
+    try {
+      const existing = await getUserProfile(user.id);
+      router.push(existing?.user?.username ? '/dashboard' : '/onboarding');
+    } catch {
+      router.push('/onboarding');
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setError('');
     setLoading(true);
@@ -41,6 +60,24 @@ export default function LoginClient() {
       setError(authError.message);
       setLoading(false);
     }
+  };
+
+  const handlePasswordSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+    setLoading(true);
+
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (authError) {
+      setError(authError.message);
+      setLoading(false);
+      return;
+    }
+
+    await redirectAfterAuth();
+    setLoading(false);
   };
 
   const sendMagicLink = async (e: React.FormEvent) => {
@@ -66,9 +103,8 @@ export default function LoginClient() {
 
   return (
     <div className="flex min-h-dvh max-h-dvh overflow-hidden bg-black font-geist text-white selection:bg-white selection:text-black">
-      {/* Brand panel */}
       <div className="hidden w-[42%] max-w-md shrink-0 flex-col justify-between border-r border-white/10 p-10 lg:flex xl:p-14">
-        <Link href="/" className="text-xl font-semibold tracking-tight">Seenly</Link>
+        <SeenlyLogo size="lg" />
         <div className="space-y-4">
           <h1 className="text-3xl font-semibold leading-tight tracking-tight xl:text-4xl">
             Show who you are,
@@ -82,18 +118,17 @@ export default function LoginClient() {
         <p className="text-xs text-white/25">seenly.tech</p>
       </div>
 
-      {/* Form panel */}
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-5 py-8 sm:px-8">
         <div className="w-full max-w-sm space-y-6">
           <div className="space-y-2 lg:hidden">
-            <Link href="/" className="text-lg font-semibold tracking-tight">Seenly</Link>
+            <SeenlyLogo size="md" />
             <p className="text-sm text-white/45">Sign in to your profile</p>
           </div>
 
           <div className={`${panel} space-y-5 p-6 sm:p-7`}>
             <div className="space-y-1">
               <h2 className="text-xl font-semibold tracking-tight">Welcome back</h2>
-              <p className="text-sm text-white/45">Continue with Google or use a magic link.</p>
+              <p className="text-sm text-white/45">Continue with Google, email & password, or a magic link.</p>
             </div>
 
             <button
@@ -112,19 +147,64 @@ export default function LoginClient() {
               <div className="h-px flex-1 bg-white/10" />
             </div>
 
-            <form onSubmit={sendMagicLink} className="space-y-3">
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@email.com"
-                className={input}
-              />
-              <button type="submit" disabled={loading} className={`${btnSecondary} w-full`}>
-                Send magic link
+            <div className="flex rounded-lg border border-white/10 p-0.5">
+              <button
+                type="button"
+                onClick={() => setAuthMethod('password')}
+                className={`flex-1 rounded-md py-2 text-xs font-medium transition-colors ${
+                  authMethod === 'password' ? 'bg-white/10 text-white' : 'text-white/45 hover:text-white/70'
+                }`}
+              >
+                Email & password
               </button>
-            </form>
+              <button
+                type="button"
+                onClick={() => setAuthMethod('magic')}
+                className={`flex-1 rounded-md py-2 text-xs font-medium transition-colors ${
+                  authMethod === 'magic' ? 'bg-white/10 text-white' : 'text-white/45 hover:text-white/70'
+                }`}
+              >
+                Magic link
+              </button>
+            </div>
+
+            {authMethod === 'password' ? (
+              <form onSubmit={handlePasswordSignIn} className="space-y-3">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@email.com"
+                  className={input}
+                />
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  className={input}
+                />
+                <button type="submit" disabled={loading} className={`${btnPrimary} w-full`}>
+                  Sign in with password
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={sendMagicLink} className="space-y-3">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@email.com"
+                  className={input}
+                />
+                <button type="submit" disabled={loading} className={`${btnSecondary} w-full`}>
+                  Send magic link
+                </button>
+              </form>
+            )}
 
             {message && <p className="text-center text-sm text-emerald-400/90">{message}</p>}
             {error && <p className="text-center text-sm text-red-400/90">{error}</p>}
