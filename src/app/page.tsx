@@ -276,13 +276,6 @@ export default function Home() {
               Record a 60-second intro, build your profile, and share one link with every recruiter.
             </p>
 
-            {/* Username claim — guests only */}
-            {authState === 'guest' && (
-              <div className="animate-[fadeSlideUp_0.8s_ease_0.65s_both] w-full max-w-md">
-                <UsernameClaimBar variant="hero" title="" className="!max-w-none" />
-              </div>
-            )}
-
             {authState === 'member' && profileUsername && (
               <div className="animate-[fadeSlideUp_0.8s_ease_0.65s_both]">
                 <a
@@ -295,59 +288,39 @@ export default function Home() {
               </div>
             )}
 
-            {authState === 'onboarding' && (
-              <div className="animate-[fadeSlideUp_0.8s_ease_0.65s_both]">
-                <p className="text-sm text-white/60 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
-                  Pick up where you left off — finish your profile in a few steps.
-                </p>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex animate-[fadeSlideUp_0.8s_ease_0.75s_both] w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+            {/* Action */}
+            <div className="animate-[fadeSlideUp_0.8s_ease_0.7s_both] flex flex-col gap-4 sm:flex-row sm:items-center">
               {authState === 'member' ? (
-                <>
-                  <a
-                    href="/dashboard"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-105 sm:w-auto"
-                  >
-                    Dashboard
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </a>
-                  {profileUsername && (
-                    <a
-                      href={`/${profileUsername}`}
-                      className="w-full rounded-lg border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/8 hover:text-white sm:w-auto text-center"
-                    >
-                      View Live Profile
-                    </a>
-                  )}
-                </>
+                <a
+                  href="/dashboard"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-[1.02] sm:w-auto"
+                >
+                  Dashboard
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
               ) : authState === 'onboarding' ? (
-                <>
-                  <a
-                    href="/onboarding"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-105 sm:w-auto"
-                  >
-                    Continue Setup
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </a>
-                </>
+                <a
+                  href="/onboarding"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-[1.02] sm:w-auto"
+                >
+                  Continue setup
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
               ) : (
                 <>
                   <a
                     href="/onboarding"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-105 sm:w-auto"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-6 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-[1.02] sm:w-auto"
                   >
-                    Create Your Intro
+                    Get started
                     <ArrowRight className="h-3.5 w-3.5" />
                   </a>
-                  <button
-                    onClick={() => alert('Demo video player modal!')}
-                    className="w-full rounded-lg border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/8 hover:text-white sm:w-auto"
+                  <a
+                    href="/login"
+                    className="text-center text-sm text-white/50 transition-colors hover:text-white/80 sm:text-left"
                   >
-                    ▶ Watch Demo
-                  </button>
+                    Sign in
+                  </a>
                 </>
               )}
             </div>
@@ -368,20 +341,20 @@ export default function Home() {
             50% { opacity: 0.9; transform: scaleX(1); }
           }
           @keyframes claimGlow {
-            0%, 100% { opacity: 0.4; transform: scale(0.9); }
-            50% { opacity: 0.85; transform: scale(1.08); }
+            0%, 100% { opacity: 0.35; transform: scale(0.92); }
+            50% { opacity: 0.65; transform: scale(1.06); }
           }
           @keyframes claimGlowAlt {
-            0%, 100% { opacity: 0.25; transform: scale(1); }
-            50% { opacity: 0.65; transform: scale(1.15); }
+            0%, 100% { opacity: 0.2; transform: scale(1) translate(0, 0); }
+            50% { opacity: 0.45; transform: scale(1.1) translate(2%, -2%); }
           }
-          @keyframes claimGlowRing {
-            0%, 100% { opacity: 0.3; transform: scale(0.98); }
-            50% { opacity: 0.7; transform: scale(1.02); }
+          @keyframes claimColorDrift {
+            0%, 100% { opacity: 0.35; transform: scale(0.95); }
+            50% { opacity: 0.6; transform: scale(1.12); }
           }
-          @keyframes claimGradientSpin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+          @keyframes claimColorDriftAlt {
+            0%, 100% { opacity: 0.25; transform: scale(1.05); }
+            50% { opacity: 0.45; transform: scale(0.92); }
           }
         `}</style>
       </section>
@@ -428,46 +401,20 @@ export default function Home() {
 
       {/* Claim username — bottom CTA above footer */}
       {authState === 'guest' && (
-        <section className="relative overflow-hidden border-t border-white/[0.06] bg-zinc-950 px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-32 lg:px-16">
-          {/* Section background */}
-          <div
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,rgba(255,255,255,0.04),transparent_70%)]"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black via-zinc-950/80 to-black"
-            aria-hidden
-          />
-
-          {/* Animated glow layers */}
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
-            <div className="h-72 w-full max-w-3xl animate-[claimGlow_8s_ease-in-out_infinite] rounded-full bg-white/[0.07] blur-[100px]" />
-            <div className="absolute h-52 w-[28rem] animate-[claimGlowAlt_6s_ease-in-out_infinite_0.75s] rounded-full bg-emerald-400/[0.12] blur-[88px]" />
-            <div className="absolute h-36 w-72 animate-[claimGlow_11s_ease-in-out_infinite_1.5s] rounded-full bg-violet-400/[0.06] blur-[64px]" />
+        <section className="relative overflow-hidden border-t border-white/[0.06] bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-32 lg:px-16">
+          {/* Subtle colorful animated glow */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+            <div className="absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 animate-[claimColorDrift_12s_ease-in-out_infinite] rounded-full bg-emerald-500/20 blur-[120px]" />
+            <div className="absolute left-[38%] top-[42%] h-72 w-72 -translate-x-1/2 -translate-y-1/2 animate-[claimColorDriftAlt_9s_ease-in-out_infinite_1s] rounded-full bg-violet-500/15 blur-[100px]" />
+            <div className="absolute left-[62%] top-[55%] h-64 w-64 -translate-x-1/2 -translate-y-1/2 animate-[claimColorDrift_14s_ease-in-out_infinite_2s] rounded-full bg-sky-400/12 blur-[90px]" />
+            <div className="absolute left-1/2 top-1/2 h-56 w-80 animate-[claimGlowAlt_8s_ease-in-out_infinite_0.5s] -translate-x-1/2 -translate-y-1/2 rounded-full bg-rose-400/10 blur-[80px]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
           </div>
 
-          <div className="relative mx-auto flex min-h-[min(320px,50vh)] max-w-4xl flex-col items-center justify-center px-2">
+          <div className="relative mx-auto flex min-h-[min(280px,45vh)] max-w-4xl flex-col items-center justify-center px-2">
             <div className="relative w-full max-w-xl">
-              <div
-                className="pointer-events-none absolute -inset-8 animate-[claimGlowRing_5s_ease-in-out_infinite] rounded-[2.5rem] bg-gradient-to-b from-emerald-400/20 via-white/10 to-violet-400/10 blur-3xl"
-                aria-hidden
-              />
-              <div className="relative overflow-hidden rounded-3xl p-[1px]">
-                <div
-                  className="pointer-events-none absolute -inset-[100%] animate-[claimGradientSpin_10s_linear_infinite] opacity-80"
-                  style={{
-                    background:
-                      'conic-gradient(from 0deg, transparent 0%, rgba(16,185,129,0.45) 18%, transparent 36%, rgba(255,255,255,0.25) 54%, transparent 72%, rgba(139,92,246,0.35) 88%, transparent 100%)',
-                  }}
-                  aria-hidden
-                />
-                <div className="relative rounded-[calc(1.5rem-1px)] border border-white/[0.08] bg-black/60 px-5 py-9 shadow-[0_0_100px_-20px_rgba(16,185,129,0.35)] backdrop-blur-md sm:px-9 sm:py-11">
-                  <div
-                    className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent"
-                    aria-hidden
-                  />
-                  <UsernameClaimBar variant="cta" className="relative w-full px-0" />
-                </div>
+              <div className="relative rounded-2xl border border-white/[0.08] bg-black/50 px-5 py-10 backdrop-blur-sm sm:px-8 sm:py-12">
+                <UsernameClaimBar variant="cta" className="relative w-full px-0" />
               </div>
             </div>
           </div>
