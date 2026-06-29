@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, Menu, X } from 'lucide-react';
 import SeenlyLogo from '@/components/SeenlyLogo';
 import UsernameClaimBar from '@/components/landing/UsernameClaimBar';
@@ -51,7 +51,6 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authState, setAuthState] = useState<'loading' | 'guest' | 'member' | 'onboarding'>('loading');
   const [profileUsername, setProfileUsername] = useState<string | null>(null);
-  const cardRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -68,56 +67,6 @@ export default function Home() {
         setAuthState('onboarding');
       }
     });
-  }, []);
-
-  // Subtle cursor-follow tilt on hero phone mockup
-  useEffect(() => {
-    const card = cardRef.current;
-    if (!card) return;
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-
-    let animFrame: number;
-    let currentX = 0;
-    let currentY = 0;
-    let targetX = 0;
-    let targetY = 0;
-
-    const lerp = (start: number, end: number, t: number) => start + (end - start) * t;
-
-    const animate = () => {
-      currentX = lerp(currentX, targetX, 0.06);
-      currentY = lerp(currentY, targetY, 0.06);
-      card.style.transform = `perspective(900px) rotateY(${currentX}deg) rotateX(${currentY}deg)`;
-      animFrame = requestAnimationFrame(animate);
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      const rect = card.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const distX = (e.clientX - cx) / rect.width;
-      const distY = (e.clientY - cy) / rect.height;
-      const proximity = Math.min(1, Math.hypot(distX, distY) * 1.4);
-      targetX = distX * 7 * proximity;
-      targetY = -distY * 7 * proximity;
-    };
-
-    const onLeave = () => {
-      targetX = 0;
-      targetY = 0;
-    };
-
-    animFrame = requestAnimationFrame(animate);
-    window.addEventListener('mousemove', onMouseMove);
-    card.addEventListener('mouseleave', onLeave);
-
-    return () => {
-      cancelAnimationFrame(animFrame);
-      window.removeEventListener('mousemove', onMouseMove);
-      card.removeEventListener('mouseleave', onLeave);
-    };
   }, []);
 
   return (
@@ -326,7 +275,7 @@ export default function Home() {
             </div>
           </div>
 
-          <HeroPhonePreview cardRef={cardRef} />
+          <HeroPhonePreview />
 
         </main>
 
@@ -340,21 +289,13 @@ export default function Home() {
             0%, 100% { opacity: 0.35; transform: scaleX(0.92); }
             50% { opacity: 0.9; transform: scaleX(1); }
           }
-          @keyframes claimGlow {
-            0%, 100% { opacity: 0.35; transform: scale(0.92); }
-            50% { opacity: 0.65; transform: scale(1.06); }
-          }
-          @keyframes claimGlowAlt {
-            0%, 100% { opacity: 0.2; transform: scale(1) translate(0, 0); }
-            50% { opacity: 0.45; transform: scale(1.1) translate(2%, -2%); }
-          }
           @keyframes claimColorDrift {
-            0%, 100% { opacity: 0.35; transform: scale(0.95); }
-            50% { opacity: 0.6; transform: scale(1.12); }
+            0%, 100% { opacity: 0.55; transform: scale(0.97); }
+            50% { opacity: 0.9; transform: scale(1.03); }
           }
           @keyframes claimColorDriftAlt {
-            0%, 100% { opacity: 0.25; transform: scale(1.05); }
-            50% { opacity: 0.45; transform: scale(0.92); }
+            0%, 100% { opacity: 0.45; transform: scale(1.02); }
+            50% { opacity: 0.75; transform: scale(0.96); }
           }
         `}</style>
       </section>
@@ -402,13 +343,11 @@ export default function Home() {
       {/* Claim username — bottom CTA above footer */}
       {authState === 'guest' && (
         <section className="relative overflow-hidden border-t border-white/[0.06] bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-32 lg:px-16">
-          {/* Subtle colorful animated glow */}
+          {/* Very subtle colorful glow */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-            <div className="absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 animate-[claimColorDrift_12s_ease-in-out_infinite] rounded-full bg-emerald-500/20 blur-[120px]" />
-            <div className="absolute left-[38%] top-[42%] h-72 w-72 -translate-x-1/2 -translate-y-1/2 animate-[claimColorDriftAlt_9s_ease-in-out_infinite_1s] rounded-full bg-violet-500/15 blur-[100px]" />
-            <div className="absolute left-[62%] top-[55%] h-64 w-64 -translate-x-1/2 -translate-y-1/2 animate-[claimColorDrift_14s_ease-in-out_infinite_2s] rounded-full bg-sky-400/12 blur-[90px]" />
-            <div className="absolute left-1/2 top-1/2 h-56 w-80 animate-[claimGlowAlt_8s_ease-in-out_infinite_0.5s] -translate-x-1/2 -translate-y-1/2 rounded-full bg-rose-400/10 blur-[80px]" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+            <div className="absolute left-1/2 top-1/2 h-[480px] w-[480px] -translate-x-1/2 -translate-y-1/2 animate-[claimColorDrift_20s_ease-in-out_infinite] rounded-full bg-emerald-500/[0.06] blur-[160px]" />
+            <div className="absolute left-[54%] top-[50%] h-80 w-80 -translate-x-1/2 -translate-y-1/2 animate-[claimColorDriftAlt_24s_ease-in-out_infinite_4s] rounded-full bg-violet-500/[0.05] blur-[140px]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/70" />
           </div>
 
           <div className="relative mx-auto flex min-h-[min(280px,45vh)] max-w-4xl flex-col items-center justify-center px-2">

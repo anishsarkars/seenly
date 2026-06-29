@@ -58,10 +58,10 @@ export default function PhoneFrame({
         }}
       >
         <div
-          className="relative p-[3px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.06)_inset]"
+          className="relative p-[3.5px] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.07)_inset,0_1px_0_rgba(255,255,255,0.12)_inset]"
           style={{
             borderRadius: outerRadius,
-            background: 'linear-gradient(145deg, #5a5a5c 0%, #3a3a3c 35%, #1a1a1c 70%, #2e2e30 100%)',
+            background: 'linear-gradient(160deg, #636366 0%, #48484a 22%, #2c2c2e 55%, #1c1c1e 85%, #3a3a3c 100%)',
           }}
         >
           {/* Titanium highlight */}
@@ -87,8 +87,9 @@ export default function PhoneFrame({
 
             {/* Dynamic Island */}
             <div className="relative flex justify-center pb-1.5 pt-0.5">
-              <div className="relative flex h-[27px] w-[112px] items-center justify-center rounded-full bg-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]">
-                <div className="absolute right-7 h-2 w-2 rounded-full bg-[#1c1c1e] ring-1 ring-[#3a3a3c]" />
+              <div className="relative flex h-[28px] w-[118px] items-center justify-center rounded-full bg-[#0a0a0a] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1),0_1px_2px_rgba(0,0,0,0.5)]">
+                <div className="absolute right-[26px] h-[7px] w-[7px] rounded-full bg-[#161618] ring-1 ring-[#404042]" />
+                <div className="absolute right-[38px] h-1.5 w-1.5 rounded-full bg-[#1a1a1c]/80" />
               </div>
             </div>
 
