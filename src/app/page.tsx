@@ -68,7 +68,7 @@ export default function Home() {
           style={{ objectPosition: '70% center' }}
         >
           <source
-            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260520_111942_8fc50f9e-4dfd-45c1-81bb-d93342a23d87.mp4"
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260330_145725_08886141-ed95-4a8e-8d6d-b75eaadce638.mp4"
             type="video/mp4"
           />
         </video>
@@ -145,125 +145,156 @@ export default function Home() {
         </div>
 
         {/* Hero Content (z-10) — Two column layout */}
-        <main className="relative z-10 flex h-[calc(100vh-80px)] items-center px-6 pb-10 pt-4 md:px-12 lg:px-16">
+        <main className="relative z-10 flex h-[calc(100vh-80px)] items-center justify-between px-6 pb-10 pt-4 md:px-12 lg:px-20">
 
           {/* LEFT: Text */}
-          <div className="flex-1 flex flex-col justify-center gap-6 max-w-xl">
+          <div className="flex flex-col justify-center gap-5 max-w-xl">
             {/* Badge */}
             <div className="animate-[fadeSlideUp_0.8s_ease_0.2s_both]">
-              <span className="text-xs sm:text-sm text-white/80 font-medium tracking-wide bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+              <span className="inline-flex items-center gap-2 text-xs text-white/60 font-medium tracking-widest uppercase bg-white/5 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Personal Video Pitch
               </span>
             </div>
 
             {/* Heading */}
-            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.08] tracking-tight text-white animate-[fadeSlideUp_0.8s_ease_0.4s_both]">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.06] tracking-tight text-white animate-[fadeSlideUp_0.8s_ease_0.4s_both]">
               Your Resume Tells.<br />
-              Your Intro Shows.
+              <span className="text-white/60">Your Intro Shows.</span>
             </h1>
 
             {/* Description */}
-            <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/70 max-w-md animate-[fadeSlideUp_0.8s_ease_0.6s_both]">
-              Create a beautiful professional profile around a 60-second introduction video. Show recruiters your communication, personality, and experience—all in one shareable link.
+            <p className="text-sm md:text-base leading-relaxed text-white/50 max-w-sm animate-[fadeSlideUp_0.8s_ease_0.6s_both]">
+              Record a 60-second intro, build your profile, and share one link with every recruiter.
             </p>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap gap-4 items-center animate-[fadeSlideUp_0.8s_ease_0.8s_both]">
+            <div className="flex flex-wrap gap-3 items-center animate-[fadeSlideUp_0.8s_ease_0.8s_both]">
               <a
                 href="/onboarding"
-                className="rounded-lg bg-white px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-semibold text-black hover:scale-105 transition-transform inline-flex items-center gap-2"
+                className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black hover:scale-105 transition-transform inline-flex items-center gap-2"
               >
                 Create Your Intro
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-3.5 w-3.5" />
               </a>
               <button
                 onClick={() => alert('Demo video player modal!')}
-                className="rounded-lg border border-white/20 hover:bg-white/10 px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-white hover:scale-105 backdrop-blur-sm transition-transform"
+                className="rounded-lg border border-white/15 hover:bg-white/8 px-5 py-2.5 text-sm font-medium text-white/70 hover:text-white hover:scale-105 backdrop-blur-sm transition-all"
               >
                 ▶ Watch Demo
               </button>
             </div>
           </div>
 
-          {/* RIGHT: 3D Animated Phone Profile Card */}
-          <div className="hidden lg:flex flex-1 items-center justify-center">
+          {/* RIGHT: 3D Animated Phone Profile Card — far right */}
+          <div className="hidden lg:flex items-center justify-end pr-12">
             <div
               ref={cardRef}
-              style={{ willChange: 'transform', transition: 'box-shadow 0.3s ease' }}
-              className="relative w-[220px] animate-[fadeSlideUp_0.9s_ease_0.5s_both]"
+              style={{ willChange: 'transform' }}
+              className="relative w-[175px] animate-[fadeSlideUp_0.9s_ease_0.5s_both]"
             >
+              {/* Ambient glow behind */}
+              <div className="absolute inset-x-0 inset-y-8 bg-white/[0.02] blur-3xl rounded-full pointer-events-none" />
+
               {/* Phone frame */}
-              <div className="relative bg-zinc-950 rounded-[2.8rem] border border-white/10 shadow-[0_32px_80px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.05)] overflow-hidden" style={{ aspectRatio: '9/19.5' }}>
-                {/* Notch */}
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-16 h-4 bg-black rounded-full z-20" />
+              <div
+                className="relative rounded-[2.4rem] border border-white/[0.08] overflow-hidden"
+                style={{ aspectRatio: '9/19.5', background: 'linear-gradient(160deg,#141414 0%,#0a0a0a 100%)', boxShadow: '0 40px 90px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)' }}
+              >
+                {/* Dynamic Island */}
+                <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-12 h-3 bg-black rounded-full z-20 flex items-center justify-center gap-1">
+                  <div className="h-1 w-1 rounded-full bg-zinc-700" />
+                  <div className="h-1 w-1 rounded-full bg-zinc-800" />
+                </div>
 
                 {/* Screen content */}
-                <div className="absolute inset-0 bg-[#0A0A0A] flex flex-col overflow-hidden">
-                  
+                <div className="absolute inset-0 flex flex-col overflow-hidden">
+
                   {/* Status bar */}
-                  <div className="flex justify-between items-center px-5 pt-7 pb-2 text-[8px] text-white/30 font-medium">
+                  <div className="flex justify-between items-center px-4 pt-6 pb-1.5 text-[7px] text-white/20 font-medium">
                     <span>9:41</span>
-                    <span className="text-[6px] uppercase tracking-widest text-white/20">LIVE PREVIEW</span>
+                    <div className="flex items-center gap-1">
+                      <div className="h-1 w-1 rounded-full bg-emerald-500/60 animate-pulse" />
+                      <span className="text-[5.5px] uppercase tracking-widest text-white/15">seenly</span>
+                    </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3 scrollbar-none">
+                  <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-2.5 scrollbar-none">
                     {/* Avatar + name */}
-                    <div className="flex flex-col items-center pt-2 pb-1 space-y-1.5">
-                      <div className="h-10 w-10 rounded-full bg-red-500 flex items-center justify-center text-white font-bold text-xs">
+                    <div className="flex flex-col items-center pt-1 pb-0.5 space-y-1">
+                      <div className="h-9 w-9 rounded-full bg-gradient-to-br from-rose-400 to-red-600 flex items-center justify-center text-white font-bold text-[10px] ring-2 ring-white/5">
                         JT
                       </div>
-                      <div className="text-center">
-                        <p className="text-white text-[11px] font-semibold leading-tight">John Timber</p>
-                        <p className="text-white/40 text-[8px]">Designer & Builder</p>
-                        <div className="flex items-center justify-center gap-0.5 mt-0.5">
-                          <MapPin className="h-2 w-2 text-white/30" />
-                          <span className="text-white/30 text-[7px]">New York</span>
+                      <div className="text-center space-y-0.5">
+                        <p className="text-white text-[10px] font-semibold leading-tight">John Timber</p>
+                        <p className="text-white/35 text-[7px]">Designer & Builder</p>
+                        <div className="flex items-center justify-center gap-0.5">
+                          <MapPin className="h-1.5 w-1.5 text-white/20" />
+                          <span className="text-white/20 text-[6px]">New York</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Video preview */}
-                    <div className="relative rounded-xl overflow-hidden bg-zinc-800/80" style={{ aspectRatio: '16/9' }}>
+                    <div className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '16/9' }}>
                       <img
                         src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=320&h=180&q=80"
                         alt="Profile intro"
-                        className="w-full h-full object-cover opacity-80"
+                        className="w-full h-full object-cover opacity-70"
                       />
+                      <div className="absolute inset-0 bg-black/20" />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="h-7 w-7 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
-                          <Play className="h-3 w-3 fill-black ml-0.5" />
+                        <div className="h-6 w-6 rounded-full bg-white/95 flex items-center justify-center">
+                          <Play className="h-2.5 w-2.5 fill-black ml-0.5" />
+                        </div>
+                      </div>
+                      <div className="absolute bottom-1.5 left-2 text-[6px] text-white/60 font-medium">0:60 intro</div>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="h-px bg-white/5" />
+
+                    {/* Experience */}
+                    <div className="space-y-1">
+                      <p className="text-[6px] font-bold text-white/20 uppercase tracking-widest">Experience</p>
+                      <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg px-2.5 py-1.5 flex items-center gap-2">
+                        <div className="h-5 w-5 rounded-md bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                          <span className="text-[7px] font-bold text-white/60">G</span>
+                        </div>
+                        <div>
+                          <p className="text-white text-[8px] font-semibold">SWE III</p>
+                          <p className="text-white/30 text-[6px]">Google · 2023–now</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Bio */}
-                    <p className="text-white/30 text-[7px] text-center italic">"living."</p>
-
-                    {/* Experience */}
-                    <div>
-                      <p className="text-[7px] font-bold text-white/25 uppercase tracking-widest mb-1">Experience</p>
-                      <div className="bg-zinc-900/60 border border-zinc-800/50 rounded-lg px-3 py-2 space-y-0.5">
-                        <p className="text-white text-[9px] font-semibold">SWE III</p>
-                        <p className="text-white/40 text-[7px]">Google</p>
+                    {/* Skills row */}
+                    <div className="space-y-1">
+                      <p className="text-[6px] font-bold text-white/20 uppercase tracking-widest">Skills</p>
+                      <div className="flex flex-wrap gap-1">
+                        {['React', 'TypeScript', 'Figma'].map(s => (
+                          <span key={s} className="text-[6px] text-white/40 bg-white/[0.04] border border-white/[0.06] px-1.5 py-0.5 rounded">{s}</span>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Projects */}
-                    <div>
-                      <p className="text-[7px] font-bold text-white/25 uppercase tracking-widest mb-1">Projects</p>
-                      <p className="text-white/25 text-[7px] italic">No projects listed yet.</p>
+                    {/* Profile link */}
+                    <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg px-2.5 py-1.5">
+                      <p className="text-[6px] text-white/20 mb-0.5">Profile</p>
+                      <p className="text-[7px] text-white/50 font-mono">seenly.tech/johntimber</p>
                     </div>
+
                   </div>
 
                   {/* Bottom bar */}
-                  <div className="flex justify-center pb-3 pt-1">
-                    <div className="w-12 h-1 bg-white/20 rounded-full" />
+                  <div className="flex justify-center pb-2.5 pt-1">
+                    <div className="w-10 h-0.5 bg-white/15 rounded-full" />
                   </div>
                 </div>
               </div>
 
               {/* Glow under phone */}
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-32 h-8 bg-white/5 blur-2xl rounded-full" />
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-24 h-6 bg-white/[0.04] blur-xl rounded-full" />
             </div>
           </div>
 
