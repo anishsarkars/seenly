@@ -7,8 +7,6 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const navLinks = ['Home', 'How it Works', 'Studio', 'Reach Us'];
-
   // 3D floating tilt animation on mouse move
   useEffect(() => {
     const card = cardRef.current;
@@ -78,18 +76,12 @@ export default function Home() {
 
         {/* Navbar (z-30) */}
         <header className="relative z-30 flex items-center justify-between px-6 py-5 md:px-12 lg:px-16">
-          <div className="flex items-center gap-8 md:gap-12 lg:gap-16">
+          <div className="flex items-center gap-8">
             <span className="text-lg font-semibold tracking-tight text-white sm:text-xl">Seenly</span>
             <nav className="hidden md:flex items-center gap-6">
-              {navLinks.map((link) => (
-                <a
-                  key={link}
-                  href={link === 'How it Works' ? '#how-it-works' : '#'}
-                  className="text-sm text-white/70 hover:text-white transition-colors"
-                >
-                  {link}
-                </a>
-              ))}
+              <a href="#how-it-works" className="text-sm text-white/70 hover:text-white transition-colors">
+                How it Works
+              </a>
             </nav>
           </div>
 
@@ -121,16 +113,13 @@ export default function Home() {
         <div className={`absolute inset-x-0 top-0 z-20 overflow-hidden bg-black/98 backdrop-blur-xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${mobileMenuOpen ? 'h-screen opacity-100' : 'h-0 opacity-0 pointer-events-none'}`}>
           <div className="flex h-full flex-col justify-center px-8">
             <nav className={`flex flex-col gap-6 transition-all duration-500 delay-100 transform ${mobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-              {navLinks.map((link) => (
-                <a
-                  key={link}
-                  href={link === 'How it Works' ? '#how-it-works' : '#'}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-3xl font-medium text-white/90 hover:text-white transition-colors"
-                >
-                  {link}
-                </a>
-              ))}
+              <a
+                href="#how-it-works"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-3xl font-medium text-white/90 hover:text-white transition-colors"
+              >
+                How it Works
+              </a>
               <div>
                 <a
                   href="/onboarding"
@@ -364,18 +353,23 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-zinc-900 bg-black py-12 px-6 md:px-12 lg:px-16 text-zinc-500">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+      <footer className="border-t border-zinc-900 bg-black py-10 px-6 md:px-12 lg:px-16">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold tracking-tight text-white">Seenly</span>
-            <span className="text-xs text-zinc-500">© 2026. All rights reserved.</span>
+            <span className="text-xs text-zinc-600">© 2026</span>
           </div>
-          <div className="flex flex-wrap justify-center gap-6 text-xs font-medium text-zinc-500">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Twitter</a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
-          </div>
+          <p className="text-xs text-zinc-500">
+            Made by{' '}
+            <a
+              href="https://github.com/anishsarkars"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/70 hover:text-white transition-colors font-medium"
+            >
+              Anish
+            </a>
+          </p>
         </div>
       </footer>
 
