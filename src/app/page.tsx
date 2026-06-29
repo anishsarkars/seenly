@@ -139,7 +139,7 @@ export default function Home() {
             </div>
 
             {/* Heading */}
-            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight text-white [text-shadow:_0_4px_24px_rgba(0,0,0,0.85)] animate-[fadeSlideUp_0.8s_ease_0.4s_both]">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight text-white [text-shadow:_0_2px_8px_rgba(0,0,0,0.35)] animate-[fadeSlideUp_0.8s_ease_0.4s_both]">
               Your Resume Tells.<br />
               Your Intro Shows.
             </h1>
@@ -148,7 +148,7 @@ export default function Home() {
           {/* Bottom Section */}
           <div>
             {/* Description Paragraph */}
-            <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/95 [text-shadow:_0_2px_12px_rgba(0,0,0,0.85)] max-w-sm sm:max-w-xl mb-5 sm:mb-6 animate-[fadeSlideUp_0.8s_ease_0.7s_both]">
+            <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/95 [text-shadow:_0_1px_4px_rgba(0,0,0,0.3)] max-w-sm sm:max-w-xl mb-5 sm:mb-6 animate-[fadeSlideUp_0.8s_ease_0.7s_both]">
               Create a beautiful professional profile around a 60-second introduction video. Show recruiters your communication, personality, projects, and experience—all in one shareable link.
             </p>
 
@@ -164,7 +164,7 @@ export default function Home() {
 
               <button
                 onClick={() => alert('Demo video player modal!')}
-                className="rounded-lg border border-white/30 hover:bg-white/10 px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-white hover:scale-105 backdrop-blur-sm transition-transform [text-shadow:_0_1px_4px_rgba(0,0,0,0.6)]"
+                className="rounded-lg border border-white/20 hover:bg-white/10 px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-medium text-white hover:scale-105 backdrop-blur-sm transition-transform [text-shadow:_0_1px_3px_rgba(0,0,0,0.3)]"
               >
                 ▶ Watch Demo
               </button>
@@ -173,52 +173,52 @@ export default function Home() {
         </main>
       </section>
 
-      {/* HOW IT WORKS SECTION (Premium Light/Pastel Theme) */}
-      <section id="how-it-works" className="relative py-24 md:py-32 bg-[#FAF9F6] border-t border-zinc-200/60 px-6 md:px-12 lg:px-16">
+      {/* HOW IT WORKS SECTION (Premium Dark Theme) */}
+      <section id="how-it-works" className="relative py-24 md:py-32 bg-black border-t border-zinc-900 px-6 md:px-12 lg:px-16">
         <div className="max-w-5xl mx-auto">
           <div className="space-y-4 text-center md:text-left mb-16 md:mb-20">
-            <h2 className="text-xs uppercase tracking-widest text-[#7C3AED] font-extrabold">Process</h2>
-            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-zinc-900">How Seenly Works</h3>
+            <h2 className="text-xs uppercase tracking-widest text-[#9F67FF] font-extrabold">Process</h2>
+            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white">How Seenly Works</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Step 1 - Pastel Lavender Card */}
-            <div className="p-8 rounded-[2rem] border border-[#ECE9FC] bg-[#F8F6FF] hover:scale-[1.02] shadow-sm hover:shadow-md transition-all duration-300 space-y-6">
-              <div className="h-12 w-12 rounded-2xl bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center">
+            {/* Step 1 - Subtle Lavender Dark Card */}
+            <div className="p-8 rounded-[2rem] border border-zinc-900 bg-zinc-950/40 hover:border-zinc-800 hover:scale-[1.01] shadow-sm hover:shadow-md transition-all duration-300 space-y-6">
+              <div className="h-12 w-12 rounded-2xl bg-zinc-900/50 text-[#9F67FF] flex items-center justify-center border border-zinc-800/50">
                 <Video className="h-6 w-6" />
               </div>
               <div className="space-y-2">
-                <div className="text-[10px] font-extrabold text-[#7C3AED]/70 uppercase tracking-widest">Step 01</div>
-                <h4 className="font-bold text-lg text-zinc-900">Record / Upload Intro</h4>
-                <p className="text-xs text-zinc-650 leading-relaxed font-medium">
+                <div className="text-[10px] font-extrabold text-[#9F67FF]/80 uppercase tracking-widest">Step 01</div>
+                <h4 className="font-bold text-lg text-white">Record / Upload Intro</h4>
+                <p className="text-xs text-zinc-400 leading-relaxed font-medium">
                   Record a 60-second introduction pitch explaining your personality, background, and what drives you.
                 </p>
               </div>
             </div>
 
-            {/* Step 2 - Pastel Sky Blue Card */}
-            <div className="p-8 rounded-[2rem] border border-[#E0F2FE] bg-[#F0F9FF] hover:scale-[1.02] shadow-sm hover:shadow-md transition-all duration-300 space-y-6">
-              <div className="h-12 w-12 rounded-2xl bg-[#E0F2FE] text-[#0284C7] flex items-center justify-center">
+            {/* Step 2 - Subtle Sky Blue Dark Card */}
+            <div className="p-8 rounded-[2rem] border border-zinc-900 bg-zinc-950/40 hover:border-zinc-800 hover:scale-[1.01] shadow-sm hover:shadow-md transition-all duration-300 space-y-6">
+              <div className="h-12 w-12 rounded-2xl bg-zinc-900/50 text-[#38BDF8] flex items-center justify-center border border-zinc-800/50">
                 <FileText className="h-6 w-6" />
               </div>
               <div className="space-y-2">
-                <div className="text-[10px] font-extrabold text-[#0284C7]/70 uppercase tracking-widest">Step 02</div>
-                <h4 className="font-bold text-lg text-zinc-900">Build Your Profile</h4>
-                <p className="text-xs text-zinc-650 leading-relaxed font-medium">
+                <div className="text-[10px] font-extrabold text-[#38BDF8]/80 uppercase tracking-widest">Step 02</div>
+                <h4 className="font-bold text-lg text-white">Build Your Profile</h4>
+                <p className="text-xs text-zinc-400 leading-relaxed font-medium">
                   Import your project list, work timeline events, social media handles, and CV document to complete your pitch.
                 </p>
               </div>
             </div>
 
-            {/* Step 3 - Pastel Mint Green Card */}
-            <div className="p-8 rounded-[2rem] border border-[#DCFCE7] bg-[#F0FDF4] hover:scale-[1.02] shadow-sm hover:shadow-md transition-all duration-300 space-y-6">
-              <div className="h-12 w-12 rounded-2xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center">
+            {/* Step 3 - Subtle Mint Green Dark Card */}
+            <div className="p-8 rounded-[2rem] border border-zinc-900 bg-zinc-950/40 hover:border-zinc-800 hover:scale-[1.01] shadow-sm hover:shadow-md transition-all duration-300 space-y-6">
+              <div className="h-12 w-12 rounded-2xl bg-zinc-900/50 text-[#4ADE80] flex items-center justify-center border border-zinc-800/50">
                 <Share2 className="h-6 w-6" />
               </div>
               <div className="space-y-2">
-                <div className="text-[10px] font-extrabold text-[#16A34A]/70 uppercase tracking-widest">Step 03</div>
-                <h4 className="font-bold text-lg text-zinc-900">Share Your Link</h4>
-                <p className="text-xs text-zinc-650 leading-relaxed font-medium">
+                <div className="text-[10px] font-extrabold text-[#4ADE80]/80 uppercase tracking-widest">Step 03</div>
+                <h4 className="font-bold text-lg text-white">Share Your Link</h4>
+                <p className="text-xs text-zinc-400 leading-relaxed font-medium">
                   Publish your profile under a custom `seenly.tech/username` link and share it directly with hiring managers.
                 </p>
               </div>
@@ -227,19 +227,19 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LIGHT MINIMAL FOOTER SECTION */}
-      <footer className="border-t border-zinc-200/60 bg-white py-12 px-6 md:px-12 lg:px-16 text-zinc-600">
+      {/* DARK MINIMAL FOOTER SECTION */}
+      <footer className="border-t border-zinc-900 bg-black py-12 px-6 md:px-12 lg:px-16 text-zinc-500">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold tracking-tight text-zinc-900">Seenly</span>
-            <span className="text-xs text-zinc-400">© 2026. All rights reserved.</span>
+            <span className="text-sm font-semibold tracking-tight text-white">Seenly</span>
+            <span className="text-xs text-zinc-500">© 2026. All rights reserved.</span>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-6 text-xs font-medium text-zinc-400">
-            <a href="#" className="hover:text-zinc-900 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-zinc-900 transition-colors">Terms of Service</a>
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-colors">Twitter</a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-900 transition-colors">GitHub</a>
+          <div className="flex flex-wrap justify-center gap-6 text-xs font-medium text-zinc-500">
+            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Twitter</a>
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
           </div>
         </div>
       </footer>
