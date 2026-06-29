@@ -212,34 +212,26 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
       </header>
 
       {showAvatarBanner && (
-        <div className="border-b border-emerald-500/20 bg-gradient-to-r from-emerald-950/60 via-zinc-950 to-zinc-950">
-          <div className="max-w-6xl mx-auto px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-start sm:items-center gap-3 min-w-0">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/20">
-                <Sparkles className="h-4 w-4 text-emerald-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-white">New clay-style avatars are here</p>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  Pick from 4 illustrated portraits — male &amp; female styles. Try one on your profile now.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0 sm:ml-4">
+        <div className="border-b border-zinc-900/80">
+          <div className="max-w-6xl mx-auto px-6 py-1.5 flex items-center justify-between gap-4">
+            <p className="text-[11px] text-zinc-500">
+              New avatars available.{' '}
               <button
+                type="button"
                 onClick={tryNewAvatars}
-                className="bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                className="text-zinc-400 hover:text-white transition-colors"
               >
-                Try it
+                Pick one →
               </button>
-              <button
-                onClick={dismissAvatarBanner}
-                className="p-2 rounded-xl text-zinc-500 hover:text-white hover:bg-zinc-900 transition-all"
-                aria-label="Dismiss"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+            </p>
+            <button
+              type="button"
+              onClick={dismissAvatarBanner}
+              className="text-zinc-600 hover:text-zinc-400 transition-colors"
+              aria-label="Dismiss"
+            >
+              <X className="h-3 w-3" />
+            </button>
           </div>
         </div>
       )}
