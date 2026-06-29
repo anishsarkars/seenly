@@ -283,8 +283,8 @@ export default function Home() {
 
             {/* Username claim — guests only */}
             {authState === 'guest' && (
-              <div className="animate-[fadeSlideUp_0.8s_ease_0.65s_both] w-full">
-                <UsernameClaimBar hero title="" className="!max-w-none" />
+              <div className="animate-[fadeSlideUp_0.8s_ease_0.65s_both] w-full max-w-md">
+                <UsernameClaimBar variant="hero" title="" className="!max-w-none" />
               </div>
             )}
 
@@ -486,12 +486,16 @@ export default function Home() {
             50% { opacity: 0.9; transform: scaleX(1); }
           }
           @keyframes claimGlow {
-            0%, 100% { opacity: 0.35; transform: scale(0.92); }
-            50% { opacity: 0.75; transform: scale(1.05); }
+            0%, 100% { opacity: 0.4; transform: scale(0.9); }
+            50% { opacity: 0.85; transform: scale(1.08); }
           }
           @keyframes claimGlowAlt {
-            0%, 100% { opacity: 0.2; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.12); }
+            0%, 100% { opacity: 0.25; transform: scale(1); }
+            50% { opacity: 0.65; transform: scale(1.15); }
+          }
+          @keyframes claimGlowRing {
+            0%, 100% { opacity: 0.3; transform: scale(0.98); }
+            50% { opacity: 0.7; transform: scale(1.02); }
           }
         `}</style>
       </section>
@@ -538,13 +542,39 @@ export default function Home() {
 
       {/* Claim username — bottom CTA above footer */}
       {authState === 'guest' && (
-        <section className="relative overflow-hidden bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-36 lg:px-16">
+        <section className="relative overflow-hidden border-t border-white/[0.06] bg-zinc-950 px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-32 lg:px-16">
+          {/* Section background */}
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,rgba(255,255,255,0.04),transparent_70%)]"
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black via-zinc-950/80 to-black"
+            aria-hidden
+          />
+
+          {/* Animated glow layers */}
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden>
-            <div className="h-56 w-full max-w-2xl animate-[claimGlow_9s_ease-in-out_infinite] rounded-full bg-white/[0.05] blur-3xl" />
-            <div className="absolute h-40 w-80 animate-[claimGlowAlt_7s_ease-in-out_infinite_0.5s] rounded-full bg-emerald-400/[0.07] blur-[72px]" />
+            <div className="h-72 w-full max-w-3xl animate-[claimGlow_8s_ease-in-out_infinite] rounded-full bg-white/[0.07] blur-[100px]" />
+            <div className="absolute h-52 w-[28rem] animate-[claimGlowAlt_6s_ease-in-out_infinite_0.75s] rounded-full bg-emerald-400/[0.12] blur-[88px]" />
+            <div className="absolute h-36 w-72 animate-[claimGlow_11s_ease-in-out_infinite_1.5s] rounded-full bg-violet-400/[0.06] blur-[64px]" />
           </div>
-          <div className="relative mx-auto flex max-w-4xl flex-col items-center text-center">
-            <UsernameClaimBar className="w-full max-w-xl px-1" />
+
+          <div className="relative mx-auto flex min-h-[min(320px,50vh)] max-w-4xl flex-col items-center justify-center">
+            <div className="relative w-full max-w-xl">
+              {/* Glow ring behind card */}
+              <div
+                className="pointer-events-none absolute -inset-6 animate-[claimGlowRing_5s_ease-in-out_infinite] rounded-[2rem] bg-gradient-to-b from-white/[0.12] via-emerald-400/[0.08] to-transparent blur-2xl"
+                aria-hidden
+              />
+              <div className="relative rounded-3xl border border-white/[0.1] bg-black/50 px-6 py-10 shadow-[0_0_80px_-12px_rgba(255,255,255,0.12)] backdrop-blur-md sm:px-10 sm:py-12">
+                <div
+                  className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent"
+                  aria-hidden
+                />
+                <UsernameClaimBar variant="cta" className="relative w-full px-0" />
+              </div>
+            </div>
           </div>
         </section>
       )}
