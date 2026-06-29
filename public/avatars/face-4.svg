@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <radialGradient id="f4-bg" cx="50%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#1a2030"/>
+      <stop offset="100%" stop-color="#0a0c12"/>
+    </radialGradient>
+    <radialGradient id="f4-skin" cx="44%" cy="36%" r="52%">
+      <stop offset="0%" stop-color="#E8C4A8"/>
+      <stop offset="55%" stop-color="#B88060"/>
+      <stop offset="100%" stop-color="#7A5038"/>
+    </radialGradient>
+    <linearGradient id="f4-hair" x1="25%" y1="0%" x2="75%" y2="100%">
+      <stop offset="0%" stop-color="#2A2220"/>
+      <stop offset="100%" stop-color="#0A0808"/>
+    </linearGradient>
+    <radialGradient id="f4-blush" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#A86050" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#A86050" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#f4-bg)"/>
+  <ellipse cx="100" cy="76" rx="66" ry="60" fill="url(#f4-hair)"/>
+  <ellipse cx="100" cy="114" rx="50" ry="54" fill="url(#f4-skin)"/>
+  <ellipse cx="72" cy="120" rx="12" ry="8" fill="url(#f4-blush)"/>
+  <ellipse cx="128" cy="120" rx="12" ry="8" fill="url(#f4-blush)"/>
+  <path fill="url(#f4-hair)" d="M38 92c6-32 28-52 62-52s56 20 62 52c-18-12-40-18-62-18s-44 6-62 18z"/>
+  <ellipse cx="82" cy="110" rx="5" ry="6" fill="#1A1410"/>
+  <ellipse cx="118" cy="110" rx="5" ry="6" fill="#1A1410"/>
+  <circle cx="84" cy="108" r="1.8" fill="#FFF" fill-opacity="0.75"/>
+  <circle cx="120" cy="108" r="1.8" fill="#FFF" fill-opacity="0.75"/>
+  <path stroke="#6A4030" stroke-width="2.5" stroke-linecap="round" d="M88 130c6 5 18 5 24 0"/>
+</svg>

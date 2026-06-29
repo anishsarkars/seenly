@@ -21,7 +21,7 @@ export default function AvatarPicker({ value, onChange, compact = false }: Avata
               key={avatar.id}
               type="button"
               onClick={() => onChange(avatar.src)}
-              className={`aspect-square overflow-hidden rounded-full border-2 transition-all ${
+              className={`aspect-square overflow-hidden rounded-full border-2 transition-all shadow-[0_4px_14px_rgba(0,0,0,0.35)] ${
                 selected
                   ? 'border-white/60 ring-2 ring-white/20 scale-[1.02]'
                   : 'border-transparent opacity-85 hover:opacity-100 hover:border-white/20'

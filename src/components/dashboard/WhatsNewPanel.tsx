@@ -23,7 +23,7 @@ export default function WhatsNewPanel({
       <div className="space-y-0.5">
         <p className={`font-semibold text-white ${compact ? 'text-xs' : 'text-sm'}`}>Pick an avatar</p>
         <p className={`text-white/45 ${compact ? 'text-[10px]' : 'text-xs'}`}>
-          Simple colorful looks for your profile.
+          Premium 3D faces for your profile.
         </p>
       </div>
       <AvatarPicker value={avatar} onChange={onAvatarChange} compact />
