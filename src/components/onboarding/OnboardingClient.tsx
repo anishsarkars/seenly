@@ -441,21 +441,21 @@ export default function OnboardingClient() {
   };
 
   return (
-    <div className="flex min-h-screen bg-black font-geist text-white selection:bg-white selection:text-black">
+    <div className="flex h-dvh max-h-dvh overflow-hidden bg-black font-geist text-white selection:bg-white selection:text-black">
       <Confetti active={step === 9} />
 
       {/* Onboarding Input Column */}
-      <div className="flex flex-1 flex-col justify-between border-white/10 px-5 py-10 md:px-8 md:py-14 lg:max-w-lg lg:border-r">
+      <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden border-white/10 px-5 py-6 md:px-7 md:py-8 lg:max-w-md lg:border-r xl:max-w-lg">
         
         {/* Top Branding / Step Progress */}
-        <div>
-          <div className="mb-10 flex items-center gap-3">
+        <div className="shrink-0">
+          <div className="mb-6 flex items-center gap-3">
             <span className="text-lg font-semibold tracking-tight text-white">Seenly</span>
           </div>
 
           {/* Progress Indicator */}
           {step < 9 && (
-            <div className="mb-10 space-y-3">
+            <div className="mb-6 space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium uppercase tracking-widest text-white/40">Step {step} of 8</span>
                 <span className="font-medium text-white/70">
@@ -482,7 +482,7 @@ export default function OnboardingClient() {
         </div>
 
         {/* Dynamic Form Area */}
-        <div className="flex flex-1 flex-col justify-center py-6">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto py-4">
           <AnimatePresence mode="wait">
             {authLoading ? (
               <div className="flex justify-center items-center py-12 text-zinc-500 gap-2">
@@ -1291,11 +1291,14 @@ export default function OnboardingClient() {
       </div>
 
       {/* Live Preview Sidebar (Right Column) */}
-      <div className="relative hidden flex-1 items-center justify-center overflow-hidden bg-black p-8 lg:flex">
+      <div className="relative hidden h-full min-h-0 flex-1 items-center justify-center overflow-hidden bg-black p-6 lg:flex">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.03)_0%,transparent_70%)]" />
 
-        {/* Live Preview Mobile Device Mockup */}
-        <div className="relative w-[360px] h-[720px] rounded-[48px] border-[8px] border-white/10 bg-black shadow-2xl overflow-hidden flex flex-col justify-between">
+        {/* Live Preview Mobile Device Mockup — scales to viewport */}
+        <div
+          className="relative flex max-h-[min(72dvh,620px)] w-[min(280px,32vw)] flex-col overflow-hidden rounded-[40px] border-[6px] border-white/10 bg-black shadow-2xl"
+          style={{ aspectRatio: '9 / 19.5' }}
+        >
           
           {/* Top Notch/Dynamic Island */}
           <div className="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-5 rounded-full bg-black z-30" />
@@ -1308,7 +1311,7 @@ export default function OnboardingClient() {
 
             {/* Profile Avatar / Username Header */}
             <div className="flex flex-col items-center text-center mt-6 space-y-3">
-              <div className="h-16 w-16 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden">
+              <div className="h-14 w-14 rounded-full overflow-hidden bg-white ring-1 ring-white/10">
                 <img
                   src={selectedAvatar}
                   alt={fullName || 'Profile avatar'}

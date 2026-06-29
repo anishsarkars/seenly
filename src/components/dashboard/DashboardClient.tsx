@@ -172,29 +172,38 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
 
   return (
     <div className={shell}>
-      <div className="flex min-h-screen">
+      <div className="flex h-dvh max-h-dvh overflow-hidden">
         {/* Nav sidebar */}
-        <aside className="hidden w-56 shrink-0 flex-col border-r border-white/10 lg:flex">
-          <div className="px-6 py-5">
+        <aside className="hidden h-full w-56 shrink-0 flex-col border-r border-white/10 lg:flex">
+          <div className="shrink-0 px-5 py-5">
             <a href="/" className="text-lg font-semibold tracking-tight text-white">Seenly</a>
           </div>
-          <nav className="flex flex-col gap-1 px-3">
+          <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 min-h-0">
             <NavButton tab="analytics" />
             <NavButton tab="edit" />
             <NavButton tab="video" />
             <NavButton tab="settings" />
           </nav>
-          <div className="mt-auto border-t border-white/10 px-4 py-4">
-            <p className="truncate text-xs text-white/40">{profile?.user?.email}</p>
-            <button type="button" onClick={handleSignOut} className="mt-2 text-xs text-white/50 hover:text-white">
-              Sign out
-            </button>
+          <div className="shrink-0 border-t border-white/10 p-3">
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">Account</p>
+              <p className="mt-1 truncate text-xs text-white/70" title={profile?.user?.email}>
+                {profile?.user?.email}
+              </p>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="mt-2 text-xs text-white/45 transition-colors hover:text-white"
+              >
+                Sign out
+              </button>
+            </div>
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {/* Header */}
-          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-8">
+          <header className="shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4 sm:px-8">
             <h1 className={sectionTitle}>{TAB_META[activeTab].label}</h1>
             <div className="flex items-center gap-2">
               <button type="button" onClick={handleCopyLink} className={btnSecondary}>
@@ -232,7 +241,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           </div>
 
           {/* Content + preview */}
-          <div className="flex flex-1 flex-col gap-8 px-5 py-8 sm:px-8 xl:flex-row xl:items-start">
+          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-5 py-6 sm:px-8 xl:flex-row xl:items-start xl:gap-8">
             <main className="min-w-0 flex-1 xl:max-w-2xl space-y-8">
               {/* Mobile / tablet preview */}
               <div className="xl:hidden">
@@ -403,8 +412,8 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
             </main>
 
             {/* Desktop preview — sticky right column */}
-            <aside className="hidden w-full shrink-0 xl:block xl:w-72">
-              <div className="sticky top-8">
+            <aside className="hidden w-full shrink-0 xl:block xl:w-64">
+              <div className="xl:sticky xl:top-6">
                 <ProfileCardPreview {...previewProps} />
               </div>
             </aside>

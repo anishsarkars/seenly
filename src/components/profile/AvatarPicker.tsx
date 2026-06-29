@@ -21,10 +21,10 @@ export default function AvatarPicker({ value, onChange, compact = false }: Avata
               key={avatar.id}
               type="button"
               onClick={() => onChange(avatar.src)}
-              className={`aspect-square overflow-hidden rounded-lg border transition-all ${
+              className={`aspect-square overflow-hidden rounded-full border-2 transition-all ${
                 selected
-                  ? 'border-white/40 ring-1 ring-white/20'
-                  : 'border-white/10 opacity-80 hover:opacity-100'
+                  ? 'border-white/50 ring-2 ring-white/15'
+                  : 'border-transparent opacity-90 hover:opacity-100'
               }`}
               aria-label={`Choose ${avatar.label} avatar`}
               aria-pressed={selected}

@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { signInWithGoogle } from '@/lib/auth-client';
+import { btnPrimary, btnSecondary, input, panel } from '@/lib/platform-ui';
 
 function GoogleIcon() {
   return (
@@ -57,65 +59,84 @@ export default function LoginClient() {
     if (authError) {
       setError(authError.message);
     } else {
-      setMessage('Check your email for a magic link to sign in.');
+      setMessage('Check your email for a magic link.');
     }
     setLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black font-geist px-6 text-white selection:bg-white selection:text-black">
-      <div className="w-full max-w-md space-y-8">
-        <div className="space-y-2 text-center">
-          <Link href="/" className="text-xl font-semibold tracking-tight">Seenly</Link>
-          <h1 className="text-3xl font-bold tracking-tight">Sign in</h1>
-          <p className="text-sm text-white/50">Create your public profile in minutes.</p>
+    <div className="flex min-h-dvh max-h-dvh overflow-hidden bg-black font-geist text-white selection:bg-white selection:text-black">
+      {/* Brand panel */}
+      <div className="hidden w-[42%] max-w-md shrink-0 flex-col justify-between border-r border-white/10 p-10 lg:flex xl:p-14">
+        <Link href="/" className="text-xl font-semibold tracking-tight">Seenly</Link>
+        <div className="space-y-4">
+          <h1 className="text-3xl font-semibold leading-tight tracking-tight xl:text-4xl">
+            Show who you are,
+            <br />
+            <span className="text-white/50">not just what&apos;s on paper.</span>
+          </h1>
+          <p className="max-w-xs text-sm leading-relaxed text-white/45">
+            Sign in to manage your video profile, track views, and share one link everywhere.
+          </p>
         </div>
+        <p className="text-xs text-white/25">seenly.tech</p>
+      </div>
 
-        <div className="space-y-3">
-          <button
-            type="button"
-            disabled={loading}
-            onClick={handleGoogleSignIn}
-            className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-white/10 bg-white px-4 py-3 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-50"
-          >
-            <GoogleIcon />
-            Continue with Google
-          </button>
+      {/* Form panel */}
+      <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-5 py-8 sm:px-8">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="space-y-2 lg:hidden">
+            <Link href="/" className="text-lg font-semibold tracking-tight">Seenly</Link>
+            <p className="text-sm text-white/45">Sign in to your profile</p>
+          </div>
+
+          <div className={`${panel} space-y-5 p-6 sm:p-7`}>
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold tracking-tight">Welcome back</h2>
+              <p className="text-sm text-white/45">Continue with Google or use a magic link.</p>
+            </div>
+
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handleGoogleSignIn}
+              className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-50"
+            >
+              <GoogleIcon />
+              Continue with Google
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-white/10" />
+              <span className="text-[11px] uppercase tracking-widest text-white/30">or</span>
+              <div className="h-px flex-1 bg-white/10" />
+            </div>
+
+            <form onSubmit={sendMagicLink} className="space-y-3">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@email.com"
+                className={input}
+              />
+              <button type="submit" disabled={loading} className={`${btnSecondary} w-full`}>
+                Send magic link
+              </button>
+            </form>
+
+            {message && <p className="text-center text-sm text-emerald-400/90">{message}</p>}
+            {error && <p className="text-center text-sm text-red-400/90">{error}</p>}
+          </div>
+
+          <p className="text-center text-sm text-white/40">
+            New here?{' '}
+            <Link href="/onboarding" className="inline-flex items-center gap-1 text-white/70 hover:text-white">
+              Create your profile <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </p>
         </div>
-
-        <div className="flex items-center gap-4">
-          <div className="h-px flex-1 bg-white/10" />
-          <span className="text-xs uppercase tracking-widest text-white/30">or</span>
-          <div className="h-px flex-1 bg-white/10" />
-        </div>
-
-        <form onSubmit={sendMagicLink} className="space-y-4">
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@email.com"
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none focus:border-white/25"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-white/10 border border-white/10 px-4 py-3 text-sm font-semibold text-white hover:bg-white/15 disabled:opacity-50"
-          >
-            Send magic link
-          </button>
-        </form>
-
-        {message && <p className="text-center text-sm text-emerald-400">{message}</p>}
-        {error && <p className="text-center text-sm text-red-400">{error}</p>}
-
-        <p className="text-center text-sm text-white/40">
-          New here?{' '}
-          <Link href="/onboarding" className="text-white/70 hover:text-white">
-            Create your profile
-          </Link>
-        </p>
       </div>
     </div>
   );
