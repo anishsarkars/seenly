@@ -421,20 +421,18 @@ export default function ProfileClient({ profileData, isOwner = false }: ProfileC
 
       </div>
 
-      <footer className={`border-t border-white/5 px-6 ${isOwner ? 'pb-28' : 'pb-10'} pt-8`}>
-        <div className="mx-auto max-w-4xl text-center">
+      <footer className={`px-6 ${isOwner ? 'pb-28' : 'pb-12'} pt-10`}>
+        <div className="mx-auto max-w-4xl flex justify-center">
           <Link
             href="/onboarding"
-            className="inline-flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-xs text-white/35 transition-colors hover:text-white/60"
+            className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/50 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/8 hover:text-white/70"
           >
             <span>Built with</span>
-            <span className="font-medium text-white/55">seenly.tech</span>
-            <span className="text-white/25">·</span>
+            <span className="font-semibold text-white/80">seenly.tech</span>
+            <span className="hidden text-white/25 sm:inline">·</span>
             <span>
               make yours with{' '}
-              <span className="font-medium text-white/55 underline decoration-white/20 underline-offset-2">
-                your username
-              </span>
+              <span className="font-semibold text-white/80">your username</span>
             </span>
           </Link>
         </div>
