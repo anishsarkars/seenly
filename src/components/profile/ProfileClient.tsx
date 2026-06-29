@@ -2,9 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { 
-  Briefcase, FolderGit, FileText, Share2, MapPin, ExternalLink, 
-  Mail, Phone, Globe, Play, Pause, 
-  Volume2, VolumeX, Maximize, AlertCircle
+  FileText, Share2, MapPin, ExternalLink, 
+  Mail, Phone, Globe
 } from 'lucide-react';
 import { logAnalyticEvent } from '@/db/actions';
 
@@ -20,53 +19,57 @@ interface ProfileClientProps {
 export default function ProfileClient({ profileData }: ProfileClientProps) {
   const { user, experiences, projects, socials } = profileData;
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const [hasLoggedPlay, setHasLoggedPlay] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Log page view on mount
   useEffect(() => {
-    logAnalyticEvent(user.id, 'views');
+    logAnalyticEvent(user.id, 'views', {
+      device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+      browser: navigator.userAgent.includes('Chrome')
+        ? 'Chrome'
+        : navigator.userAgent.includes('Safari')
+          ? 'Safari'
+          : navigator.userAgent.includes('Firefox')
+            ? 'Firefox'
+            : 'Other',
+      referrer: document.referrer || 'direct',
+    });
   }, [user.id]);
 
-  const handlePlayPause = () => {
-    if (!videoRef.current) return;
-    if (isPlaying) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      videoRef.current.play();
-      setIsPlaying(true);
-      if (!hasLoggedPlay) {
-        logAnalyticEvent(user.id, 'plays');
-        setHasLoggedPlay(true);
+  const handleDownloadResume = () => {
+    if (!user.resumeUrl || user.resumeUrl === '#') return;
+    logAnalyticEvent(user.id, 'downloads');
+    window.open(user.resumeUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const profileUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const shareText = `Check out ${user.fullName || user.username}'s Seenly profile`;
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareText, url: profileUrl });
+        return;
+      } catch {
+        // fall through to clipboard
       }
     }
-  };
-
-  const handleMuteToggle = () => {
-    if (!videoRef.current) return;
-    videoRef.current.muted = !isMuted;
-    setIsMuted(!isMuted);
-  };
-
-  const handleFullscreen = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.requestFullscreen) {
-      videoRef.current.requestFullscreen();
-    }
-  };
-
-  const handleDownloadResume = () => {
-    logAnalyticEvent(user.id, 'downloads');
-    alert('Mock Resume PDF download started!');
-  };
-
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
+    await navigator.clipboard.writeText(profileUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareTo = (platform: 'linkedin' | 'twitter' | 'whatsapp' | 'email') => {
+    const encodedUrl = encodeURIComponent(profileUrl);
+    const encodedText = encodeURIComponent(shareText);
+    const urls = {
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+      twitter: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
+      whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
+      email: `mailto:?subject=${encodedText}&body=${encodedUrl}`,
+    };
+    window.open(urls[platform], '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -103,7 +106,7 @@ export default function ProfileClient({ profileData }: ProfileClientProps) {
             >
               <Share2 className="h-3.5 w-3.5" /> {copied ? 'Copied Link' : 'Share Profile'}
             </button>
-            {user.resumeUrl && (
+            {user.resumeUrl && user.resumeUrl !== '#' && (
               <button 
                 onClick={handleDownloadResume}
                 className="flex items-center gap-2 bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all"
@@ -111,6 +114,18 @@ export default function ProfileClient({ profileData }: ProfileClientProps) {
                 <FileText className="h-3.5 w-3.5" /> Download CV
               </button>
             )}
+          </div>
+
+          <div className="flex flex-wrap gap-2 w-full justify-center md:justify-start">
+            {(['linkedin', 'twitter', 'whatsapp', 'email'] as const).map((platform) => (
+              <button
+                key={platform}
+                onClick={() => shareTo(platform)}
+                className="rounded-lg border border-zinc-900 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 transition-colors hover:border-zinc-700 hover:text-white"
+              >
+                {platform}
+              </button>
+            ))}
           </div>
 
           {/* Social Icons list */}
@@ -154,59 +169,29 @@ export default function ProfileClient({ profileData }: ProfileClientProps) {
         {/* Main Content Area: Video and Details */}
         <div className="md:col-span-8 space-y-10">
           
-          {/* Custom video frame */}
-          <div className="relative group rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-900 shadow-2xl">
-            <div className="aspect-video w-full relative flex items-center justify-center">
-              <video 
-                ref={videoRef} 
-                src={user.videoUrl} 
-                className="w-full h-full object-cover" 
-                playsInline
-                loop
-                onClick={handlePlayPause}
-              />
-              
-              {/* Custom floating controllers */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 pointer-events-none">
-                <div className="flex justify-between items-center w-full">
-                  <span className="text-[10px] bg-black/60 px-2 py-0.5 rounded-full border border-white/5 uppercase tracking-widest text-zinc-400">
-                    60s Introduction
-                  </span>
+          {/* Intro video */}
+          <div className="relative overflow-hidden rounded-2xl border border-zinc-900 bg-zinc-950 shadow-2xl">
+            <div className="aspect-video w-full">
+              {user.videoUrl ? (
+                <video
+                  ref={videoRef}
+                  src={user.videoUrl}
+                  poster={user.thumbnailUrl || undefined}
+                  className="h-full w-full object-cover"
+                  controls
+                  playsInline
+                  preload="metadata"
+                  onPlay={() => {
+                    if (!hasLoggedPlay) {
+                      logAnalyticEvent(user.id, 'plays');
+                      setHasLoggedPlay(true);
+                    }
+                  }}
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                  No intro video uploaded yet.
                 </div>
-
-                <div className="flex justify-between items-center w-full pointer-events-auto">
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={handlePlayPause}
-                      className="h-10 w-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-all shadow-md"
-                    >
-                      {isPlaying ? <Pause className="h-4 w-4 fill-black" /> : <Play className="h-4 w-4 fill-black ml-0.5" />}
-                    </button>
-                    <button 
-                      onClick={handleMuteToggle}
-                      className="h-8 w-8 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center hover:bg-black/80 transition-all"
-                    >
-                      {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-                    </button>
-                  </div>
-                  
-                  <button 
-                    onClick={handleFullscreen}
-                    className="h-8 w-8 rounded-full bg-black/60 border border-white/10 text-white flex items-center justify-center hover:bg-black/80 transition-all"
-                  >
-                    <Maximize className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Big overlay play button when paused */}
-              {!isPlaying && (
-                <button 
-                  onClick={handlePlayPause}
-                  className="absolute h-16 w-16 rounded-full bg-white/95 text-black flex items-center justify-center hover:scale-105 transition-all shadow-2xl backdrop-blur-sm z-10"
-                >
-                  <Play className="h-6 w-6 fill-black ml-1" />
-                </button>
               )}
             </div>
           </div>

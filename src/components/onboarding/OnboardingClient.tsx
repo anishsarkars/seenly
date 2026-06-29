@@ -7,7 +7,9 @@ import {
   FileText, CheckCircle, Plus, Trash2, ArrowRight, ArrowLeft, RefreshCw, 
   Play, Square, Sparkles, Upload, Volume2, VolumeX, Shield, UserCheck
 } from 'lucide-react';
-import { saveOnboardingData, isUsernameUnique, getUserProfile } from '@/db/actions';
+import { saveOnboardingData, isUsernameUnique, getUserProfile, getUsernameSuggestions } from '@/db/actions';
+import { validateUsername } from '@/lib/username';
+import { captureVideoThumbnail, uploadProfileResume, uploadProfileThumbnail, uploadProfileVideo } from '@/lib/storage';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 
@@ -30,6 +32,8 @@ export default function OnboardingClient() {
   const [username, setUsername] = useState('');
   const [usernameValid, setUsernameValid] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
+  const [usernameError, setUsernameError] = useState('');
   
   const [fullName, setFullName] = useState('');
   const [headline, setHeadline] = useState('');
@@ -155,22 +159,36 @@ export default function OnboardingClient() {
   useEffect(() => {
     if (!username) {
       setUsernameValid(null);
+      setUsernameError('');
+      setUsernameSuggestions([]);
       return;
     }
+
     const cleanUsername = username.toLowerCase().replace(/[^a-z0-9_-]/g, '');
     if (cleanUsername !== username) {
       setUsername(cleanUsername);
     }
-    
-    if (username.length < 3 || username.length > 30) {
+
+    const validation = validateUsername(cleanUsername);
+    if (!validation.valid) {
       setUsernameValid(false);
+      setUsernameError(validation.error || 'Invalid username.');
+      setUsernameSuggestions([]);
       return;
     }
 
     const timer = setTimeout(async () => {
       setCheckingUsername(true);
-      const isUnique = await isUsernameUnique(username, sessionUser?.id);
+      const isUnique = await isUsernameUnique(cleanUsername, sessionUser?.id);
       setUsernameValid(isUnique);
+      if (!isUnique) {
+        setUsernameError('This username is already taken.');
+        const suggestions = await getUsernameSuggestions(cleanUsername);
+        setUsernameSuggestions(suggestions);
+      } else {
+        setUsernameError('');
+        setUsernameSuggestions([]);
+      }
       setCheckingUsername(false);
     }, 400);
 
@@ -277,18 +295,33 @@ export default function OnboardingClient() {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 250 * 1024 * 1024) {
-      alert('File size exceeds 250MB limit.');
+    if (file.size > 50 * 1024 * 1024) {
+      alert('File size exceeds 50MB limit.');
+      return;
+    }
+
+    if (!file.type.startsWith('video/')) {
+      alert('Please upload an MP4 video file.');
       return;
     }
 
     const url = URL.createObjectURL(file);
-    setVideoPreviewUrl(url);
-    setRecordedBlob(file);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.src = url;
+    video.onloadedmetadata = () => {
+      if (video.duration > 60) {
+        alert('Video must be 60 seconds or shorter.');
+        URL.revokeObjectURL(url);
+        return;
+      }
+      setVideoPreviewUrl(url);
+      setRecordedBlob(file);
+    };
   };
 
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -300,40 +333,77 @@ export default function OnboardingClient() {
   };
 
   const handlePublish = async () => {
+    if (!sessionUser?.id) {
+      alert('Please sign in before publishing your profile.');
+      return;
+    }
+
+    if (!usernameValid || !recordedBlob || !videoPreviewUrl) {
+      alert('Please complete your username and intro video before publishing.');
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(10);
-    
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 90) { clearInterval(interval); return 90; }
-        return prev + 15;
-      });
-    }, 200);
 
-    const onboardingPayload = {
-      username,
-      email: socials.email || `${username}@seenly.tech`,
-      fullName,
-      headline,
-      location,
-      bio,
-      videoUrl: videoPreviewUrl,
-      resumeUrl: resumeName ? `#` : undefined,
-      experiences: experiences.filter(e => e.company && e.role),
-      projects: projects.filter(p => p.title && p.description),
-      socials
-    };
+    try {
+      let finalVideoUrl = videoPreviewUrl;
+      let finalThumbnailUrl: string | undefined;
+      let finalResumeUrl: string | undefined;
 
-    const res = await saveOnboardingData(sessionUser.id, onboardingPayload);
-    
-    setUploadProgress(100);
-    clearInterval(interval);
-    
-    setTimeout(() => {
-      setIsUploading(false);
-      // Redirect to public profile page after publishing
+      if (recordedBlob && videoPreviewUrl.startsWith('blob:')) {
+        setUploadProgress(30);
+        try {
+          finalVideoUrl = await uploadProfileVideo(supabase, sessionUser.id, recordedBlob);
+          setUploadProgress(55);
+          const thumbnail = await captureVideoThumbnail(videoPreviewUrl);
+          finalThumbnailUrl = await uploadProfileThumbnail(supabase, sessionUser.id, thumbnail);
+        } catch (uploadError) {
+          console.warn('Storage upload unavailable, saving profile without cloud media.', uploadError);
+        }
+      }
+
+      if (resumeFile) {
+        setUploadProgress(75);
+        try {
+          finalResumeUrl = await uploadProfileResume(supabase, sessionUser.id, resumeFile);
+        } catch (uploadError) {
+          console.warn('Resume upload unavailable.', uploadError);
+        }
+      }
+
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName || username)}`;
+
+      const onboardingPayload = {
+        username,
+        email: socials.email || sessionUser.email || `${username}@seenly.tech`,
+        fullName,
+        headline,
+        location,
+        bio,
+        videoUrl: finalVideoUrl,
+        thumbnailUrl: finalThumbnailUrl,
+        avatarUrl,
+        resumeUrl: finalResumeUrl,
+        experiences: experiences.filter(e => e.company && e.role),
+        projects: projects.filter(p => p.title && p.description),
+        socials,
+        isPublic: true,
+      };
+
+      setUploadProgress(90);
+      const res = await saveOnboardingData(sessionUser.id, onboardingPayload);
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to save profile.');
+      }
+
+      setUploadProgress(100);
       router.push(`/${username}`);
-    }, 500);
+    } catch (err: any) {
+      alert(err.message || 'Failed to publish profile. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const addExperience = () => {
@@ -527,15 +597,29 @@ export default function OnboardingClient() {
                       className="flex-1 bg-transparent px-4 py-3 outline-none text-white text-sm"
                     />
                   </div>
-                  <div className="flex justify-between items-center text-xs px-1">
+                  <div className="space-y-2 px-1 text-xs">
                     {checkingUsername ? (
                       <span className="text-zinc-500 flex items-center gap-1"><RefreshCw className="h-3 w-3 animate-spin" /> Checking availability...</span>
                     ) : usernameValid === true ? (
                       <span className="text-emerald-400 flex items-center gap-1"><UserCheck className="h-3 w-3" /> Link is available!</span>
                     ) : usernameValid === false ? (
-                      <span className="text-red-400">Must be 3-30 letters/numbers and unique</span>
+                      <span className="text-red-400">{usernameError || 'This username is unavailable.'}</span>
                     ) : (
-                      <span className="text-zinc-600">3-30 characters, lowercase</span>
+                      <span className="text-zinc-600">3–30 characters, lowercase letters, numbers, _ or -</span>
+                    )}
+                    {usernameSuggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {usernameSuggestions.map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => setUsername(suggestion)}
+                            className="rounded-full border border-zinc-800 px-3 py-1 text-zinc-400 transition-colors hover:border-zinc-600 hover:text-white"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>

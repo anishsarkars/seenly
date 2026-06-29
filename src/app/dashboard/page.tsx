@@ -10,7 +10,7 @@ export default async function DashboardPage() {
 
   // If not logged in, redirect to onboarding login screen
   if (!user) {
-    redirect('/onboarding');
+    redirect('/login');
   }
 
   // Fetch the logged-in user's profile and analytics

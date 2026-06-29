@@ -10,6 +10,9 @@ import {
   Mail, FileText, MapPin, Save
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
+import { createClient } from '@/utils/supabase/client';
+import { captureVideoThumbnail, uploadProfileThumbnail, uploadProfileVideo } from '@/lib/storage';
+import { useRouter } from 'next/navigation';
 
 interface DashboardClientProps {
   initialProfile: any;
@@ -17,11 +20,14 @@ interface DashboardClientProps {
 }
 
 export default function DashboardClient({ initialProfile, initialAnalytics }: DashboardClientProps) {
+  const router = useRouter();
+  const [supabase] = useState(() => createClient());
   const [activeTab, setActiveTab] = useState<'analytics' | 'edit' | 'video' | 'settings'>('analytics');
   const [profile, setProfile] = useState(initialProfile);
   const [analytics, setAnalytics] = useState(initialAnalytics);
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
   // Edit form states
   const [fullName, setFullName] = useState(profile?.user?.fullName || profile?.user?.username || '');
@@ -71,6 +77,78 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
         socials
       });
     }
+  };
+
+  const handleVideoReplace = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile?.user?.id) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      alert('Video must be 50MB or smaller.');
+      return;
+    }
+
+    setIsUploadingVideo(true);
+    try {
+      const previewUrl = URL.createObjectURL(file);
+      const videoUrl = await uploadProfileVideo(supabase, profile.user.id, file);
+      const thumbnailBlob = await captureVideoThumbnail(previewUrl);
+      const thumbnailUrl = await uploadProfileThumbnail(supabase, profile.user.id, thumbnailBlob);
+      URL.revokeObjectURL(previewUrl);
+
+      await saveOnboardingData(profile.user.id, {
+        username: profile.user.username,
+        email: profile.user.email,
+        fullName: profile.user.fullName,
+        headline: profile.user.headline,
+        location: profile.user.location,
+        bio: profile.user.bio,
+        videoUrl,
+        thumbnailUrl,
+        resumeUrl: profile.user.resumeUrl,
+        experiences: profile.experiences,
+        projects: profile.projects,
+        socials: profile.socials,
+      });
+
+      setProfile({
+        ...profile,
+        user: { ...profile.user, videoUrl, thumbnailUrl },
+      });
+      alert('Video updated successfully.');
+    } catch (err: any) {
+      alert(err.message || 'Failed to upload video.');
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
+
+  const handleTogglePrivacy = async () => {
+    const nextValue = !profile?.user?.isPublic;
+    await saveOnboardingData(profile.user.id, {
+      username: profile.user.username,
+      email: profile.user.email,
+      fullName: profile.user.fullName,
+      headline: profile.user.headline,
+      location: profile.user.location,
+      bio: profile.user.bio,
+      videoUrl: profile.user.videoUrl,
+      thumbnailUrl: profile.user.thumbnailUrl,
+      resumeUrl: profile.user.resumeUrl,
+      experiences: profile.experiences,
+      projects: profile.projects,
+      socials: profile.socials,
+      isPublic: nextValue,
+    });
+    setProfile({
+      ...profile,
+      user: { ...profile.user, isPublic: nextValue },
+    });
   };
 
   return (
@@ -390,15 +468,21 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-zinc-300">Drag or click to choose a new video</p>
-                  <p className="text-xs text-zinc-550">Supports MP4, MOV, WEBM (Max 250MB)</p>
+                  <p className="text-xs text-zinc-550">Supports MP4 or WEBM (max 50MB, 60 seconds)</p>
                 </div>
-                <input type="file" className="hidden" id="dash-vid-uploader" />
-                <button 
-                  onClick={() => alert('Replacement feature activated (simulate replacement)')}
-                  className="bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+                <input
+                  type="file"
+                  accept="video/mp4,video/webm"
+                  className="hidden"
+                  id="dash-vid-uploader"
+                  onChange={handleVideoReplace}
+                />
+                <label
+                  htmlFor="dash-vid-uploader"
+                  className={`inline-block cursor-pointer bg-white text-black hover:bg-zinc-200 px-4 py-2 rounded-xl text-xs font-bold transition-all ${isUploadingVideo ? 'opacity-50 pointer-events-none' : ''}`}
                 >
-                  Upload File
-                </button>
+                  {isUploadingVideo ? 'Uploading...' : 'Upload File'}
+                </label>
               </div>
             </div>
           )}
@@ -409,6 +493,34 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
               <h2 className="text-lg font-bold">Account Settings</h2>
               
               <div className="space-y-4">
+                <div className="flex justify-between items-center p-4 border border-zinc-900 rounded-xl bg-zinc-900/10">
+                  <div>
+                    <h3 className="text-sm font-bold">Profile visibility</h3>
+                    <p className="text-xs text-zinc-500">
+                      {profile?.user?.isPublic === false ? 'Your profile is private.' : 'Your profile is public.'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleTogglePrivacy}
+                    className="border border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700 text-zinc-300 text-xs font-bold px-4 py-2 rounded-xl transition-all"
+                  >
+                    {profile?.user?.isPublic === false ? 'Make Public' : 'Make Private'}
+                  </button>
+                </div>
+
+                <div className="flex justify-between items-center p-4 border border-zinc-900 rounded-xl bg-zinc-900/10">
+                  <div>
+                    <h3 className="text-sm font-bold">Sign out</h3>
+                    <p className="text-xs text-zinc-500">End your session on this device.</p>
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    className="border border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700 text-zinc-300 text-xs font-bold px-4 py-2 rounded-xl transition-all"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+
                 <div className="flex justify-between items-center p-4 border border-zinc-900 rounded-xl bg-zinc-900/10">
                   <div>
                     <h3 className="text-sm font-bold">Delete Profile</h3>

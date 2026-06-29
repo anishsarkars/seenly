@@ -1,7 +1,45 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Menu, X, Video, FileText, Share2, MapPin, Play } from 'lucide-react';
+import { ArrowRight, Menu, X, MapPin, Play } from 'lucide-react';
+
+const steps = [
+  {
+    label: 'Record intro',
+    description: 'A 1-2 Minute pitch — your voice, your story.',
+    icon: (
+      <svg viewBox="0 0 48 48" fill="none" className="h-10 w-10 sm:h-12 sm:w-12" aria-hidden>
+        <rect x="8" y="12" width="32" height="24" rx="2" stroke="currentColor" strokeWidth="1.25" />
+        <circle cx="24" cy="24" r="6" stroke="currentColor" strokeWidth="1.25" />
+        <circle cx="24" cy="24" r="2" fill="currentColor" />
+        <path d="M20 12V9M28 12V9" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Build profile',
+    description: 'Experience, projects, resume — all in one place.',
+    icon: (
+      <svg viewBox="0 0 48 48" fill="none" className="h-10 w-10 sm:h-12 sm:w-12" aria-hidden>
+        <rect x="12" y="8" width="24" height="32" rx="2" stroke="currentColor" strokeWidth="1.25" />
+        <circle cx="24" cy="18" r="4" stroke="currentColor" strokeWidth="1.25" />
+        <path d="M17 30c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+        <path d="M16 38h16" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Share link',
+    description: 'One URL for every application and outreach.',
+    icon: (
+      <svg viewBox="0 0 48 48" fill="none" className="h-10 w-10 sm:h-12 sm:w-12" aria-hidden>
+        <path d="M18 22l12-12M30 10h8v8" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M30 22l-12 12M18 34H10v-8" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="14" y="14" width="20" height="20" rx="2" stroke="currentColor" strokeWidth="1.25" strokeDasharray="3 3" opacity="0.35" />
+      </svg>
+    ),
+  },
+];
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -55,15 +93,14 @@ export default function Home() {
     <div className="min-h-screen bg-black font-geist text-white selection:bg-white selection:text-black">
 
       {/* HERO VIEWPORT SECTION */}
-      <section className="relative h-screen w-full overflow-hidden flex flex-col justify-between">
+      <section className="relative flex min-h-[115dvh] w-full flex-col justify-between overflow-hidden">
         {/* Video Background */}
         <video
           autoPlay
           muted
           loop
           playsInline
-          className="absolute inset-0 h-full w-full object-cover"
-          style={{ objectPosition: '70% center' }}
+          className="absolute inset-0 h-full w-full object-cover max-sm:object-[center_35%] sm:object-[65%_center]"
         >
           <source
             src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_064209_0cb7d815-ff61-4caa-a6d5-bbff145ab272.mp4"
@@ -71,11 +108,8 @@ export default function Home() {
           />
         </video>
 
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/55 pointer-events-none" />
-
         {/* Navbar (z-30) */}
-        <header className="relative z-30 flex items-center justify-between px-6 py-5 md:px-12 lg:px-16">
+        <header className="relative z-30 flex items-center justify-between px-5 py-5 sm:px-6 md:px-12 lg:px-16">
           <div className="flex items-center gap-8">
             <span className="text-lg font-semibold tracking-tight text-white sm:text-xl">Seenly</span>
             <nav className="hidden md:flex items-center gap-6">
@@ -86,12 +120,12 @@ export default function Home() {
           </div>
 
           <div className="flex items-center">
-            <a
-              href="/onboarding"
-              className="hidden md:block rounded-lg bg-white px-5 py-2 text-sm font-medium text-black hover:scale-105 transition-transform"
+            <button
+              disabled
+              className="hidden md:block rounded-lg bg-gray-400 px-5 py-2 text-sm font-medium text-gray-700 cursor-not-allowed"
             >
-              Get Started
-            </a>
+              Join Beta (Closed)
+            </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="relative h-10 w-10 flex items-center justify-center text-white focus:outline-none md:hidden z-50 active:scale-90 transition-transform"
@@ -110,7 +144,7 @@ export default function Home() {
         </header>
 
         {/* Mobile Menu */}
-        <div className={`absolute inset-x-0 top-0 z-20 overflow-hidden bg-black/98 backdrop-blur-xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${mobileMenuOpen ? 'h-screen opacity-100' : 'h-0 opacity-0 pointer-events-none'}`}>
+        <div className={`absolute inset-x-0 top-0 z-20 overflow-hidden bg-black/98 backdrop-blur-xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${mobileMenuOpen ? 'min-h-[100dvh] opacity-100' : 'h-0 opacity-0 pointer-events-none'}`}>
           <div className="flex h-full flex-col justify-center px-8">
             <nav className={`flex flex-col gap-6 transition-all duration-500 delay-100 transform ${mobileMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
               <a
@@ -134,41 +168,41 @@ export default function Home() {
         </div>
 
         {/* Hero Content (z-10) — Two column layout */}
-        <main className="relative z-10 flex h-[calc(100vh-80px)] items-center justify-between px-6 pb-10 pt-4 md:px-12 lg:px-20">
+        <main className="relative z-10 flex flex-1 items-center justify-between px-5 pb-10 pt-4 sm:px-6 md:px-12 lg:px-20">
 
           {/* LEFT: Text */}
-          <div className="flex flex-col justify-center gap-5 max-w-xl">
+          <div className="flex w-full max-w-xl flex-col justify-center gap-5 lg:w-auto [text-shadow:0_2px_24px_rgba(0,0,0,0.85)]">
             {/* Badge */}
             <div className="animate-[fadeSlideUp_0.8s_ease_0.2s_both]">
-              <span className="inline-flex items-center gap-2 text-xs text-white/60 font-medium tracking-widest uppercase bg-white/5 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/60 backdrop-blur-md">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                 Personal Video Pitch
               </span>
             </div>
 
             {/* Heading */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-[1.06] tracking-tight text-white animate-[fadeSlideUp_0.8s_ease_0.4s_both]">
+            <h1 className="animate-[fadeSlideUp_0.8s_ease_0.4s_both] text-4xl font-bold leading-[1.06] tracking-tight text-white sm:text-5xl md:text-6xl">
               Your Resume Tells.<br />
               <span className="text-white/60">Your Intro Shows.</span>
             </h1>
 
             {/* Description */}
-            <p className="text-sm md:text-base leading-relaxed text-white/50 max-w-sm animate-[fadeSlideUp_0.8s_ease_0.6s_both]">
+            <p className="max-w-sm animate-[fadeSlideUp_0.8s_ease_0.6s_both] text-sm leading-relaxed text-white/50 md:text-base">
               Record a 60-second intro, build your profile, and share one link with every recruiter.
             </p>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap gap-3 items-center animate-[fadeSlideUp_0.8s_ease_0.8s_both]">
+            <div className="flex animate-[fadeSlideUp_0.8s_ease_0.8s_both] w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
               <a
                 href="/onboarding"
-                className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black hover:scale-105 transition-transform inline-flex items-center gap-2"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-105 sm:w-auto"
               >
                 Create Your Intro
                 <ArrowRight className="h-3.5 w-3.5" />
               </a>
               <button
                 onClick={() => alert('Demo video player modal!')}
-                className="rounded-lg border border-white/15 hover:bg-white/8 px-5 py-2.5 text-sm font-medium text-white/70 hover:text-white hover:scale-105 backdrop-blur-sm transition-all"
+                className="w-full rounded-lg border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 backdrop-blur-sm transition-all hover:scale-105 hover:bg-white/8 hover:text-white sm:w-auto"
               >
                 ▶ Watch Demo
               </button>
@@ -176,11 +210,12 @@ export default function Home() {
           </div>
 
           {/* RIGHT: 3D Animated Phone Profile Card — far right */}
-          <div className="hidden lg:flex items-center justify-end pr-12">
+          <div className="hidden items-center justify-end pr-4 lg:flex xl:pr-16">
+            <a href="/anish" className="relative block w-[210px] animate-[fadeSlideUp_0.9s_ease_0.5s_both] xl:w-[230px]">
             <div
               ref={cardRef}
               style={{ willChange: 'transform' }}
-              className="relative w-[175px] animate-[fadeSlideUp_0.9s_ease_0.5s_both]"
+              className="relative"
             >
               {/* Ambient glow behind */}
               <div className="absolute inset-x-0 inset-y-8 bg-white/[0.02] blur-3xl rounded-full pointer-events-none" />
@@ -285,6 +320,7 @@ export default function Home() {
               {/* Glow under phone */}
               <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-24 h-6 bg-white/[0.04] blur-xl rounded-full" />
             </div>
+            </a>
           </div>
 
         </main>
@@ -299,61 +335,41 @@ export default function Home() {
       </section>
 
       {/* HOW IT WORKS SECTION */}
-      <section id="how-it-works" className="relative py-24 md:py-32 bg-black border-t border-zinc-900 px-6 md:px-12 lg:px-16">
-        <div className="max-w-5xl mx-auto">
-          <div className="space-y-4 text-center md:text-left mb-16 md:mb-20">
-            <h2 className="text-xs uppercase tracking-widest text-[#9F67FF] font-extrabold">Process</h2>
-            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white">How Seenly Works</h3>
+      <section id="how-it-works" className="relative border-t border-zinc-900 bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-36 lg:px-16">
+        <div className="mx-auto flex max-w-4xl flex-col items-center gap-16 text-center sm:gap-20 md:gap-24">
+          <div className="space-y-4 sm:space-y-5">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/60">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
+              How it works
+            </span>
+            <h2 className="text-2xl font-bold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl">
+              Three steps to your profile.<br />
+              <span className="text-white/60">One link to share everywhere.</span>
+            </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Step 1 */}
-            <div className="p-8 rounded-[2rem] border border-zinc-900 bg-zinc-950/40 hover:border-zinc-800 hover:scale-[1.01] transition-all duration-300 space-y-6">
-              <div className="h-12 w-12 rounded-2xl bg-zinc-900/50 text-[#9F67FF] flex items-center justify-center border border-zinc-800/50">
-                <Video className="h-6 w-6" />
+          <div className="grid w-full grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-8">
+            {steps.map((step) => (
+              <div key={step.label} className="flex flex-col items-center gap-4 sm:gap-5">
+                <div className="text-white/50">{step.icon}</div>
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold tracking-tight text-white">{step.label}</p>
+                  <p className="mx-auto max-w-xs px-2 text-sm leading-relaxed text-white/50 sm:max-w-[12rem] sm:px-0">{step.description}</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <div className="text-[10px] font-extrabold text-[#9F67FF]/80 uppercase tracking-widest">Step 01</div>
-                <h4 className="font-bold text-lg text-white">Record / Upload Intro</h4>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Record a 60-second introduction pitch explaining your personality, background, and what drives you.
-                </p>
-              </div>
-            </div>
+            ))}
+          </div>
 
-            {/* Step 2 */}
-            <div className="p-8 rounded-[2rem] border border-zinc-900 bg-zinc-950/40 hover:border-zinc-800 hover:scale-[1.01] transition-all duration-300 space-y-6">
-              <div className="h-12 w-12 rounded-2xl bg-zinc-900/50 text-[#38BDF8] flex items-center justify-center border border-zinc-800/50">
-                <FileText className="h-6 w-6" />
-              </div>
-              <div className="space-y-2">
-                <div className="text-[10px] font-extrabold text-[#38BDF8]/80 uppercase tracking-widest">Step 02</div>
-                <h4 className="font-bold text-lg text-white">Build Your Profile</h4>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Import your project list, work timeline, social handles, and CV to complete your pitch.
-                </p>
-              </div>
-            </div>
-
-            {/* Step 3 */}
-            <div className="p-8 rounded-[2rem] border border-zinc-900 bg-zinc-950/40 hover:border-zinc-800 hover:scale-[1.01] transition-all duration-300 space-y-6">
-              <div className="h-12 w-12 rounded-2xl bg-zinc-900/50 text-[#4ADE80] flex items-center justify-center border border-zinc-800/50">
-                <Share2 className="h-6 w-6" />
-              </div>
-              <div className="space-y-2">
-                <div className="text-[10px] font-extrabold text-[#4ADE80]/80 uppercase tracking-widest">Step 03</div>
-                <h4 className="font-bold text-lg text-white">Share Your Link</h4>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Publish your profile under a custom seenly.tech/username link and share it with hiring managers.
-                </p>
-              </div>
-            </div>
+          <div className="w-full max-w-md rounded-full border border-white/10 bg-white/5 px-5 py-3 text-center text-sm leading-relaxed text-white/50 backdrop-blur-sm sm:w-auto sm:px-6">
+            From one intro to your{' '}
+            <span className="font-semibold text-white/80">seenly.tech</span>
+            {' '}link
           </div>
         </div>
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-zinc-900 bg-black py-10 px-6 md:px-12 lg:px-16">
+      <footer className="border-t border-zinc-900 bg-black px-5 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6 md:px-12 lg:px-16">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm font-semibold tracking-tight text-white">Seenly</span>

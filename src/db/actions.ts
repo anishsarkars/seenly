@@ -1,8 +1,9 @@
 'use server';
 
 import { db } from './index';
-import { users, experiences, projects, socials, analytics } from './schema';
-import { eq, sql } from 'drizzle-orm';
+import { users, experiences, projects, socials, analytics, profileViews } from './schema';
+import { eq } from 'drizzle-orm';
+import { suggestUsernames, validateUsername } from '@/lib/username';
 
 // Mock in-memory database fallback for easy developer review/testing
 const mockStore: {
@@ -25,14 +26,17 @@ mockStore.users[SEED_MOCK_USER_ID] = {
   id: SEED_MOCK_USER_ID,
   username: 'anish',
   email: 'anish@seenly.tech',
+  fullName: 'Anish Sarkar',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200&h=200',
   headline: 'AI Software Engineer & Product Creator',
   bio: 'Building the default professional profile for the AI era. Passionate about Next.js, AI workflows, and minimalist, high-fidelity user experiences.',
   location: 'San Francisco, CA',
-  videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-developer-typing-on-his-computer-34282-large.mp4', // Safe stock video for placeholder
+  videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-developer-typing-on-his-computer-34282-large.mp4',
   thumbnailUrl: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=800&h=450',
-  resumeUrl: '#',
+  resumeUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+  isPublic: true,
   createdAt: new Date(),
+  updatedAt: new Date(),
 };
 mockStore.experiences[SEED_MOCK_USER_ID] = [
   { id: '1', company: 'Google DeepMind', role: 'Staff Research Engineer', duration: '2024 - Present' },
@@ -147,6 +151,9 @@ export async function getUserProfile(userId: string) {
 }
 
 export async function isUsernameUnique(username: string, currentUserId?: string) {
+  const validation = validateUsername(username);
+  if (!validation.valid) return false;
+
   const normalized = username.toLowerCase().trim();
   if (!isDbAvailable()) {
     const existing = Object.values(mockStore.users).find(
@@ -160,27 +167,60 @@ export async function isUsernameUnique(username: string, currentUserId?: string)
     if (existing.length === 0) return true;
     if (currentUserId && existing[0].id === currentUserId) return true;
     return false;
-  } catch (error) {
+  } catch {
     return true;
   }
 }
 
+export async function getUsernameSuggestions(username: string) {
+  const normalized = username.toLowerCase().trim();
+  const suggestions = suggestUsernames(normalized);
+  const available: string[] = [];
+
+  for (const candidate of suggestions) {
+    if (await isUsernameUnique(candidate)) {
+      available.push(candidate);
+    }
+    if (available.length >= 3) break;
+  }
+
+  return available;
+}
+
 export async function saveOnboardingData(userId: string, data: any) {
-  const { username, email, fullName, headline, location, bio, videoUrl, experiences: expList, projects: projList, socials: socialData, resumeUrl } = data;
+  const {
+    username,
+    email,
+    fullName,
+    headline,
+    location,
+    bio,
+    videoUrl,
+    thumbnailUrl,
+    avatarUrl,
+    experiences: expList,
+    projects: projList,
+    socials: socialData,
+    resumeUrl,
+    isPublic = true,
+  } = data;
 
   if (!isDbAvailable()) {
     mockStore.users[userId] = {
       id: userId,
       username: username?.toLowerCase().trim(),
       email,
-      avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName || '')}`,
+      fullName,
+      avatar: avatarUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(fullName || username || '')}`,
       headline,
       location,
       bio,
       videoUrl: videoUrl || 'https://assets.mixkit.co/videos/preview/mixkit-developer-typing-on-his-computer-34282-large.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=800&h=450',
+      thumbnailUrl: thumbnailUrl || 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=800&h=450',
       resumeUrl,
+      isPublic,
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     mockStore.experiences[userId] = (expList || []).map((e: any, index: number) => ({
@@ -210,25 +250,34 @@ export async function saveOnboardingData(userId: string, data: any) {
   }
 
   try {
-    // 1. Insert/Update User Profile
     await db.insert(users).values({
       id: userId,
       username: username?.toLowerCase().trim(),
       email,
+      fullName,
+      avatar: avatarUrl,
       headline,
       location,
       bio,
       videoUrl,
+      thumbnailUrl,
       resumeUrl,
+      isPublic,
+      updatedAt: new Date(),
     }).onConflictDoUpdate({
       target: users.id,
       set: {
         username: username?.toLowerCase().trim(),
+        fullName,
+        avatar: avatarUrl,
         headline,
         location,
         bio,
         videoUrl,
+        thumbnailUrl,
         resumeUrl,
+        isPublic,
+        updatedAt: new Date(),
       }
     });
 
@@ -279,18 +328,35 @@ export async function saveOnboardingData(userId: string, data: any) {
   }
 }
 
-export async function logAnalyticEvent(profileId: string, type: 'views' | 'plays' | 'downloads', country?: string) {
+export async function logAnalyticEvent(profileId: string, type: 'views' | 'plays' | 'downloads', meta?: { country?: string; device?: string; browser?: string; referrer?: string }) {
   if (!isDbAvailable()) {
+    if (type === 'views') {
+      const existing = mockStore.analytics[profileId] || [];
+      const item = existing.find((e: any) => e.country === (meta?.country || 'Unknown'));
+      if (item) {
+        item.views = (item.views || 0) + 1;
+      } else {
+        existing.push({
+          views: 1,
+          plays: 0,
+          downloads: 0,
+          country: meta?.country || 'Unknown',
+        });
+      }
+      mockStore.analytics[profileId] = existing;
+      return;
+    }
+
     const existing = mockStore.analytics[profileId] || [];
-    const item = existing.find(e => e.country === (country || 'Unknown'));
+    const item = existing.find((e: any) => e.country === (meta?.country || 'Unknown'));
     if (item) {
       item[type] = (item[type] || 0) + 1;
     } else {
       existing.push({
-        views: type === 'views' ? 1 : 0,
+        views: 0,
         plays: type === 'plays' ? 1 : 0,
         downloads: type === 'downloads' ? 1 : 0,
-        country: country || 'Unknown',
+        country: meta?.country || 'Unknown',
       });
     }
     mockStore.analytics[profileId] = existing;
@@ -298,12 +364,22 @@ export async function logAnalyticEvent(profileId: string, type: 'views' | 'plays
   }
 
   try {
+    if (type === 'views') {
+      await db.insert(profileViews).values({
+        profileId,
+        country: meta?.country || 'Unknown',
+        device: meta?.device || null,
+        browser: meta?.browser || null,
+        referrer: meta?.referrer || null,
+      });
+    }
+
     await db.insert(analytics).values({
       profileId,
       views: type === 'views' ? 1 : 0,
       plays: type === 'plays' ? 1 : 0,
       downloads: type === 'downloads' ? 1 : 0,
-      country: country || 'Unknown',
+      country: meta?.country || 'Unknown',
     });
   } catch (error) {
     console.error('Failed to log analytic event:', error);
@@ -332,7 +408,13 @@ export async function getProfileAnalytics(profileId: string) {
       views: totalViews,
       plays: totalPlays,
       downloads: totalDownloads,
+      todayViews: Math.max(1, Math.floor(totalViews * 0.08)),
+      uniqueVisitors: totalViews,
       countries: Object.entries(countries).map(([name, value]) => ({ name, value })),
+      referrers: [
+        { name: 'Direct', value: Math.floor(totalViews * 0.4) },
+        { name: 'LinkedIn', value: Math.floor(totalViews * 0.3) },
+      ],
       history: [
         { date: 'Mon', views: Math.floor(totalViews * 0.1), plays: Math.floor(totalPlays * 0.1) },
         { date: 'Tue', views: Math.floor(totalViews * 0.15), plays: Math.floor(totalPlays * 0.12) },
@@ -347,25 +429,43 @@ export async function getProfileAnalytics(profileId: string) {
 
   try {
     const stats = await db.select().from(analytics).where(eq(analytics.profileId, profileId));
-    let totalViews = 0;
+    const viewEvents = await db.select().from(profileViews).where(eq(profileViews.profileId, profileId));
+
+    let totalViews = viewEvents.length;
     let totalPlays = 0;
     let totalDownloads = 0;
     const countries: Record<string, number> = {};
+    const referrers: Record<string, number> = {};
 
     stats.forEach((row) => {
-      totalViews += row.views;
       totalPlays += row.plays;
       totalDownloads += row.downloads;
+    });
+
+    viewEvents.forEach((row) => {
       if (row.country) {
-        countries[row.country] = (countries[row.country] || 0) + row.views;
+        countries[row.country] = (countries[row.country] || 0) + 1;
+      }
+      if (row.referrer) {
+        referrers[row.referrer] = (referrers[row.referrer] || 0) + 1;
       }
     });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayViews = viewEvents.filter((row) => row.createdAt && row.createdAt >= today).length;
 
     return {
       views: totalViews,
       plays: totalPlays,
       downloads: totalDownloads,
+      todayViews,
+      uniqueVisitors: totalViews,
       countries: Object.entries(countries).map(([name, value]) => ({ name, value })),
+      referrers: Object.entries(referrers)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5),
       history: [
         { date: 'Mon', views: Math.floor(totalViews * 0.1), plays: Math.floor(totalPlays * 0.1) },
         { date: 'Tue', views: Math.floor(totalViews * 0.15), plays: Math.floor(totalPlays * 0.12) },
@@ -382,7 +482,10 @@ export async function getProfileAnalytics(profileId: string) {
       views: 0,
       plays: 0,
       downloads: 0,
+      todayViews: 0,
+      uniqueVisitors: 0,
       countries: [],
+      referrers: [],
       history: [],
     };
   }
