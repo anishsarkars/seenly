@@ -1,7 +1,12 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { getUserProfile } from '@/db/actions';
+import { Suspense } from 'react';
 import OnboardingClient from '@/components/onboarding/OnboardingClient';
+
+function OnboardingFallback() {
+  return <div className="flex h-dvh items-center justify-center bg-black text-white/40 text-sm">Loading…</div>;
+}
 
 export default async function OnboardingPage() {
   const supabase = await createClient();
@@ -15,5 +20,9 @@ export default async function OnboardingPage() {
     }
   }
 
-  return <OnboardingClient />;
+  return (
+    <Suspense fallback={<OnboardingFallback />}>
+      <OnboardingClient />
+    </Suspense>
+  );
 }

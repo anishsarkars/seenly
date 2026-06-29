@@ -8,6 +8,7 @@ import { createClient } from '@/utils/supabase/client';
 import { getUserProfile } from '@/db/actions';
 import { signInWithGoogle } from '@/lib/auth-client';
 import SeenlyLogo from '@/components/SeenlyLogo';
+import SiteFooter from '@/components/SiteFooter';
 import { btnPrimary, btnSecondary, input, panel } from '@/lib/platform-ui';
 
 function GoogleIcon() {
@@ -102,7 +103,8 @@ export default function LoginClient() {
   };
 
   return (
-    <div className="flex min-h-dvh max-h-dvh overflow-hidden bg-black font-geist text-white selection:bg-white selection:text-black">
+    <div className="flex min-h-dvh flex-col overflow-hidden bg-black font-geist text-white selection:bg-white selection:text-black">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
       <div className="hidden w-[42%] max-w-md shrink-0 flex-col justify-between border-r border-white/10 p-10 lg:flex xl:p-14">
         <SeenlyLogo size="lg" />
         <div className="space-y-4">
@@ -218,6 +220,8 @@ export default function LoginClient() {
           </p>
         </div>
       </div>
+      </div>
+      <SiteFooter compact />
     </div>
   );
 }

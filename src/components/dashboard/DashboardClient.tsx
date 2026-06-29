@@ -5,7 +5,7 @@ import { XAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import {
   TrendingUp, Play, Download, Eye, Edit3, Film, Settings,
   Globe, Plus, ArrowUpRight, Copy, Check, Sparkles, ChevronDown,
-  PanelLeftClose, PanelLeft,
+  PanelLeftClose, PanelLeft, PanelRightClose, PanelRight,
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
 import { createClient } from '@/utils/supabase/client';
@@ -15,6 +15,7 @@ import type { ProfileViewData } from '@/components/profile/ProfileView';
 import AvatarPicker from '@/components/profile/AvatarPicker';
 import WhatsNewPanel from '@/components/dashboard/WhatsNewPanel';
 import { useDashboardSidebar } from '@/components/dashboard/useDashboardSidebar';
+import { useDashboardPreview } from '@/components/dashboard/useDashboardPreview';
 import SeenlyLogo from '@/components/SeenlyLogo';
 import { formatVideoDurationLimit } from '@/lib/video-limits';
 import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
@@ -48,6 +49,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [hasUnreadWhatsNew, setHasUnreadWhatsNew] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
   const sidebar = useDashboardSidebar();
+  const preview = useDashboardPreview();
 
   useEffect(() => {
     const lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY);
@@ -205,7 +207,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
 
   return (
     <div className={shell}>
-      <div className="flex h-dvh max-h-dvh min-w-[680px] overflow-x-auto overflow-y-hidden">
+      <div className="flex h-dvh max-h-dvh flex-col overflow-hidden lg:flex-row">
         {/* Nav sidebar — resizable & closable */}
         <aside
           className={`relative hidden h-full shrink-0 flex-col overflow-hidden border-r border-white/10 transition-[width] duration-200 lg:flex ${
@@ -290,8 +292,8 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           )}
         </aside>
 
-        <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
-          <div className="flex min-h-0 min-w-[280px] flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:flex-row">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {/* Header */}
           <header className="shrink-0 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-6 sm:py-4">
             <div className="flex min-w-0 items-center gap-2 sm:gap-3">
@@ -309,12 +311,25 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
               <h1 className={`${sectionTitle} truncate text-base sm:text-lg`}>{TAB_META[activeTab].label}</h1>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <button type="button" onClick={handleCopyLink} className={btnSecondary}>
+              {!preview.open && (
+                <button
+                  type="button"
+                  onClick={preview.toggle}
+                  className="hidden rounded-lg p-1.5 text-white/40 transition-colors hover:bg-white/5 hover:text-white lg:inline-flex"
+                  aria-label="Open preview"
+                >
+                  <PanelRight className="h-4 w-4" />
+                </button>
+              )}
+              <button type="button" onClick={handleCopyLink} className={`${btnSecondary} hidden sm:inline-flex`}>
                 {copied ? (
                   <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Copied</span>
                 ) : (
                   <span className="flex items-center gap-1.5"><Copy className="h-3.5 w-3.5" strokeWidth={1.5} /> Copy link</span>
                 )}
+              </button>
+              <button type="button" onClick={handleCopyLink} className={`${btnSecondary} sm:hidden`} aria-label="Copy link">
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
               </button>
               <a
                 href={`/${profile?.user?.username}`}
@@ -341,7 +356,32 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 {TAB_META[tab].label}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={toggleWhatsNew}
+              className={`relative shrink-0 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                whatsNewOpen ? 'bg-white/10 text-white' : 'text-white/50'
+              }`}
+            >
+              <Sparkles className="h-3 w-3" />
+              New
+              {hasUnreadWhatsNew && (
+                <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-400" />
+              )}
+            </button>
           </div>
+
+          {whatsNewOpen && (
+            <div className="shrink-0 border-b border-white/10 px-4 py-3 lg:hidden">
+              <WhatsNewPanel
+                compact
+                avatar={avatar}
+                onAvatarChange={setAvatar}
+                onApplyAvatar={handleSaveProfile}
+                isSaving={isSaving}
+              />
+            </div>
+          )}
 
           {/* Content */}
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
@@ -513,16 +553,53 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           </div>
           </div>
 
-          {/* Live preview — always visible right column */}
-          <aside className="flex min-h-0 w-[clamp(220px,28vw,360px)] shrink-0 border-l border-white/10">
+          {/* Live preview — app-style bottom panel on mobile */}
+          <aside className="flex h-[min(38dvh,340px)] min-h-[200px] w-full shrink-0 flex-col overflow-hidden border-t border-white/10 lg:hidden">
             <ProfileLivePreview
               profileData={previewProfileData}
               username={profile?.user?.username}
               defaultLayout="mobile"
               alwaysVisible
-              className="flex-1"
+              panelMode="bottom"
+              className="min-h-0 flex-1"
             />
           </aside>
+
+          {/* Resizable side preview on desktop */}
+          {preview.open && (
+            <aside
+              className={`relative hidden min-h-0 shrink-0 flex-col overflow-hidden border-l border-white/10 lg:flex ${
+                preview.isDragging ? 'transition-none' : 'transition-[width] duration-200'
+              }`}
+              style={{ width: preview.width }}
+            >
+              <div className="flex shrink-0 items-center justify-end border-b border-white/10 px-2 py-1.5">
+                <button
+                  type="button"
+                  onClick={preview.toggle}
+                  className="rounded-lg p-1.5 text-white/40 transition-colors hover:bg-white/5 hover:text-white"
+                  aria-label="Close preview"
+                >
+                  <PanelRightClose className="h-4 w-4" />
+                </button>
+              </div>
+              <ProfileLivePreview
+                profileData={previewProfileData}
+                username={profile?.user?.username}
+                defaultLayout="mobile"
+                alwaysVisible
+                panelMode="side"
+                className="min-h-0 flex-1"
+              />
+              <div
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize preview"
+                onMouseDown={preview.onResizeStart}
+                className="absolute left-0 top-0 z-10 h-full w-1.5 cursor-col-resize hover:bg-white/15 active:bg-white/25"
+              />
+            </aside>
+          )}
         </div>
       </div>
     </div>

@@ -7,14 +7,6 @@ import ProfileView, { type ProfileViewData } from '@/components/profile/ProfileV
 const DESKTOP_PREVIEW_WIDTH = 896;
 const PHONE_OUTER_WIDTH = 320;
 
-interface ProfileLivePreviewProps {
-  profileData: ProfileViewData;
-  username?: string;
-  defaultLayout?: 'mobile' | 'desktop';
-  className?: string;
-  alwaysVisible?: boolean;
-}
-
 function StatusBar() {
   return (
     <div className="flex items-center justify-between px-5 pt-2.5 pb-1 text-[11px] font-semibold text-white">
@@ -39,26 +31,37 @@ function StatusBar() {
   );
 }
 
+interface ProfileLivePreviewProps {
+  profileData: ProfileViewData;
+  username?: string;
+  defaultLayout?: 'mobile' | 'desktop';
+  className?: string;
+  alwaysVisible?: boolean;
+  panelMode?: 'side' | 'bottom';
+}
+
 function PhoneFrame({
   children,
   scale,
+  compact,
 }: {
   children: React.ReactNode;
   scale: number;
+  compact?: boolean;
 }) {
-  const scaledWidth = PHONE_OUTER_WIDTH * scale;
+  const outerWidth = compact ? 280 : PHONE_OUTER_WIDTH;
+  const scaledWidth = outerWidth * scale;
 
   return (
     <div className="mx-auto shrink-0 pb-2" style={{ width: scaledWidth }}>
       <div
         style={{
-          width: PHONE_OUTER_WIDTH,
+          width: outerWidth,
           transform: `scale(${scale})`,
           transformOrigin: 'top center',
         }}
       >
-        {/* Device shell */}
-        <div className="relative rounded-[3.25rem] bg-gradient-to-b from-[#4a4a4c] via-[#2c2c2e] to-[#1c1c1e] p-[3px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.08)_inset]">
+        <div className={`relative bg-gradient-to-b from-[#4a4a4c] via-[#2c2c2e] to-[#1c1c1e] p-[3px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.08)_inset] ${compact ? 'rounded-[2.75rem]' : 'rounded-[3.25rem]'}`}>
           {/* Side buttons */}
           <div className="absolute -left-[2px] top-[88px] h-8 w-[3px] rounded-l bg-[#3a3a3c]" />
           <div className="absolute -left-[2px] top-[130px] h-14 w-[3px] rounded-l bg-[#3a3a3c]" />
@@ -137,6 +140,7 @@ export default function ProfileLivePreview({
   defaultLayout = 'mobile',
   className = '',
   alwaysVisible = false,
+  panelMode = 'side',
 }: ProfileLivePreviewProps) {
   const [layout, setLayout] = useState<'mobile' | 'desktop'>(defaultLayout);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -151,15 +155,16 @@ export default function ProfileLivePreview({
     if (!el) return;
 
     const updatePhoneScale = () => {
-      const available = el.clientWidth - 16;
-      setPhoneScale(Math.min(1, available / PHONE_OUTER_WIDTH));
+      const available = el.clientWidth - (panelMode === 'bottom' ? 8 : 16);
+      const base = panelMode === 'bottom' ? 280 : PHONE_OUTER_WIDTH;
+      setPhoneScale(Math.min(1, available / base));
     };
 
     updatePhoneScale();
     const ro = new ResizeObserver(updatePhoneScale);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [layout]);
+  }, [layout, panelMode]);
 
   useEffect(() => {
     if (layout !== 'desktop') return;
@@ -224,7 +229,7 @@ export default function ProfileLivePreview({
         className="relative flex flex-1 min-h-0 items-start justify-center overflow-y-auto overflow-x-hidden bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.04)_0%,transparent_65%)] p-3 sm:p-4"
       >
         {layout === 'mobile' ? (
-          <PhoneFrame scale={phoneScale}>
+          <PhoneFrame scale={phoneScale} compact={panelMode === 'bottom'}>
             <ProfileView profileData={profileData} preview layout="mobile" embedded />
           </PhoneFrame>
         ) : (

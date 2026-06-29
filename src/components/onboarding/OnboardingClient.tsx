@@ -22,13 +22,15 @@ import { DEFAULT_PROFILE_AVATAR } from '@/lib/profile-avatars';
 import AvatarPicker from '@/components/profile/AvatarPicker';
 import OnboardingProfilePreview from '@/components/onboarding/OnboardingProfilePreview';
 import SeenlyLogo from '@/components/SeenlyLogo';
+import SiteFooter from '@/components/SiteFooter';
 import Confetti from '@/components/Confetti';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { signInWithGoogle } from '@/lib/auth-client';
 
 export default function OnboardingClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   // Supabase Auth States
   const [supabase] = useState(() => createClient());
@@ -94,6 +96,14 @@ export default function OnboardingClient() {
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Prefill username from landing claim bar
+  useEffect(() => {
+    const prefilled = searchParams.get('username');
+    if (!prefilled) return;
+    const clean = prefilled.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    if (clean) setUsername(clean);
+  }, [searchParams]);
+
   // Auth check & state management
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -131,7 +141,11 @@ export default function OnboardingClient() {
   const handleGoogleSignIn = async () => {
     setAuthError('');
     setOauthLoading(true);
-    const { error } = await signInWithGoogle(supabase, '/onboarding');
+    const claimed = searchParams.get('username');
+    const nextPath = claimed
+      ? `/onboarding?username=${encodeURIComponent(claimed.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}`
+      : '/onboarding';
+    const { error } = await signInWithGoogle(supabase, nextPath);
     if (error) {
       setAuthError(error.message);
       setOauthLoading(false);
@@ -1290,6 +1304,7 @@ export default function OnboardingClient() {
           </AnimatePresence>
         </div>
 
+        <SiteFooter compact className="mt-auto shrink-0 border-t-0 bg-transparent px-0 pb-0 pt-4" />
       </div>
 
       <OnboardingProfilePreview

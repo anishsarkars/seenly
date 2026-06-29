@@ -13,7 +13,7 @@ export default function AvatarPicker({ value, onChange, compact = false }: Avata
   return (
     <div className="space-y-2">
       <label className={label}>Avatar</label>
-      <div className={`grid grid-cols-3 ${compact ? 'gap-2' : 'gap-2.5'}`}>
+      <div className={`grid grid-cols-4 ${compact ? 'gap-2' : 'gap-2.5'}`}>
         {PROFILE_AVATARS.map((avatar) => {
           const selected = value === avatar.src;
           return (

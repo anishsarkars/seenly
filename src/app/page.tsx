@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Menu, X, MapPin, Play } from 'lucide-react';
 import SeenlyLogo from '@/components/SeenlyLogo';
+import UsernameClaimBar from '@/components/landing/UsernameClaimBar';
+import SiteFooter from '@/components/SiteFooter';
 import { createClient } from '@/utils/supabase/client';
 import { getUserProfile } from '@/db/actions';
 
@@ -229,6 +231,16 @@ export default function Home() {
               Record a 60-second intro, build your profile, and share one link with every recruiter.
             </p>
 
+            {/* Username claim */}
+            {authState === 'guest' && (
+              <div className="animate-[fadeSlideUp_0.8s_ease_0.7s_both] w-full max-w-xl">
+                <UsernameClaimBar
+                  title=""
+                  className="!max-w-none space-y-3"
+                />
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex animate-[fadeSlideUp_0.8s_ease_0.8s_both] w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
               {authState === 'member' ? (
@@ -430,6 +442,8 @@ export default function Home() {
             ))}
           </div>
 
+          <UsernameClaimBar className="px-2" />
+
           <div className="w-full max-w-md rounded-full border border-white/10 bg-white/5 px-5 py-3 text-center text-sm leading-relaxed text-white/50 backdrop-blur-sm sm:w-auto sm:px-6">
             From one intro to your{' '}
             <span className="font-semibold text-white/80">seenly.tech</span>
@@ -438,26 +452,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-zinc-900 bg-black px-5 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-6 md:px-12 lg:px-16">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <SeenlyLogo size="sm" showBeta />
-            <span className="text-xs text-zinc-600">© 2026</span>
-          </div>
-          <p className="text-xs text-zinc-500">
-            Made by{' '}
-            <a
-              href="https://github.com/anishsarkars"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white/70 hover:text-white transition-colors font-medium"
-            >
-              Anish
-            </a>
-          </p>
-        </div>
-      </footer>
+      <SiteFooter />
 
     </div>
   );

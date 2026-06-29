@@ -21,9 +21,9 @@ export default function WhatsNewPanel({
   return (
     <div className={`${panel} space-y-3 ${compact ? 'p-3' : 'p-4'}`}>
       <div className="space-y-0.5">
-        <p className={`font-semibold text-white ${compact ? 'text-xs' : 'text-sm'}`}>Flat avatars</p>
+        <p className={`font-semibold text-white ${compact ? 'text-xs' : 'text-sm'}`}>Pick an avatar</p>
         <p className={`text-white/45 ${compact ? 'text-[10px]' : 'text-xs'}`}>
-          Colorful minimalist portraits — pick your look.
+          Simple colorful looks for your profile.
         </p>
       </div>
       <AvatarPicker value={avatar} onChange={onAvatarChange} compact />
