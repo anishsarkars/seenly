@@ -16,6 +16,11 @@ import {
 } from '@/lib/supabase/sync-storage-limits';
 import type { StorageBucketName } from '@/lib/upload-config';
 import { isStorageSizeError } from '@/lib/storage-limits';
+import {
+  createR2PresignedUploadUrl,
+  getR2SetupError,
+  shouldUseR2ForVideo,
+} from '@/lib/r2/client';
 
 type PrepareBody = {
   kind?: UploadKind;
@@ -77,6 +82,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Resume must be 10MB or smaller.' }, { status: 400 });
     }
 
+    const path = pathFor(kind, user.id, fileMeta);
+    const contentType = contentTypeFor(kind, fileMeta);
+
+    // Pro/Founder videos → Cloudflare R2 (no Supabase 50 MB cap)
+    if (kind === 'video') {
+      const r2Error = getR2SetupError(entitlements.tier, fileSize);
+      if (r2Error) {
+        return NextResponse.json({ error: r2Error }, { status: 503 });
+      }
+
+      if (shouldUseR2ForVideo(entitlements.tier, fileSize)) {
+        const r2 = await createR2PresignedUploadUrl(path, contentType);
+        return NextResponse.json({
+          provider: 'r2',
+          path: r2.key,
+          uploadUrl: r2.uploadUrl,
+          publicUrl: r2.publicUrl,
+          contentType,
+          tier: entitlements.tier,
+          maxUploadBytes: entitlements.maxUploadBytes,
+        });
+      }
+    }
+
     const admin = createAdminClient();
     if (!admin) {
       return NextResponse.json(
@@ -94,8 +123,6 @@ export async function POST(request: Request) {
     const globalSync = await syncAllStorageLimits(admin);
 
     const bucket = UPLOAD_BUCKETS[kind] as StorageBucketName;
-    const path = pathFor(kind, user.id, fileMeta);
-    const contentType = contentTypeFor(kind, fileMeta);
 
     const capacity = await assertStorageCanAcceptUpload(admin, bucket, fileSize, globalSync);
     if (!capacity.ok) {
@@ -116,6 +143,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
+      provider: 'supabase',
       bucket,
       path,
       token: data.token,

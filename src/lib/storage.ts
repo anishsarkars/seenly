@@ -1,6 +1,7 @@
 import { PLANS } from '@/lib/plans';
 import { createClient } from '@/utils/supabase/client';
 import { isStorageSizeError, storageSizeErrorMessage } from '@/lib/storage-limits';
+import { uploadBlobToPresignedUrl } from '@/lib/r2/upload';
 import { shouldUseResumableUpload, uploadViaTus } from '@/lib/storage-tus';
 
 export type VideoUploadLimits = {
@@ -14,10 +15,12 @@ export const FREE_VIDEO_LIMITS: VideoUploadLimits = {
 };
 
 type PreparePayload = {
-  bucket: string;
+  provider?: 'supabase' | 'r2';
+  bucket?: string;
   path: string;
   token?: string;
   signedUrl?: string;
+  uploadUrl?: string;
   contentType?: string;
   publicUrl: string;
   maxUploadBytes?: number;
@@ -30,7 +33,7 @@ async function uploadBytesToStorage(
 ) {
   const supabase = createClient();
 
-  if (payload.token) {
+  if (payload.token && payload.bucket) {
     const { error: signedError } = await supabase.storage
       .from(payload.bucket)
       .uploadToSignedUrl(payload.path, payload.token, fileBuffer, {
@@ -40,6 +43,10 @@ async function uploadBytesToStorage(
       });
 
     if (!signedError) return;
+  }
+
+  if (!payload.bucket) {
+    throw new Error('Storage bucket missing for upload.');
   }
 
   const { error: directError } = await supabase.storage
@@ -94,7 +101,7 @@ export async function uploadFile(
     throw new Error(typeof payload.error === 'string' ? payload.error : 'Upload failed.');
   }
 
-  if (!payload.bucket || !payload.path || !payload.publicUrl) {
+  if (!payload.path || !payload.publicUrl) {
     throw new Error('Upload could not be prepared. Please try again.');
   }
 
@@ -103,7 +110,9 @@ export async function uploadFile(
     typeof payload.maxUploadBytes === 'number' ? payload.maxUploadBytes : PLANS.free.maxUploadBytes;
 
   try {
-    if (shouldUseResumableUpload(file, kind)) {
+    if (payload.provider === 'r2' && payload.uploadUrl) {
+      await uploadBlobToPresignedUrl(file, payload.uploadUrl, contentType, onProgress);
+    } else if (shouldUseResumableUpload(file, kind) && payload.bucket) {
       await uploadViaTus(
         file,
         {
