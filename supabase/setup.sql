@@ -94,6 +94,18 @@ CREATE POLICY "Users update own thumbnails" ON storage.objects
 CREATE POLICY "Users update own resumes" ON storage.objects
   FOR UPDATE USING (bucket_id = 'resumes' AND auth.uid()::text = (storage.foldername(name))[1]);
 
+CREATE POLICY "Users delete own videos" ON storage.objects
+  FOR DELETE USING (bucket_id = 'videos' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users delete own thumbnails" ON storage.objects
+  FOR DELETE USING (bucket_id = 'thumbnails' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users delete own resumes" ON storage.objects
+  FOR DELETE USING (bucket_id = 'resumes' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users delete own avatars" ON storage.objects
+  FOR DELETE USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+
 -- Row Level Security for profiles
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE experiences ENABLE ROW LEVEL SECURITY;
