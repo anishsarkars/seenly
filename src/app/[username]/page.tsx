@@ -3,7 +3,7 @@ import { getProfileByUsername } from '@/db/actions';
 import ProfileClient from '@/components/profile/ProfileClient';
 import { createClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
-import { resolveProfileThumbnailUrl } from '@/lib/profile-media';
+import { getProfileOgImageUrl, PROFILE_OG_SIZE } from '@/lib/profile-og';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
     ? `Watch ${displayName}'s professional introduction, projects and experience.`
     : `Watch ${displayName}'s professional introduction on Seenly.`;
   const profileUrl = `${APP_URL}/${user.username}`;
-  const shareImage = resolveProfileThumbnailUrl(user.thumbnailUrl, user.updatedAt);
+  const ogImage = getProfileOgImageUrl(user.username!);
 
   return {
     title: `${displayName} • Seenly`,
@@ -39,13 +39,21 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
       description,
       type: 'profile',
       url: profileUrl,
-      images: shareImage ? [{ url: shareImage, alt: `${displayName}'s intro video` }] : undefined,
+      siteName: 'Seenly',
+      images: [
+        {
+          url: ogImage,
+          width: PROFILE_OG_SIZE.width,
+          height: PROFILE_OG_SIZE.height,
+          alt: `${displayName} on Seenly`,
+        },
+      ],
     },
     twitter: {
-      card: shareImage ? 'summary_large_image' : 'summary',
+      card: 'summary_large_image',
       title: `${displayName} • Seenly`,
       description,
-      images: shareImage ? [shareImage] : undefined,
+      images: [ogImage],
     },
   };
 }

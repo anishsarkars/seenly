@@ -128,10 +128,10 @@ function ProfilePublicFooter({ username }: { username?: string }) {
   const handle = username || 'yourusername';
 
   return (
-    <footer className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-4 sm:pb-6">
+    <footer className="flex justify-center">
       <Link
         href="/onboarding"
-        className="pointer-events-auto group inline-flex max-w-[min(100%,22rem)] flex-col items-center gap-1.5 rounded-2xl border border-white/10 bg-black/90 px-4 py-3 text-center shadow-2xl shadow-black/50 backdrop-blur-xl transition-all hover:border-white/20 hover:bg-zinc-950/95 sm:max-w-none sm:flex-row sm:gap-3 sm:px-5 sm:text-left"
+        className="group inline-flex max-w-full flex-col items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-center transition-all hover:border-white/20 hover:bg-white/[0.05] sm:flex-row sm:gap-3 sm:px-5 sm:text-left"
       >
         <span className="inline-flex items-center gap-1.5 font-semibold tracking-tight text-white">
           <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-[10px] font-bold text-black">
@@ -387,7 +387,7 @@ export default function ProfileView({
   if (isPublicProfile) {
     return (
       <div className={`min-h-screen ${pageBg} text-white selection:bg-white selection:text-black py-10 md:py-16`}>
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 pb-28">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
           <header className="mb-8 flex items-center md:mb-10">
             <SeenlyLogo
               size="md"
@@ -465,9 +465,13 @@ export default function ProfileView({
               {mainSectionOrder.map((id) => renderMainSection(id))}
             </div>
           </div>
-        </div>
 
-        {!removeBranding && <ProfilePublicFooter username={user.username} />}
+          {!removeBranding && (
+            <div className="mt-14 border-t border-white/[0.06] pt-10 md:mt-16">
+              <ProfilePublicFooter username={user.username} />
+            </div>
+          )}
+        </div>
       </div>
     );
   }
