@@ -76,6 +76,37 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     setHasUnreadWhatsNew(hasUnreadUpdates(lastSeen));
   }, []);
 
+  // Always load fresh plan limits from the database (SSR profile can be stale after payment).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/billing/entitlements', { credentials: 'same-origin' });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (cancelled || !data.plan) return;
+        setProfile((prev: typeof initialProfile) => {
+          if (!prev?.user) return prev;
+          return {
+            ...prev,
+            user: {
+              ...prev.user,
+              plan: data.plan,
+              planStatus: data.planStatus,
+              planExpiresAt: data.planExpiresAt,
+              isFounder: data.isFounder,
+            },
+          };
+        });
+      } catch {
+        // keep SSR profile
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useEffect(() => {
     if (!whatsNewOpen) return;
     localStorage.setItem(WHATS_NEW_STORAGE_KEY, SEENLY_UPDATES_VERSION);
@@ -216,7 +247,10 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     setIsUploadingVideo(true);
     try {
       const previewUrl = URL.createObjectURL(file);
-      const videoUrl = await uploadProfileVideo(file, file.name);
+      const videoUrl = await uploadProfileVideo(file, file.name, {
+        maxVideoSec: entitlements.maxVideoSec,
+        maxUploadBytes: entitlements.maxUploadBytes,
+      });
       const thumbnailBlob = await captureVideoThumbnail(previewUrl);
       const thumbnailUrl = await uploadProfileThumbnail(thumbnailBlob);
       URL.revokeObjectURL(previewUrl);

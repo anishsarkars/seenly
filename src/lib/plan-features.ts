@@ -25,7 +25,7 @@ export const PLAN_FEATURE_LISTS: Record<PlanTier, string[]> = {
   ],
   founder: [
     'Everything in Pro, forever.',
-    'Final boss badge',
+    'Golden verified tick on profile',
     'All future Pro features',
     'Lifetime updates',
     'Coming soon: more',

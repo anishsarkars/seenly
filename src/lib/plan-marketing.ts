@@ -14,7 +14,7 @@ export const PLAN_MARKETING_BENEFITS: Record<Exclude<PlanTier, 'free'>, string[]
   ],
   founder: [
     'Everything in Pro, forever',
-    'Final boss badge on your profile',
+    'Golden verified tick on profile',
     'All future Pro features included',
     'Lifetime updates',
   ],

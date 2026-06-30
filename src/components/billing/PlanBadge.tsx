@@ -10,7 +10,7 @@ export default function PlanBadge({ user, className = '' }: PlanBadgeProps) {
 
   const tone =
     tier === 'founder'
-      ? 'border-violet-400/25 bg-violet-500/10 text-violet-200/90'
+      ? 'border-amber-400/30 bg-amber-500/10 text-amber-200/95'
       : tier === 'pro'
         ? 'border-emerald-400/25 bg-emerald-500/10 text-emerald-200/90'
         : 'border-white/10 bg-white/5 text-white/45';

@@ -1,5 +1,15 @@
 import { PLANS } from '@/lib/plans';
 
+export type VideoUploadLimits = {
+  maxVideoSec: number;
+  maxUploadBytes: number;
+};
+
+export const FREE_VIDEO_LIMITS: VideoUploadLimits = {
+  maxVideoSec: PLANS.free.maxVideoSec,
+  maxUploadBytes: PLANS.free.maxUploadBytes,
+};
+
 export async function uploadFile(
   file: Blob,
   kind: 'video' | 'thumbnail' | 'resume' | 'avatar',
@@ -32,6 +42,7 @@ export function isPersistedMediaUrl(url?: string | null) {
 }
 
 function formatDurationLimit(seconds: number) {
+  if (seconds <= 60) return '60 seconds';
   const minutes = Math.floor(seconds / 60);
   return minutes === 1 ? '1 minute' : `${minutes} minutes`;
 }
@@ -116,8 +127,12 @@ export async function captureVideoThumbnail(source: string): Promise<Blob> {
   });
 }
 
-export async function uploadProfileVideo(file: Blob, fileName?: string) {
-  const validation = await validateVideoFile(file);
+export async function uploadProfileVideo(
+  file: Blob,
+  fileName?: string,
+  limits: VideoUploadLimits = FREE_VIDEO_LIMITS
+) {
+  const validation = await validateVideoFile(file, limits.maxVideoSec, limits.maxUploadBytes);
   if (!validation.ok) throw new Error(validation.error);
   return uploadFile(file, 'video', fileName);
 }

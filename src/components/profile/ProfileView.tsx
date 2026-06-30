@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { isPersistedMediaUrl } from '@/lib/storage';
 import { logAnalyticEvent } from '@/db/actions';
+import GoldenVerifiedTick from '@/components/profile/GoldenVerifiedTick';
 
 export interface ProfileViewData {
   user: {
@@ -180,13 +181,9 @@ export default function ProfileView({
           </div>
 
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 md:justify-start">
               <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
-              {showFounderBadge && (
-                <span className="inline-flex items-center rounded-full border border-violet-400/25 bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-tight text-violet-300/90">
-                  Final boss
-                </span>
-              )}
+              {showFounderBadge && <GoldenVerifiedTick size="lg" />}
             </div>
             <p className="text-zinc-400 text-sm leading-relaxed">{displayHeadline}</p>
             {(user.location || preview) && (

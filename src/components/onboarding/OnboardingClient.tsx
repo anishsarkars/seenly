@@ -16,8 +16,10 @@ import {
   uploadProfileThumbnail,
   uploadProfileVideo,
   validateVideoFile,
+  FREE_VIDEO_LIMITS,
+  type VideoUploadLimits,
 } from '@/lib/storage';
-import { MAX_VIDEO_DURATION_SEC, formatVideoDurationLimit } from '@/lib/video-limits';
+import { formatVideoDurationLimit, formatUploadLimit } from '@/lib/video-limits';
 import { DEFAULT_PROFILE_AVATAR } from '@/lib/profile-avatars';
 import AvatarPicker from '@/components/profile/AvatarPicker';
 import OnboardingProfilePreview from '@/components/onboarding/OnboardingProfilePreview';
@@ -65,6 +67,7 @@ export default function OnboardingClient() {
   const [recordTime, setRecordTime] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [videoLimits, setVideoLimits] = useState<VideoUploadLimits>(FREE_VIDEO_LIMITS);
   
   // Repeatable blocks
   const [experiences, setExperiences] = useState<Array<{ company: string; role: string; duration: string }>>([
@@ -117,6 +120,14 @@ export default function OnboardingClient() {
           if (existing?.user?.username) {
             router.replace('/dashboard');
             return;
+          }
+          const entRes = await fetch('/api/billing/entitlements', { credentials: 'same-origin' });
+          if (entRes.ok) {
+            const ent = await entRes.json();
+            setVideoLimits({
+              maxVideoSec: ent.maxVideoSec ?? FREE_VIDEO_LIMITS.maxVideoSec,
+              maxUploadBytes: ent.maxUploadBytes ?? FREE_VIDEO_LIMITS.maxUploadBytes,
+            });
           }
         } catch {}
         // Otherwise advance past the account creation step
@@ -318,9 +329,9 @@ export default function OnboardingClient() {
 
     timerRef.current = setInterval(() => {
       setRecordTime((prev) => {
-        if (prev >= MAX_VIDEO_DURATION_SEC) {
+        if (prev >= videoLimits.maxVideoSec) {
           stopRecording();
-          return MAX_VIDEO_DURATION_SEC;
+          return videoLimits.maxVideoSec;
         }
         return prev + 1;
       });
@@ -347,7 +358,7 @@ export default function OnboardingClient() {
       return;
     }
 
-    const validation = await validateVideoFile(file);
+    const validation = await validateVideoFile(file, videoLimits.maxVideoSec, videoLimits.maxUploadBytes);
     if (!validation.ok) {
       alert(validation.error);
       return;
@@ -389,7 +400,8 @@ export default function OnboardingClient() {
         setUploadProgress(30);
         finalVideoUrl = await uploadProfileVideo(
           recordedBlob,
-          recordedBlob.type.includes('webm') ? 'intro.webm' : 'intro.mp4'
+          recordedBlob.type.includes('webm') ? 'intro.webm' : 'intro.mp4',
+          videoLimits
         );
         setUploadProgress(55);
         const thumbnail = await captureVideoThumbnail(videoPreviewUrl);
@@ -684,7 +696,7 @@ export default function OnboardingClient() {
               >
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tight">Record your Intro.</h1>
-                  <p className="text-zinc-400 text-sm">Explain who you are, what you build, and what you&apos;re looking for in {formatVideoDurationLimit()}.</p>
+                  <p className="text-zinc-400 text-sm">Explain who you are, what you build, and what you&apos;re looking for in {formatVideoDurationLimit(videoLimits.maxVideoSec)}.</p>
                 </div>
 
                 <div className="flex gap-4 p-1 bg-zinc-900/80 rounded-lg border border-white/10">
@@ -723,7 +735,7 @@ export default function OnboardingClient() {
                         {isRecording ? (
                           <div className="absolute top-4 left-4 bg-red-500/80 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 animate-pulse">
                             <span className="h-2 w-2 rounded-full bg-white" />
-                            {Math.floor(recordTime / 60)}:{(recordTime % 60).toString().padStart(2, '0')} / 3:00
+                            {Math.floor(recordTime / 60)}:{(recordTime % 60).toString().padStart(2, '0')} / {Math.floor(videoLimits.maxVideoSec / 60)}:{(videoLimits.maxVideoSec % 60).toString().padStart(2, '0')}
                           </div>
                         ) : (
                           <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-zinc-300 px-3 py-1 rounded-full text-xs font-medium border border-white/10">
@@ -803,7 +815,7 @@ export default function OnboardingClient() {
                         </div>
                         <div className="space-y-1">
                           <p className="text-sm font-medium text-zinc-300">Drag and drop your video file</p>
-                          <p className="text-xs text-zinc-500">MP4, MOV or WEBM up to 150MB ({formatVideoDurationLimit()})</p>
+                          <p className="text-xs text-zinc-500">MP4, MOV or WEBM up to {formatUploadLimit(videoLimits.maxUploadBytes)} ({formatVideoDurationLimit(videoLimits.maxVideoSec)})</p>
                         </div>
                       </div>
                     )}

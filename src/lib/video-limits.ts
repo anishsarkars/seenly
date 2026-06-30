@@ -6,7 +6,8 @@ export const MAX_VIDEO_SIZE_BYTES = PLANS.pro.maxUploadBytes;
 
 export function formatVideoDurationLimit(maxSeconds = PLANS.free.maxVideoSec) {
   if (maxSeconds <= 60) return '60 seconds';
-  return '1–3 minutes';
+  const minutes = Math.floor(maxSeconds / 60);
+  return minutes === 1 ? '1 minute' : `up to ${minutes} minutes`;
 }
 
 export function formatUploadLimit(maxBytes = PLANS.free.maxUploadBytes) {
