@@ -3,8 +3,11 @@ import { getProfileByUsername } from '@/db/actions';
 import ProfileClient from '@/components/profile/ProfileClient';
 import { createClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
+import { resolveProfileThumbnailUrl } from '@/lib/profile-media';
 
 export const dynamic = 'force-dynamic';
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://seenly.tech';
 
 interface ProfilePageProps {
   params: Promise<{ username: string }>;
@@ -23,21 +26,26 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
   const description = user.headline
     ? `Watch ${displayName}'s professional introduction, projects and experience.`
     : `Watch ${displayName}'s professional introduction on Seenly.`;
+  const profileUrl = `${APP_URL}/${user.username}`;
+  const shareImage = resolveProfileThumbnailUrl(user.thumbnailUrl, user.updatedAt);
 
   return {
     title: `${displayName} • Seenly`,
     description,
+    metadataBase: new URL(APP_URL),
+    alternates: { canonical: profileUrl },
     openGraph: {
       title: `${displayName} • Seenly`,
       description,
       type: 'profile',
-      images: user.thumbnailUrl ? [{ url: user.thumbnailUrl }] : undefined,
+      url: profileUrl,
+      images: shareImage ? [{ url: shareImage, alt: `${displayName}'s intro video` }] : undefined,
     },
     twitter: {
-      card: 'summary_large_image',
+      card: shareImage ? 'summary_large_image' : 'summary',
       title: `${displayName} • Seenly`,
       description,
-      images: user.thumbnailUrl ? [user.thumbnailUrl] : undefined,
+      images: shareImage ? [shareImage] : undefined,
     },
   };
 }

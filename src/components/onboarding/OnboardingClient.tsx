@@ -45,6 +45,11 @@ export default function OnboardingClient() {
   const [authSuccessMsg, setAuthSuccessMsg] = useState('');
   const [oauthLoading, setOauthLoading] = useState(false);
   const [passwordAuthLoading, setPasswordAuthLoading] = useState(false);
+  const [betaRequired, setBetaRequired] = useState(false);
+  const [betaUnlocked, setBetaUnlocked] = useState(false);
+  const [betaCode, setBetaCode] = useState('');
+  const [betaError, setBetaError] = useState('');
+  const [betaChecking, setBetaChecking] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   // Form State
@@ -108,6 +113,56 @@ export default function OnboardingClient() {
     if (clean) setUsername(clean);
   }, [searchParams]);
 
+  useEffect(() => {
+    if (searchParams.get('beta') === 'required') {
+      setBetaError('Beta access code required to create a new account.');
+      setAuthMode('signup');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    fetch('/api/auth/beta', { credentials: 'same-origin' })
+      .then((res) => res.json())
+      .then((data) => {
+        setBetaRequired(!!data.required);
+        setBetaUnlocked(!!data.verified);
+      })
+      .catch(() => {
+        setBetaRequired(false);
+        setBetaUnlocked(true);
+      });
+  }, []);
+
+  const verifyBetaCode = async () => {
+    setBetaError('');
+    if (!betaCode.trim()) {
+      setBetaError('Enter the 4-digit beta code.');
+      return;
+    }
+    setBetaChecking(true);
+    try {
+      const res = await fetch('/api/auth/beta', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ code: betaCode.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Invalid beta code.');
+      }
+      setBetaUnlocked(true);
+      setBetaError('');
+    } catch (err: any) {
+      setBetaUnlocked(false);
+      setBetaError(err.message || 'Invalid beta code.');
+    } finally {
+      setBetaChecking(false);
+    }
+  };
+
+  const signupBlocked = betaRequired && !betaUnlocked && authMode === 'signup';
+
   // Auth check & state management
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -152,6 +207,10 @@ export default function OnboardingClient() {
 
   const handleGoogleSignIn = async () => {
     setAuthError('');
+    if (signupBlocked) {
+      setAuthError('Enter a valid beta code first.');
+      return;
+    }
     setOauthLoading(true);
     const claimed = searchParams.get('username');
     const nextPath = claimed
@@ -171,6 +230,11 @@ export default function OnboardingClient() {
 
     if (!emailInput || !passwordInput) {
       setAuthError('Please enter both email and password.');
+      return;
+    }
+
+    if (authMode === 'signup' && signupBlocked) {
+      setAuthError('Enter a valid beta code first.');
       return;
     }
 
@@ -421,6 +485,16 @@ export default function OnboardingClient() {
         throw new Error('Video upload failed. Check your connection and try again.');
       }
 
+      if (!finalThumbnailUrl) {
+        try {
+          finalThumbnailUrl = await uploadProfileThumbnail(
+            await captureVideoThumbnail(finalVideoUrl)
+          );
+        } catch (thumbErr) {
+          console.warn('Thumbnail regen from uploaded video skipped:', thumbErr);
+        }
+      }
+
       if (resumeFile) {
         setUploadProgress(75);
         finalResumeUrl = await uploadProfileResume(resumeFile);
@@ -566,9 +640,38 @@ export default function OnboardingClient() {
                       </div>
                     ) : (
                       <div className="space-y-4">
+                        {authMode === 'signup' && betaRequired && !betaUnlocked && (
+                          <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-4">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                              Beta access code
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={4}
+                                placeholder="0000"
+                                value={betaCode}
+                                onChange={(e) => setBetaCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm tracking-[0.3em] text-center focus:border-white outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={verifyBetaCode}
+                                disabled={betaChecking || betaCode.length < 4}
+                                className="shrink-0 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
+                              >
+                                {betaChecking ? '…' : 'Unlock'}
+                              </button>
+                            </div>
+                            {betaError && <p className="text-xs text-red-400">{betaError}</p>}
+                            <p className="text-[11px] text-zinc-500">Seenly is in private beta. Enter your invite code to create an account.</p>
+                          </div>
+                        )}
+
                         <button
                           type="button"
-                          disabled={oauthLoading}
+                          disabled={oauthLoading || signupBlocked}
                           onClick={handleGoogleSignIn}
                           className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-white/10 bg-white px-4 py-3 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-50"
                         >
@@ -615,7 +718,7 @@ export default function OnboardingClient() {
 
                         <button 
                           type="submit"
-                          disabled={oauthLoading || passwordAuthLoading}
+                          disabled={oauthLoading || passwordAuthLoading || signupBlocked}
                           className="w-full bg-white text-black py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm disabled:opacity-50"
                         >
                           <LoadingLabel

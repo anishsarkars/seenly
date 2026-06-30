@@ -8,6 +8,7 @@ import { ensureProfileSchema } from './ensure-schema';
 import { ensureStorageBuckets } from './ensure-storage';
 import { DEFAULT_PROFILE_AVATAR } from '@/lib/profile-avatars';
 import { countFilledSocialLinks, getEntitlements } from '@/lib/plans';
+import { sanitizeProfileMedia } from '@/lib/profile-media';
 
 // Mock in-memory database fallback for easy developer review/testing
 const mockStore: {
@@ -101,7 +102,7 @@ export async function getProfileByUsername(username: string) {
     const [userSocials] = await db.select().from(socials).where(eq(socials.userId, user.id)).limit(1);
 
     return {
-      user,
+      user: sanitizeProfileMedia(user),
       experiences: userExperiences,
       projects: userProjects,
       socials: userSocials || null,
@@ -143,7 +144,7 @@ export async function getUserProfile(userId: string) {
     const [userSocials] = await db.select().from(socials).where(eq(socials.userId, safeId)).limit(1);
 
     return {
-      user,
+      user: sanitizeProfileMedia(user),
       experiences: userExperiences,
       projects: userProjects,
       socials: userSocials || null,
@@ -227,8 +228,8 @@ export async function saveOnboardingData(userId: string, data: any) {
       headline,
       location,
       bio,
-      videoUrl: videoUrl || 'https://assets.mixkit.co/videos/preview/mixkit-developer-typing-on-his-computer-34282-large.mp4',
-      thumbnailUrl: thumbnailUrl || 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=800&h=450',
+      videoUrl: videoUrl || null,
+      thumbnailUrl: thumbnailUrl || null,
       resumeUrl,
       isPublic,
       createdAt: new Date(),
