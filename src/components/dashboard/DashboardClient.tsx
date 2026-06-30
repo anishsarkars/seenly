@@ -4,12 +4,12 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { XAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import {
   TrendingUp, Play, Download, Eye, Edit3, Film, Settings,
-  Globe, Plus, ArrowUpRight, Copy, Check, Sparkles, ChevronDown,
+  Globe, Plus, ArrowUpRight, Copy, Check, Sparkles, ChevronDown, FileText,
   PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, X, Smartphone,
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
 import { createClient } from '@/utils/supabase/client';
-import { captureVideoThumbnail, uploadProfileThumbnail, uploadProfileVideo, validateVideoFile } from '@/lib/storage';
+import { captureVideoThumbnail, uploadProfileResume, uploadProfileThumbnail, uploadProfileVideo, validateVideoFile } from '@/lib/storage';
 import ProfileLivePreview from '@/components/profile/ProfileLivePreview';
 import type { ProfileViewData } from '@/components/profile/ProfileView';
 import AvatarPicker from '@/components/profile/AvatarPicker';
@@ -55,6 +55,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
   const [actionStatus, setActionStatus] = useState<ActionStatusState>(null);
   const [hasUnreadWhatsNew, setHasUnreadWhatsNew] = useState(false);
@@ -293,6 +294,44 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     }
   };
 
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile?.user?.id) return;
+
+    setIsUploadingResume(true);
+    setActionStatus({ type: 'loading', message: 'Uploading resume…' });
+
+    try {
+      const resumeUrl = await uploadProfileResume(file);
+      const res = await saveOnboardingData(profile.user.id, {
+        username: profile.user.username,
+        email: profile.user.email,
+        fullName: profile.user.fullName,
+        headline: profile.user.headline,
+        location: profile.user.location,
+        bio: profile.user.bio,
+        videoUrl: profile.user.videoUrl,
+        thumbnailUrl: profile.user.thumbnailUrl,
+        resumeUrl,
+        experiences: profile.experiences,
+        projects: profile.projects,
+        socials: profile.socials,
+      });
+
+      if (!res.success) {
+        throw new Error(res.error || 'Could not save resume.');
+      }
+
+      setProfile({ ...profile, user: { ...profile.user, resumeUrl } });
+      setActionStatus({ type: 'success', message: 'Resume updated' });
+    } catch (err: any) {
+      setActionStatus({ type: 'error', message: err.message || 'Failed to upload resume.' });
+    } finally {
+      setIsUploadingResume(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     router.push('/login');
@@ -419,10 +458,6 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 <div className="max-h-80 overflow-y-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:thin]">
                   <WhatsNewPanel
                     compact
-                    avatar={avatar}
-                    onAvatarChange={setAvatar}
-                    onApplyAvatar={handleSaveProfile}
-                    isSaving={isSaving}
                     planTier={entitlements.tier}
                   />
                 </div>
@@ -549,10 +584,6 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
             <div className="shrink-0 border-b border-white/10 px-4 py-3 lg:hidden">
               <WhatsNewPanel
                 compact
-                avatar={avatar}
-                onAvatarChange={setAvatar}
-                onApplyAvatar={handleSaveProfile}
-                isSaving={isSaving}
                 planTier={entitlements.tier}
               />
             </div>
@@ -646,6 +677,47 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                     ))}
                   </div>
                   <div className="space-y-4 border-t border-white/10 pt-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className={muted}>Resume</p>
+                        <p className="mt-1 text-xs text-white/40">
+                          Upload a PDF so it shows on your profile.
+                        </p>
+                      </div>
+                      {profile?.user?.resumeUrl && (
+                        <a
+                          href={profile.user.resumeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-medium text-white/55 transition-colors hover:text-white"
+                        >
+                          View current
+                        </a>
+                      )}
+                    </div>
+                    <div className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        className="hidden"
+                        id="dash-resume-uploader"
+                        onChange={handleResumeUpload}
+                        disabled={isUploadingResume}
+                      />
+                      <label
+                        htmlFor="dash-resume-uploader"
+                        className={`${btnSecondary} inline-flex cursor-pointer items-center gap-1.5 ${
+                          isUploadingResume ? 'pointer-events-none opacity-50' : ''
+                        }`}
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        <LoadingLabel loading={isUploadingResume} loadingText="Uploading…">
+                          Upload resume
+                        </LoadingLabel>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="space-y-4 border-t border-white/10 pt-6">
                     <p className={muted}>Experience</p>
                     {experiences.map((exp, idx) => (
                       <div key={idx} className="grid gap-2 sm:grid-cols-3">
@@ -675,9 +747,13 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                   <div className="space-y-4 border-t border-white/10 pt-6">
                     <p className={muted}>Projects</p>
                     {projects.map((proj, idx) => (
-                      <div key={idx} className="space-y-2">
+                      <div key={idx} className="space-y-2 rounded-lg border border-white/10 bg-white/[0.02] p-4">
                         <input type="text" placeholder="Title" value={proj.title} onChange={(e) => { const copy = [...projects]; copy[idx].title = e.target.value; setProjects(copy); }} className={input} />
                         <input type="text" placeholder="Description" value={proj.description} onChange={(e) => { const copy = [...projects]; copy[idx].description = e.target.value; setProjects(copy); }} className={input} />
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <input type="text" placeholder="Project link" value={proj.website || ''} onChange={(e) => { const copy = [...projects]; copy[idx].website = e.target.value; setProjects(copy); }} className={input} />
+                          <input type="text" placeholder="GitHub link" value={proj.github || ''} onChange={(e) => { const copy = [...projects]; copy[idx].github = e.target.value; setProjects(copy); }} className={input} />
+                        </div>
                         <button type="button" onClick={() => setProjects(projects.filter((_, i) => i !== idx))} className="text-xs text-white/40 hover:text-white">Remove</button>
                       </div>
                     ))}

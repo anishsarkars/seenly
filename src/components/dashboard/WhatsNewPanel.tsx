@@ -1,29 +1,20 @@
 'use client';
 
-import AvatarPicker from '@/components/profile/AvatarPicker';
 import ProVerifiedTick from '@/components/profile/ProVerifiedTick';
 import GoldenVerifiedTick from '@/components/profile/GoldenVerifiedTick';
-import { btnPrimary, panel } from '@/lib/platform-ui';
+import { panel } from '@/lib/platform-ui';
 
 interface WhatsNewPanelProps {
-  avatar: string;
-  onAvatarChange: (src: string) => void;
-  onApplyAvatar: () => Promise<void>;
-  isSaving: boolean;
   compact?: boolean;
   planTier?: 'free' | 'pro' | 'founder';
 }
 
 export default function WhatsNewPanel({
-  avatar,
-  onAvatarChange,
-  onApplyAvatar,
-  isSaving,
   compact = false,
   planTier = 'free',
 }: WhatsNewPanelProps) {
   return (
-    <div className={`space-y-3 ${compact ? '' : ''}`}>
+    <div className="space-y-3">
       <div className={`${panel} space-y-2.5 ${compact ? 'p-3' : 'p-4'}`}>
         <div className="space-y-0.5">
           <p className={`font-semibold text-white ${compact ? 'text-xs' : 'text-sm'}`}>
@@ -59,20 +50,30 @@ export default function WhatsNewPanel({
 
       <div className={`${panel} space-y-3 ${compact ? 'p-3' : 'p-4'}`}>
         <div className="space-y-0.5">
-          <p className={`font-semibold text-white ${compact ? 'text-xs' : 'text-sm'}`}>Pick an avatar</p>
-          <p className={`text-white/45 ${compact ? 'text-[10px]' : 'text-xs'}`}>
-            Premium 3D faces for your profile.
+          <p className={`font-semibold text-white ${compact ? 'text-xs' : 'text-sm'}`}>Projects on profile</p>
+          <p className={`text-white/45 ${compact ? 'text-[10px] leading-relaxed' : 'text-xs leading-relaxed'}`}>
+            Add project links from the dashboard and they now appear in a cleaner project section on your public profile.
           </p>
         </div>
-        <AvatarPicker value={avatar} onChange={onAvatarChange} compact />
-        <button
-          type="button"
-          onClick={onApplyAvatar}
-          disabled={isSaving}
-          className={`${btnPrimary} ${compact ? 'w-full text-xs py-2' : 'w-full'}`}
-        >
-          {isSaving ? 'Saving…' : 'Apply avatar'}
-        </button>
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5">
+          <p className={`text-white/70 ${compact ? 'text-[11px]' : 'text-xs'}`}>
+            Add a project title, description, project link, and optional GitHub link.
+          </p>
+        </div>
+      </div>
+
+      <div className={`${panel} space-y-3 ${compact ? 'p-3' : 'p-4'}`}>
+        <div className="space-y-0.5">
+          <p className={`font-semibold text-white ${compact ? 'text-xs' : 'text-sm'}`}>Resume upload in profile editor</p>
+          <p className={`text-white/45 ${compact ? 'text-[10px] leading-relaxed' : 'text-xs leading-relaxed'}`}>
+            You can now upload your PDF resume directly inside the profile edit section instead of managing it elsewhere.
+          </p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5">
+          <p className={`text-white/70 ${compact ? 'text-[11px]' : 'text-xs'}`}>
+            Upload once, then your profile keeps the latest resume download button in sync.
+          </p>
+        </div>
       </div>
     </div>
   );
