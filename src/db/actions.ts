@@ -91,6 +91,8 @@ export async function getProfileByUsername(username: string) {
   }
 
   try {
+    await ensureProfileSchema();
+
     const [user] = await db.select().from(users).where(eq(users.username, normalized)).limit(1);
     if (!user) return null;
 
@@ -131,6 +133,8 @@ export async function getUserProfile(userId: string) {
   }
 
   try {
+    await ensureProfileSchema();
+
     const [user] = await db.select().from(users).where(eq(users.id, safeId)).limit(1);
     if (!user) return null;
 

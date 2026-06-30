@@ -43,19 +43,24 @@ async function getUserEntitlements(userId: string) {
     return getEntitlements({});
   }
 
-  await ensureProfileSchema();
-  const [row] = await db
-    .select({
-      plan: users.plan,
-      planStatus: users.planStatus,
-      planExpiresAt: users.planExpiresAt,
-      isFounder: users.isFounder,
-    })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
+  try {
+    await ensureProfileSchema();
+    const [row] = await db
+      .select({
+        plan: users.plan,
+        planStatus: users.planStatus,
+        planExpiresAt: users.planExpiresAt,
+        isFounder: users.isFounder,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
-  return getEntitlements(row ?? {});
+    return getEntitlements(row ?? {});
+  } catch (error) {
+    console.error('Failed to load plan entitlements, using free tier:', error);
+    return getEntitlements({});
+  }
 }
 
 export async function POST(request: Request) {

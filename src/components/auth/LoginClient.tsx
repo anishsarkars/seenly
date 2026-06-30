@@ -48,8 +48,9 @@ export default function LoginClient() {
     try {
       const existing = await getUserProfile(user.id);
       router.push(existing?.user?.username ? '/dashboard' : '/onboarding');
-    } catch {
-      router.push('/onboarding');
+    } catch (err) {
+      console.error('Profile lookup after login failed:', err);
+      router.push('/dashboard');
     }
   };
 
