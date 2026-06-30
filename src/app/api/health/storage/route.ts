@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/utils/supabase/admin';
-import { getStorageConfigErrors, syncAllStorageLimits } from '@/lib/supabase/storage-server';
+import { getStorageConfigErrors, getStorageConfigWarnings, syncAllStorageLimits } from '@/lib/supabase/storage-server';
 import { getGlobalStorageLimit } from '@/lib/supabase/sync-storage-limits';
 import { MAX_BUCKET_FILE_BYTES } from '@/lib/storage-limits';
 import { STORAGE_BUCKET_NAMES } from '@/lib/upload-config';
@@ -8,12 +8,14 @@ import { STORAGE_BUCKET_NAMES } from '@/lib/upload-config';
 /** Diagnostic: verify storage env + buckets (admin only). */
 export async function GET() {
   const configErrors = getStorageConfigErrors();
+  const configWarnings = getStorageConfigWarnings();
   const admin = createAdminClient();
 
   if (!admin) {
     return NextResponse.json({
       ok: false,
       configErrors,
+      configWarnings,
       buckets: [],
       globalFileSizeLimit: null,
       message: 'Add SUPABASE_SERVICE_ROLE_KEY to enable uploads.',
@@ -48,6 +50,7 @@ export async function GET() {
     return NextResponse.json({
       ok: missing.length === 0 && limitsOk && globalOk && configErrors.length === 0,
       configErrors,
+      configWarnings,
       buckets: bucketDetails,
       missing,
       requiredBucketLimit: MAX_BUCKET_FILE_BYTES,
@@ -60,6 +63,7 @@ export async function GET() {
       {
         ok: false,
         configErrors,
+        configWarnings,
         error: error instanceof Error ? error.message : 'Storage check failed',
       },
       { status: 500 }

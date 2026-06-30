@@ -13,8 +13,8 @@ export function isStorageSizeError(message: string) {
 
 export function storageSizeErrorMessage(planLimitBytes: number) {
   return (
-    `Upload failed: file exceeds the storage limit. Your plan allows up to ${formatBytesLimit(planLimitBytes)}. ` +
-    `Supabase may still be capped at 50 MB globally — set Storage → Settings → Global file size limit to 250 MB, ` +
-    `or add SUPABASE_MANAGEMENT_TOKEN to auto-sync.`
+    `Upload failed: file exceeds the storage limit. Your Seenly plan allows up to ${formatBytesLimit(planLimitBytes)}. ` +
+    `Your Supabase project may still be capped at 50 MB — open Supabase Dashboard → Storage → Settings → ` +
+    `set Global file size limit to 250 MB (requires Supabase Pro on your Supabase project, not just Seenly Pro).`
   );
 }

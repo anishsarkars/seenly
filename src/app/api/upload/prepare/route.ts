@@ -12,7 +12,7 @@ import {
 import { getUserEntitlements } from '@/lib/upload-entitlements';
 import {
   syncAllStorageLimits,
-  verifyBucketCanAccept,
+  assertStorageCanAcceptUpload,
 } from '@/lib/supabase/sync-storage-limits';
 import type { StorageBucketName } from '@/lib/upload-config';
 import { isStorageSizeError } from '@/lib/storage-limits';
@@ -97,11 +97,9 @@ export async function POST(request: Request) {
     const path = pathFor(kind, user.id, fileMeta);
     const contentType = contentTypeFor(kind, fileMeta);
 
-    const bucketCheck = await verifyBucketCanAccept(admin, bucket, fileSize, {
-      globalSynced: globalSync.ok,
-    });
-    if (!bucketCheck.ok && !globalSync.ok) {
-      return NextResponse.json({ error: bucketCheck.message }, { status: 413 });
+    const capacity = await assertStorageCanAcceptUpload(admin, bucket, fileSize, globalSync);
+    if (!capacity.ok) {
+      return NextResponse.json({ error: capacity.message, storageSync: globalSync }, { status: 413 });
     }
 
     const { data, error } = await admin.storage

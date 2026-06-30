@@ -19,12 +19,17 @@ export function getStorageConfigErrors(): string[] {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
     errors.push('SUPABASE_SERVICE_ROLE_KEY is missing (required for server uploads).');
   }
+  return errors;
+}
+
+export function getStorageConfigWarnings(): string[] {
+  const warnings: string[] = [];
   if (!process.env.SUPABASE_MANAGEMENT_TOKEN?.trim()) {
-    errors.push(
-      'SUPABASE_MANAGEMENT_TOKEN is missing (needed to raise the 50 MB Supabase global upload cap).'
+    warnings.push(
+      'SUPABASE_MANAGEMENT_TOKEN is missing — cannot auto-raise the 50 MB Supabase global upload cap.'
     );
   }
-  return errors;
+  return warnings;
 }
 
 export async function uploadWithAdminStorage({

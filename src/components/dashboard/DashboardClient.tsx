@@ -111,6 +111,12 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     };
   }, []);
 
+  // Warm storage limit sync when user opens the video tab (raises 50 MB cap if token is set).
+  useEffect(() => {
+    if (activeTab !== 'video') return;
+    fetch('/api/storage/sync', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+  }, [activeTab]);
+
   useEffect(() => {
     if (!whatsNewOpen) return;
     localStorage.setItem(WHATS_NEW_STORAGE_KEY, SEENLY_UPDATES_VERSION);
