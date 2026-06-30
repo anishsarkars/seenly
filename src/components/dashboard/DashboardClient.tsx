@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
 import { createClient } from '@/utils/supabase/client';
-import { captureVideoThumbnail, fetchUploadLimits, uploadProfileResume, uploadProfileThumbnail, uploadProfileVideo, validateVideoFile } from '@/lib/storage';
+import { captureVideoThumbnail, fetchUploadLimits, isPersistedMediaUrl, uploadProfileResume, uploadProfileThumbnail, uploadProfileVideo, validateVideoFile } from '@/lib/storage';
 import ProfileLivePreview from '@/components/profile/ProfileLivePreview';
 import type { ProfileViewData } from '@/components/profile/ProfileView';
 import AvatarPicker from '@/components/profile/AvatarPicker';
@@ -62,6 +62,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isRegeneratingThumbnail, setIsRegeneratingThumbnail] = useState(false);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
   const [actionStatus, setActionStatus] = useState<ActionStatusState>(null);
@@ -323,6 +324,44 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     } finally {
       setIsUploadingVideo(false);
       e.target.value = '';
+    }
+  };
+
+  const handleRegenerateThumbnail = async () => {
+    const videoUrl = profile?.user?.videoUrl;
+    if (!videoUrl || !profile?.user?.id || !isPersistedMediaUrl(videoUrl)) return;
+
+    setIsRegeneratingThumbnail(true);
+    setActionStatus({ type: 'loading', message: 'Updating thumbnail…' });
+    try {
+      const thumbnailBlob = await captureVideoThumbnail(videoUrl);
+      const thumbnailUrl = await uploadProfileThumbnail(thumbnailBlob);
+      const saveRes = await saveOnboardingData(profile.user.id, {
+        username: profile.user.username,
+        email: profile.user.email,
+        fullName: profile.user.fullName,
+        headline: profile.user.headline,
+        location: profile.user.location,
+        bio: profile.user.bio,
+        videoUrl: profile.user.videoUrl,
+        thumbnailUrl,
+        resumeUrl: profile.user.resumeUrl,
+        experiences: profile.experiences,
+        projects: profile.projects,
+        socials: profile.socials,
+      });
+      if (!saveRes?.success) {
+        throw new Error(saveRes?.error || 'Thumbnail updated but profile could not be saved.');
+      }
+      setProfile({ ...profile, user: { ...profile.user, thumbnailUrl } });
+      setActionStatus({ type: 'success', message: 'Thumbnail updated to match your video' });
+    } catch (err: any) {
+      setActionStatus({
+        type: 'error',
+        message: err.message || 'Could not update thumbnail. Try re-uploading your video.',
+      });
+    } finally {
+      setIsRegeneratingThumbnail(false);
     }
   };
 
@@ -849,6 +888,18 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                         Upload video
                       </LoadingLabel>
                     </label>
+                    {profile?.user?.videoUrl && isPersistedMediaUrl(profile.user.videoUrl) && (
+                      <button
+                        type="button"
+                        onClick={handleRegenerateThumbnail}
+                        disabled={isUploadingVideo || isRegeneratingThumbnail}
+                        className={`${btnSecondary} mt-3 inline-flex items-center gap-1.5 disabled:opacity-50`}
+                      >
+                        <LoadingLabel loading={isRegeneratingThumbnail} loadingText="Updating…">
+                          Sync thumbnail from video
+                        </LoadingLabel>
+                      </button>
+                    )}
                   </div>
 
                   {entitlements.customProfileLayout && profile?.user?.id && (

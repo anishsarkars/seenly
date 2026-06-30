@@ -113,7 +113,6 @@ function IntroVideo({
       <video
         ref={videoRef}
         src={videoUrl}
-        poster={thumbnailUrl || undefined}
         className={`${mediaClass} object-contain ${videoReady ? 'relative' : 'absolute inset-0 opacity-0'}`}
         controls
         playsInline

@@ -189,34 +189,61 @@ export async function validateVideoFile(
 }
 
 export async function captureVideoThumbnail(source: string): Promise<Blob> {
+  let objectUrl = source;
+  let shouldRevoke = false;
+
+  if (!source.startsWith('blob:') && !source.startsWith('data:')) {
+    const res = await fetch(source);
+    if (!res.ok) {
+      throw new Error('Could not fetch video for thumbnail.');
+    }
+    const blob = await res.blob();
+    objectUrl = URL.createObjectURL(blob);
+    shouldRevoke = true;
+  }
+
+  try {
+    return await captureVideoThumbnailFromObjectUrl(objectUrl);
+  } finally {
+    if (shouldRevoke) {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+}
+
+async function captureVideoThumbnailFromObjectUrl(objectUrl: string): Promise<Blob> {
   const video = document.createElement('video');
-  video.src = source;
+  video.src = objectUrl;
   video.muted = true;
   video.playsInline = true;
-  video.crossOrigin = 'anonymous';
 
   await new Promise<void>((resolve, reject) => {
-    video.onloadeddata = () => resolve();
+    video.onloadedmetadata = () => resolve();
     video.onerror = () => reject(new Error('Could not load video for thumbnail.'));
   });
 
-  video.currentTime = Math.min(1, Math.max(video.duration / 2, 0));
+  const { videoWidth, videoHeight, duration } = video;
+  if (!videoWidth || !videoHeight) {
+    throw new Error('Could not read video dimensions for thumbnail.');
+  }
+
+  const seekTime =
+    Number.isFinite(duration) && duration > 0 ? Math.min(1, duration / 2) : 0;
+  video.currentTime = seekTime;
   await new Promise<void>((resolve) => {
     video.onseeked = () => resolve();
   });
 
+  const maxDim = 1280;
+  const scale = Math.min(1, maxDim / Math.max(videoWidth, videoHeight));
   const canvas = document.createElement('canvas');
-  canvas.width = 1280;
-  canvas.height = 720;
+  canvas.width = Math.max(1, Math.round(videoWidth * scale));
+  canvas.height = Math.max(1, Math.round(videoHeight * scale));
+
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not create thumbnail.');
 
-  const scale = Math.max(canvas.width / video.videoWidth, canvas.height / video.videoHeight);
-  const width = video.videoWidth * scale;
-  const height = video.videoHeight * scale;
-  const x = (canvas.width - width) / 2;
-  const y = (canvas.height - height) / 2;
-  ctx.drawImage(video, x, y, width, height);
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(

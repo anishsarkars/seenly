@@ -56,11 +56,11 @@ export default function ProfileCardPreview({
         </div>
       </div>
 
-      <div className="relative mt-4 aspect-video overflow-hidden rounded-lg border border-white/10 bg-black">
+      <div className="relative mt-4 overflow-hidden rounded-lg border border-white/10 bg-black">
         {hasVideo && thumbnailUrl ? (
-          <img src={thumbnailUrl} alt="" className="h-full w-full object-cover" />
+          <img src={thumbnailUrl} alt="" className="mx-auto block h-auto w-full max-h-40 object-contain" />
         ) : (
-          <div className="flex h-full items-center justify-center text-xs text-white/30">No video yet</div>
+          <div className="flex aspect-video items-center justify-center text-xs text-white/30">No video yet</div>
         )}
       </div>
 
