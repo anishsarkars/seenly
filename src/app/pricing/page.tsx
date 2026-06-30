@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/server';
-import { redirect } from 'next/navigation';
 import SeenlyLogo from '@/components/SeenlyLogo';
-import PricingCards, { PricingPageFooter } from '@/components/billing/PricingCards';
+import PricingTierGrid, { PricingPageFooter } from '@/components/billing/PricingTierGrid';
 import SiteFooter from '@/components/SiteFooter';
 import { getUserProfile } from '@/db/actions';
 import { getEffectiveTier } from '@/lib/plans';
@@ -25,52 +24,41 @@ export default async function PricingPage() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-black font-geist text-white">
-      <header className="border-b border-white/[0.06] px-5 py-5 sm:px-8">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-          <Link href="/">
-            <SeenlyLogo size="md" />
-          </Link>
-          <div className="flex items-center gap-3">
-            {user ? (
-              <Link href="/dashboard" className="text-sm text-white/60 hover:text-white">
-                Dashboard
+    <div className="flex min-h-dvh flex-col bg-black font-geist text-white selection:bg-white selection:text-black">
+      <header className="relative z-30 flex items-center justify-between px-5 py-5 sm:px-6 md:px-12 lg:px-16">
+        <Link href="/">
+          <SeenlyLogo size="md" />
+        </Link>
+        <div className="flex items-center gap-3 sm:gap-4">
+          {user ? (
+            <Link
+              href="/dashboard"
+              className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black transition-transform hover:scale-[1.02] hover:bg-zinc-200 sm:px-5"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm text-white/70 transition-colors hover:text-white">
+                Sign in
               </Link>
-            ) : (
-              <>
-                <Link href="/login" className="text-sm text-white/60 hover:text-white">
-                  Sign in
-                </Link>
-                <Link
-                  href="/onboarding"
-                  className="rounded-lg bg-white px-3.5 py-2 text-sm font-semibold text-black hover:bg-zinc-200"
-                >
-                  Get started
-                </Link>
-              </>
-            )}
-          </div>
+              <Link
+                href="/onboarding"
+                className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black transition-transform hover:scale-[1.02] hover:bg-zinc-200 sm:px-5"
+              >
+                Get started
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-12 sm:px-8 sm:py-16">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/55">
-            Pricing
-          </span>
-          <h1 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">
-            Simple plans for every stage
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-white/50 sm:text-base">
-            Start free. Upgrade when you need longer videos, bigger uploads, and a cleaner public profile.
-          </p>
-        </div>
+      <main className="flex-1">
+        <section className="relative bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-36 lg:px-16">
+          <PricingTierGrid variant="checkout" currentTier={currentTier} isSignedIn={!!user} />
+        </section>
 
-        <div className="mt-12">
-          <PricingCards currentTier={currentTier} isSignedIn={!!user} />
-        </div>
-
-        <div className="mt-10">
+        <div className="px-5 pb-16 sm:px-6 md:px-12 lg:px-16">
           <PricingPageFooter />
         </div>
       </main>

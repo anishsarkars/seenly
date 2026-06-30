@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
-import { Check, Sparkles } from 'lucide-react';
-import { btnPrimary, btnSecondary } from '@/lib/platform-ui';
+import { Check } from 'lucide-react';
 import { PLAN_MARKETING_BENEFITS } from '@/lib/plan-marketing';
 import { PLANS } from '@/lib/plans';
 
@@ -79,39 +78,57 @@ export default function BillingSuccessOverlay({ plan, onDismiss, onSignInAgain }
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <canvas ref={canvasRef} className="pointer-events-none absolute inset-0" aria-hidden />
-      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onDismiss} aria-hidden />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onDismiss} aria-hidden />
 
-      <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl sm:p-8">
-        <div className="mb-4 flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-emerald-400" />
-          <h2 className="text-xl font-semibold tracking-tight text-white">Payment successful</h2>
-        </div>
+      <div className="relative w-full max-w-md text-center">
+        <div
+          className="pointer-events-none absolute -inset-px rounded-2xl bg-gradient-to-r from-emerald-500/10 via-violet-500/6 to-sky-400/6 blur-lg opacity-70"
+          aria-hidden
+        />
+        <div className="relative rounded-2xl border border-white/[0.08] bg-black/50 px-6 py-8 shadow-[0_0_40px_-20px_rgba(16,185,129,0.12)] backdrop-blur-md sm:px-8 sm:py-10">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/60">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
+            Payment successful
+          </span>
 
-        <p className="text-sm leading-relaxed text-white/60">
-          Welcome to <span className="font-medium text-white">{entitlements.label}</span>. Your plan benefits
-          will be applied to your account shortly — usually within a minute.
-        </p>
+          <h2 className="mt-5 text-2xl font-bold leading-[1.1] tracking-tight text-white sm:text-3xl">
+            Welcome to {entitlements.label}.<br />
+            <span className="text-white/60">Your benefits are on the way.</span>
+          </h2>
 
-        <ul className="mt-5 space-y-2.5">
-          {benefits.map((item) => (
-            <li key={item} className="flex items-start gap-2 text-sm text-white/70">
-              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400/90" strokeWidth={2.5} />
-              {item}
-            </li>
-          ))}
-        </ul>
+          <p className="mt-4 text-sm leading-relaxed text-white/50">
+            Plan perks will apply to your account shortly — usually within a minute.
+          </p>
 
-        <p className="mt-5 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-xs leading-relaxed text-amber-200/80">
-          Please sign in again so your session picks up the new plan.
-        </p>
+          <ul className="mt-6 space-y-2.5 text-left">
+            {benefits.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-sm text-white/60">
+                <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400/80" strokeWidth={2.5} />
+                {item}
+              </li>
+            ))}
+          </ul>
 
-        <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-          <button type="button" onClick={onSignInAgain} className={`${btnPrimary} w-full sm:flex-1`}>
-            Sign in again
-          </button>
-          <button type="button" onClick={onDismiss} className={`${btnSecondary} w-full sm:flex-1`}>
-            Continue to dashboard
-          </button>
+          <p className="mt-6 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-xs leading-relaxed text-white/50">
+            Please <span className="font-semibold text-white/75">sign in again</span> so your session picks up the new plan.
+          </p>
+
+          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <button
+              type="button"
+              onClick={onSignInAgain}
+              className="rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-[1.02] hover:bg-zinc-200 sm:flex-1"
+            >
+              Sign in again
+            </button>
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="rounded-lg border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white sm:flex-1"
+            >
+              Continue to dashboard
+            </button>
+          </div>
         </div>
       </div>
     </div>

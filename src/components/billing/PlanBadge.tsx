@@ -17,7 +17,9 @@ export default function PlanBadge({ user, className = '' }: PlanBadgeProps) {
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${tone} ${className}`}
+      className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+        tier === 'founder' ? 'normal-case tracking-tight' : 'uppercase tracking-wider'
+      } ${tone} ${className}`}
     >
       {label}
     </span>

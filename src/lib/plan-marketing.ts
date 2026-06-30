@@ -1,5 +1,8 @@
 import type { PlanTier } from '@/lib/plans';
 
+export const FINAL_BOSS_LABEL = 'Seenly Final boss!';
+export const SUPPORT_EMAIL = 'hello@anishsarkar.site';
+
 export const PLAN_MARKETING_BENEFITS: Record<Exclude<PlanTier, 'free'>, string[]> = {
   pro: [
     '3-minute intro video',
@@ -11,7 +14,7 @@ export const PLAN_MARKETING_BENEFITS: Record<Exclude<PlanTier, 'free'>, string[]
   ],
   founder: [
     'Everything in Pro, forever',
-    'Founder badge on your profile',
+    'Final boss badge on your profile',
     'All future Pro features included',
     'Lifetime updates',
   ],

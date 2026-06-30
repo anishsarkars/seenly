@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     });
 
     if (plan === 'founder' && currentTier === 'founder') {
-      return NextResponse.json({ error: 'You already have Founder access.' }, { status: 400 });
+      return NextResponse.json({ error: 'You already have Seenly Final boss! access.' }, { status: 400 });
     }
 
     if (plan === 'pro' && (currentTier === 'pro' || currentTier === 'founder')) {

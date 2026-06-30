@@ -183,8 +183,8 @@ export default function ProfileView({
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
               {showFounderBadge && (
-                <span className="inline-flex items-center rounded-full border border-violet-400/25 bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-violet-300/90">
-                  Founder
+                <span className="inline-flex items-center rounded-full border border-violet-400/25 bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-tight text-violet-300/90">
+                  Final boss
                 </span>
               )}
             </div>

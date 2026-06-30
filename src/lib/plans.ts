@@ -41,7 +41,7 @@ export const PLANS: Record<PlanTier, PlanEntitlements> = {
   },
   founder: {
     tier: 'founder',
-    label: 'Founder',
+    label: 'Seenly Final boss!',
     maxVideoSec: 180,
     maxUploadBytes: 250 * 1024 * 1024,
     maxProjects: Number.POSITIVE_INFINITY,

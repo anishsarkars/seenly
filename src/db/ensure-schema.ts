@@ -39,6 +39,15 @@ export async function ensureProfileSchema() {
       event_type varchar(64) NOT NULL,
       processed_at timestamp DEFAULT now() NOT NULL
     )`,
+    sql`CREATE TABLE IF NOT EXISTS billing_payments (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      plan varchar(20) NOT NULL,
+      amount_label varchar(32) NOT NULL,
+      dodo_payment_id varchar(128) UNIQUE,
+      paid_at timestamp DEFAULT now() NOT NULL
+    )`,
+    sql`CREATE INDEX IF NOT EXISTS billing_payments_user_id_idx ON billing_payments(user_id)`,
   ];
 
   for (const statement of statements) {

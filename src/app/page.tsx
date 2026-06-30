@@ -100,6 +100,9 @@ export default function Home() {
               <a href="#how-it-works" className="text-sm text-white/70 hover:text-white transition-colors">
                 How it Works
               </a>
+              <a href="#pricing" className="text-sm text-white/70 hover:text-white transition-colors">
+                Pricing
+              </a>
             </nav>
           </div>
 
@@ -161,6 +164,13 @@ export default function Home() {
                 className="border-b border-white/[0.06] py-5 text-2xl font-medium tracking-tight text-white/90 transition-colors hover:text-white"
               >
                 How it Works
+              </a>
+              <a
+                href="#pricing"
+                onClick={() => setMobileMenuOpen(false)}
+                className="border-b border-white/[0.06] py-5 text-2xl font-medium tracking-tight text-white/90 transition-colors hover:text-white"
+              >
+                Pricing
               </a>
               {authState === 'guest' && (
                 <a
@@ -328,6 +338,12 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Subtle animated divider */}
+      <div className="relative h-px w-full overflow-hidden bg-black">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+        <div className="absolute inset-y-0 left-1/2 h-full w-2/3 -translate-x-1/2 animate-[sectionGlow_6s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/15 to-transparent blur-[0.5px]" />
+      </div>
 
       <LandingPricing />
 

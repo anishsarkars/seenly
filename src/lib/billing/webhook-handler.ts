@@ -3,6 +3,7 @@ import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { getDodoProductIds } from '@/lib/billing/dodo-client';
+import { PLAN_PRICES } from '@/lib/plan-marketing';
 
 function isDbAvailable() {
   return !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('your-supabase');
@@ -23,6 +24,15 @@ export async function ensureBillingSchema() {
       event_type varchar(64) NOT NULL,
       processed_at timestamp DEFAULT now() NOT NULL
     )`,
+    sql`CREATE TABLE IF NOT EXISTS billing_payments (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      plan varchar(20) NOT NULL,
+      amount_label varchar(32) NOT NULL,
+      dodo_payment_id varchar(128) UNIQUE,
+      paid_at timestamp DEFAULT now() NOT NULL
+    )`,
+    sql`CREATE INDEX IF NOT EXISTS billing_payments_user_id_idx ON billing_payments(user_id)`,
   ];
 
   for (const statement of statements) {
@@ -88,6 +98,32 @@ async function findUserId({
     .limit(1);
 
   return row?.id ?? null;
+}
+
+export async function recordBillingPayment(
+  userId: string,
+  {
+    plan,
+    amountLabel,
+    paymentId,
+  }: {
+    plan: 'pro' | 'founder';
+    amountLabel: string;
+    paymentId?: string | null;
+  }
+) {
+  if (!isDbAvailable()) return;
+  await ensureBillingSchema();
+
+  try {
+    await db.execute(
+      sql`INSERT INTO billing_payments (user_id, plan, amount_label, dodo_payment_id)
+          VALUES (${userId}, ${plan}, ${amountLabel}, ${paymentId ?? null})
+          ON CONFLICT (dodo_payment_id) DO NOTHING`
+    );
+  } catch (error) {
+    console.warn('Failed to record billing payment:', error);
+  }
 }
 
 export async function applyFounderPlan(userId: string, customerId?: string | null) {
@@ -203,6 +239,12 @@ export async function handleDodoWebhookEvent(event: {
 
   const subscriptionId = typeof data.subscription_id === 'string' ? data.subscription_id : null;
   const nextBilling = parseDate(data.next_billing_date);
+  const paymentId =
+    typeof data.payment_id === 'string'
+      ? data.payment_id
+      : typeof data.id === 'string'
+        ? data.id
+        : null;
 
   switch (type) {
     case 'payment.succeeded': {
@@ -213,6 +255,22 @@ export async function handleDodoWebhookEvent(event: {
 
       if (isFounderPayment && !subscriptionId) {
         await applyFounderPlan(userId, customerId);
+        await recordBillingPayment(userId, {
+          plan: 'founder',
+          amountLabel: PLAN_PRICES.founder.amount,
+          paymentId,
+        });
+      } else if (
+        productId === pro ||
+        cartProductIds.includes(pro) ||
+        metadataPlan === 'pro' ||
+        subscriptionId
+      ) {
+        await recordBillingPayment(userId, {
+          plan: 'pro',
+          amountLabel: `${PLAN_PRICES.pro.amount}${PLAN_PRICES.pro.period}`,
+          paymentId,
+        });
       }
       break;
     }
