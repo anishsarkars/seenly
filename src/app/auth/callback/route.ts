@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const next = searchParams.get('next') ?? '/onboarding';
+  const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/onboarding';
 
   if (code) {
     const supabase = await createClient();
@@ -16,12 +17,19 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser();
 
       if (user) {
+        if (safeNext === '/pricing') {
+          return NextResponse.redirect(`${origin}/pricing`);
+        }
+
         const profile = await getUserProfile(user.id);
-        const destination = profile?.user?.username ? '/dashboard' : '/onboarding';
-        return NextResponse.redirect(`${origin}${destination}`);
+        if (profile?.user?.username) {
+          return NextResponse.redirect(`${origin}/dashboard`);
+        }
+
+        return NextResponse.redirect(`${origin}${safeNext}`);
       }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(`${origin}${safeNext}`);
     }
   }
 

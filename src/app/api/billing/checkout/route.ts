@@ -4,6 +4,28 @@ import { getUserProfile } from '@/db/actions';
 import { getDodoClient, getDodoProductIds, getAppBaseUrl } from '@/lib/billing/dodo-client';
 import { getEffectiveTier } from '@/lib/plans';
 
+function formatCheckoutError(error: unknown): { message: string; status: number } {
+  const raw = error instanceof Error ? error.message : String(error);
+
+  if (raw.includes('401') || raw.toLowerCase().includes('unauthorized')) {
+    return {
+      message:
+        'Dodo Payments rejected the API key. On Vercel, verify DODO_PAYMENTS_API_KEY is set and matches live_mode (or set DODO_PAYMENTS_ENV=test_mode for test keys).',
+      status: 502,
+    };
+  }
+
+  if (raw.includes('DODO_PAYMENTS_API_KEY')) {
+    return { message: 'Payment API key is missing on the server. Add DODO_PAYMENTS_API_KEY in Vercel.', status: 503 };
+  }
+
+  if (raw.includes('product IDs')) {
+    return { message: 'Payment product IDs are missing on the server. Add DODO_PRO_PRODUCT_ID and DODO_FOUNDER_PRODUCT_ID in Vercel.', status: 503 };
+  }
+
+  return { message: 'Could not start checkout. Please try again in a moment.', status: 500 };
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -12,7 +34,10 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: 'Sign in to upgrade.' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Sign in to upgrade your plan.', code: 'auth_required' },
+        { status: 401 }
+      );
     }
 
     const body = await request.json().catch(() => ({}));
@@ -63,7 +88,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ checkoutUrl: session.checkout_url });
   } catch (error) {
     console.error('Checkout error:', error);
-    const message = error instanceof Error ? error.message : 'Checkout failed.';
-    return NextResponse.json({ error: message }, { status: 500 });
+    const { message, status } = formatCheckoutError(error);
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -1,37 +1,37 @@
 export const PROFILE_AVATARS = [
-  { id: 'face-1', label: 'Alex', src: '/avatars/face-1.svg' },
-  { id: 'face-2', label: 'Sam', src: '/avatars/face-2.svg' },
-  { id: 'face-3', label: 'Riley', src: '/avatars/face-3.svg' },
-  { id: 'face-4', label: 'Jordan', src: '/avatars/face-4.svg' },
+  { id: 'minimal-1', label: 'Minimal 1', src: '/avatars/minimal-1.svg' },
+  { id: 'minimal-2', label: 'Minimal 2', src: '/avatars/minimal-2.svg' },
+  { id: 'minimal-3', label: 'Minimal 3', src: '/avatars/minimal-3.svg' },
+  { id: 'minimal-4', label: 'Minimal 4', src: '/avatars/minimal-4.svg' },
 ] as const;
 
 const LEGACY_AVATAR_MAP: Record<string, string> = {
-  '/avatars/dot-1.svg': '/avatars/face-1.svg',
-  '/avatars/dot-2.svg': '/avatars/face-2.svg',
-  '/avatars/dot-3.svg': '/avatars/face-3.svg',
-  '/avatars/dot-4.svg': '/avatars/face-4.svg',
-  '/avatars/flat-1.svg': '/avatars/face-3.svg',
-  '/avatars/flat-2.svg': '/avatars/face-2.svg',
-  '/avatars/flat-3.svg': '/avatars/face-1.svg',
-  '/avatars/flat-4.svg': '/avatars/face-3.svg',
-  '/avatars/flat-5.svg': '/avatars/face-4.svg',
-  '/avatars/flat-6.svg': '/avatars/face-1.svg',
-  '/avatars/geo-1.svg': '/avatars/face-1.svg',
-  '/avatars/geo-2.svg': '/avatars/face-2.svg',
-  '/avatars/geo-3.svg': '/avatars/face-3.svg',
-  '/avatars/geo-4.svg': '/avatars/face-4.svg',
-  '/avatars/minimal-1.svg': '/avatars/face-1.svg',
-  '/avatars/minimal-2.svg': '/avatars/face-2.svg',
-  '/avatars/minimal-3.svg': '/avatars/face-3.svg',
-  '/avatars/minimal-4.svg': '/avatars/face-4.svg',
-  '/avatars/line-1.svg': '/avatars/face-1.svg',
-  '/avatars/line-2.svg': '/avatars/face-2.svg',
-  '/avatars/line-3.svg': '/avatars/face-3.svg',
-  '/avatars/line-4.svg': '/avatars/face-4.svg',
-  '/avatars/comic-1.svg': '/avatars/face-1.svg',
-  '/avatars/comic-2.svg': '/avatars/face-2.svg',
-  '/avatars/comic-3.svg': '/avatars/face-3.svg',
-  '/avatars/comic-4.svg': '/avatars/face-4.svg',
+  '/avatars/face-1.svg': '/avatars/minimal-1.svg',
+  '/avatars/face-2.svg': '/avatars/minimal-2.svg',
+  '/avatars/face-3.svg': '/avatars/minimal-3.svg',
+  '/avatars/face-4.svg': '/avatars/minimal-4.svg',
+  '/avatars/dot-1.svg': '/avatars/minimal-1.svg',
+  '/avatars/dot-2.svg': '/avatars/minimal-2.svg',
+  '/avatars/dot-3.svg': '/avatars/minimal-3.svg',
+  '/avatars/dot-4.svg': '/avatars/minimal-4.svg',
+  '/avatars/flat-1.svg': '/avatars/minimal-3.svg',
+  '/avatars/flat-2.svg': '/avatars/minimal-2.svg',
+  '/avatars/flat-3.svg': '/avatars/minimal-1.svg',
+  '/avatars/flat-4.svg': '/avatars/minimal-3.svg',
+  '/avatars/flat-5.svg': '/avatars/minimal-4.svg',
+  '/avatars/flat-6.svg': '/avatars/minimal-1.svg',
+  '/avatars/geo-1.svg': '/avatars/minimal-1.svg',
+  '/avatars/geo-2.svg': '/avatars/minimal-2.svg',
+  '/avatars/geo-3.svg': '/avatars/minimal-3.svg',
+  '/avatars/geo-4.svg': '/avatars/minimal-4.svg',
+  '/avatars/line-1.svg': '/avatars/minimal-1.svg',
+  '/avatars/line-2.svg': '/avatars/minimal-2.svg',
+  '/avatars/line-3.svg': '/avatars/minimal-3.svg',
+  '/avatars/line-4.svg': '/avatars/minimal-4.svg',
+  '/avatars/comic-1.svg': '/avatars/minimal-1.svg',
+  '/avatars/comic-2.svg': '/avatars/minimal-2.svg',
+  '/avatars/comic-3.svg': '/avatars/minimal-3.svg',
+  '/avatars/comic-4.svg': '/avatars/minimal-4.svg',
 };
 
 export type ProfileAvatarId = (typeof PROFILE_AVATARS)[number]['id'];
@@ -51,7 +51,9 @@ export function resolveProfileAvatarSelection(url?: string | null): string {
   const legacy = LEGACY_AVATAR_MAP[url];
   if (legacy) return legacy;
 
-  const match = PROFILE_AVATARS.find((a) => url === a.src || url.endsWith(`/${a.id}.svg`));
+  const match = PROFILE_AVATARS.find(
+    (a) => url === a.src || url.endsWith(`/${a.id}.svg`) || url.endsWith(`/${a.id.replace('minimal-', 'face-')}.svg`)
+  );
   if (match) return match.src;
 
   if (url.startsWith('http') || url.startsWith('/')) return url;

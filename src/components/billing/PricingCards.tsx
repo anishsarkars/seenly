@@ -9,6 +9,7 @@ import { type PlanTier } from '@/lib/plans';
 interface PricingCardsProps {
   currentTier?: PlanTier;
   compact?: boolean;
+  isSignedIn?: boolean;
   onUpgrade?: (plan: 'pro' | 'founder') => void;
   loadingPlan?: 'pro' | 'founder' | null;
 }
@@ -46,6 +47,7 @@ const FEATURES = {
 export default function PricingCards({
   currentTier = 'free',
   compact = false,
+  isSignedIn = false,
   onUpgrade,
   loadingPlan = null,
 }: PricingCardsProps) {
@@ -58,15 +60,27 @@ export default function PricingCards({
       return;
     }
 
+    if (!isSignedIn) {
+      window.location.href = `/login?next=${encodeURIComponent('/pricing')}`;
+      return;
+    }
+
     setLocalLoading(plan);
     try {
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({ plan }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Checkout failed.');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 401 || data.code === 'auth_required') {
+          window.location.href = `/login?next=${encodeURIComponent('/pricing')}`;
+          return;
+        }
+        throw new Error(typeof data.error === 'string' ? data.error : 'Checkout failed.');
+      }
       if (data.checkoutUrl) window.location.href = data.checkoutUrl;
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Checkout failed.');

@@ -67,7 +67,7 @@ export default async function PricingPage() {
         </div>
 
         <div className="mt-12">
-          <PricingCards currentTier={currentTier} />
+          <PricingCards currentTier={currentTier} isSignedIn={!!user} />
         </div>
 
         <div className="mt-10">

@@ -40,11 +40,18 @@ export default function LoginClient() {
   }, [searchParams]);
 
   const redirectAfterAuth = async () => {
+    const nextPath = searchParams.get('next');
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       router.push('/onboarding');
       return;
     }
+
+    if (nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//')) {
+      router.push(nextPath);
+      return;
+    }
+
     try {
       const existing = await getUserProfile(user.id);
       router.push(existing?.user?.username ? '/dashboard' : '/onboarding');
@@ -57,7 +64,10 @@ export default function LoginClient() {
   const handleGoogleSignIn = async () => {
     setError('');
     setLoading(true);
-    const { error: authError } = await signInWithGoogle(supabase, '/onboarding');
+    const nextPath = searchParams.get('next');
+    const oauthNext =
+      nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : '/onboarding';
+    const { error: authError } = await signInWithGoogle(supabase, oauthNext);
     if (authError) {
       setError(authError.message);
       setLoading(false);
