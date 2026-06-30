@@ -19,6 +19,8 @@ export const users = pgTable('users', {
   isFounder: boolean('is_founder').default(false).notNull(),
   dodoCustomerId: varchar('dodo_customer_id', { length: 64 }),
   dodoSubscriptionId: varchar('dodo_subscription_id', { length: 64 }),
+  dodoCheckoutSessionId: varchar('dodo_checkout_session_id', { length: 64 }),
+  pendingCheckoutPlan: varchar('pending_checkout_plan', { length: 20 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

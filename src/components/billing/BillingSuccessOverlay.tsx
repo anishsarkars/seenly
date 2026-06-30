@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
-import { PLAN_MARKETING_BENEFITS } from '@/lib/plan-marketing';
+import { getPlanFeatureList } from '@/lib/plan-features';
 import { PLANS } from '@/lib/plans';
 
 interface BillingSuccessOverlayProps {
@@ -65,7 +65,7 @@ function fireConfetti(canvas: HTMLCanvasElement) {
 export default function BillingSuccessOverlay({ plan, onDismiss, onSignInAgain }: BillingSuccessOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const entitlements = PLANS[plan];
-  const benefits = PLAN_MARKETING_BENEFITS[plan];
+  const benefits = getPlanFeatureList(plan);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -92,12 +92,12 @@ export default function BillingSuccessOverlay({ plan, onDismiss, onSignInAgain }
           </span>
 
           <h2 className="mt-5 text-2xl font-bold leading-[1.1] tracking-tight text-white sm:text-3xl">
-            Welcome to {entitlements.label}.<br />
-            <span className="text-white/60">Your benefits are on the way.</span>
+          Welcome to {entitlements.label}.<br />
+          <span className="text-white/60">Your plan is now active on this account.</span>
           </h2>
 
           <p className="mt-4 text-sm leading-relaxed text-white/50">
-            Plan perks will apply to your account shortly — usually within a minute.
+            These limits and features apply to your account now — longer videos, bigger uploads, and more.
           </p>
 
           <ul className="mt-6 space-y-2.5 text-left">

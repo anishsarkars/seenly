@@ -3,7 +3,9 @@ import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 import { getDodoProductIds } from '@/lib/billing/dodo-client';
+import { parseDodoEventData, parseDate } from '@/lib/billing/parse-webhook-data';
 import { PLAN_PRICES } from '@/lib/plan-marketing';
+import { getEffectiveTier } from '@/lib/plans';
 
 function isDbAvailable() {
   return !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('your-supabase');
@@ -19,6 +21,8 @@ export async function ensureBillingSchema() {
     sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_founder boolean DEFAULT false NOT NULL`,
     sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dodo_customer_id varchar(64)`,
     sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dodo_subscription_id varchar(64)`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dodo_checkout_session_id varchar(64)`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS pending_checkout_plan varchar(20)`,
     sql`CREATE TABLE IF NOT EXISTS billing_webhook_events (
       id varchar(128) PRIMARY KEY,
       event_type varchar(64) NOT NULL,
@@ -67,12 +71,6 @@ export async function markWebhookProcessed(eventId: string, eventType: string) {
   );
 }
 
-function parseDate(value: unknown): Date | null {
-  if (!value || typeof value !== 'string') return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
 function readMetadataUserId(metadata: unknown): string | null {
   if (!metadata || typeof metadata !== 'object') return null;
   const userId = (metadata as Record<string, unknown>).seenly_user_id;
@@ -82,11 +80,13 @@ function readMetadataUserId(metadata: unknown): string | null {
 async function findUserId({
   metadata,
   customerId,
+  metadataUserId,
 }: {
   metadata?: unknown;
   customerId?: string | null;
+  metadataUserId?: string | null;
 }): Promise<string | null> {
-  const fromMetadata = readMetadataUserId(metadata);
+  const fromMetadata = metadataUserId ?? readMetadataUserId(metadata);
   if (fromMetadata) return fromMetadata;
 
   if (!customerId || !isDbAvailable()) return null;
@@ -126,6 +126,15 @@ export async function recordBillingPayment(
   }
 }
 
+export async function clearPendingCheckout(userId: string) {
+  if (!isDbAvailable()) return;
+  await ensureBillingSchema();
+  await db
+    .update(users)
+    .set({ pendingCheckoutPlan: null, dodoCheckoutSessionId: null, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
+
 export async function applyFounderPlan(userId: string, customerId?: string | null) {
   if (!isDbAvailable()) return;
   await ensureBillingSchema();
@@ -137,6 +146,7 @@ export async function applyFounderPlan(userId: string, customerId?: string | nul
       planStatus: 'active',
       planExpiresAt: null,
       isFounder: true,
+      pendingCheckoutPlan: null,
       ...(customerId ? { dodoCustomerId: customerId } : {}),
       updatedAt: new Date(),
     })
@@ -160,7 +170,11 @@ export async function applyProSubscription(
   if (!isDbAvailable()) return;
   await ensureBillingSchema();
 
-  const [existing] = await db.select({ plan: users.plan, isFounder: users.isFounder }).from(users).where(eq(users.id, userId)).limit(1);
+  const [existing] = await db
+    .select({ plan: users.plan, isFounder: users.isFounder })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
   if (existing?.isFounder || existing?.plan === 'founder') return;
 
   await db
@@ -169,6 +183,7 @@ export async function applyProSubscription(
       plan: 'pro',
       planStatus: status,
       planExpiresAt: expiresAt,
+      pendingCheckoutPlan: null,
       ...(subscriptionId ? { dodoSubscriptionId: subscriptionId } : {}),
       ...(customerId ? { dodoCustomerId: customerId } : {}),
       updatedAt: new Date(),
@@ -180,7 +195,11 @@ export async function downgradeToFree(userId: string) {
   if (!isDbAvailable()) return;
   await ensureBillingSchema();
 
-  const [existing] = await db.select({ isFounder: users.isFounder, plan: users.plan }).from(users).where(eq(users.id, userId)).limit(1);
+  const [existing] = await db
+    .select({ isFounder: users.isFounder, plan: users.plan })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
   if (existing?.isFounder || existing?.plan === 'founder') return;
 
   await db
@@ -190,9 +209,75 @@ export async function downgradeToFree(userId: string) {
       planStatus: null,
       planExpiresAt: null,
       dodoSubscriptionId: null,
+      pendingCheckoutPlan: null,
       updatedAt: new Date(),
     })
     .where(eq(users.id, userId));
+}
+
+function resolvePaidPlan({
+  productId,
+  cartProductIds,
+  metadataPlan,
+  proProductId,
+  founderProductId,
+}: {
+  productId: string | null;
+  cartProductIds: string[];
+  metadataPlan: string | null;
+  proProductId: string;
+  founderProductId: string;
+}): 'pro' | 'founder' | null {
+  if (
+    productId === founderProductId ||
+    cartProductIds.includes(founderProductId) ||
+    metadataPlan === 'founder'
+  ) {
+    return 'founder';
+  }
+  if (productId === proProductId || cartProductIds.includes(proProductId) || metadataPlan === 'pro') {
+    return 'pro';
+  }
+  return null;
+}
+
+/** Activate plan on the user row — used by webhooks and post-checkout sync. */
+export async function activatePaidPlan(
+  userId: string,
+  plan: 'pro' | 'founder',
+  {
+    customerId,
+    subscriptionId,
+    expiresAt,
+    paymentId,
+  }: {
+    customerId?: string | null;
+    subscriptionId?: string | null;
+    expiresAt?: Date | null;
+    paymentId?: string | null;
+  }
+) {
+  if (plan === 'founder') {
+    await applyFounderPlan(userId, customerId);
+    await recordBillingPayment(userId, {
+      plan: 'founder',
+      amountLabel: PLAN_PRICES.founder.amount,
+      paymentId,
+    });
+    return;
+  }
+
+  await applyProSubscription(userId, {
+    subscriptionId,
+    customerId,
+    expiresAt,
+    status: 'active',
+  });
+  await recordBillingPayment(userId, {
+    plan: 'pro',
+    amountLabel: `${PLAN_PRICES.pro.amount}${PLAN_PRICES.pro.period}`,
+    paymentId,
+  });
 }
 
 export async function handleDodoWebhookEvent(event: {
@@ -202,84 +287,56 @@ export async function handleDodoWebhookEvent(event: {
   const type = event.type;
   const data = (event.data && typeof event.data === 'object' ? event.data : {}) as Record<string, unknown>;
   const { pro, founder } = getDodoProductIds();
+  const parsed = parseDodoEventData(data);
 
-  const metadata = data.metadata;
-  const customerField = data.customer;
-  const customerFromNested =
-    customerField && typeof customerField === 'object'
-      ? (customerField as Record<string, unknown>).customer_id
-      : null;
-  const customerId =
-    typeof data.customer_id === 'string'
-      ? data.customer_id
-      : typeof customerFromNested === 'string'
-        ? customerFromNested
-        : null;
-  const userId = await findUserId({ metadata, customerId });
+  const userId = await findUserId({
+    metadata: parsed.metadata,
+    customerId: parsed.customerId,
+    metadataUserId: parsed.metadataUserId,
+  });
   if (!userId) {
     console.warn('Dodo webhook: could not resolve Seenly user', type);
     return;
   }
 
-  const productId =
-    typeof data.product_id === 'string'
-      ? data.product_id
-      : null;
+  const paidPlan = resolvePaidPlan({
+    productId: parsed.productId,
+    cartProductIds: parsed.cartProductIds,
+    metadataPlan: parsed.metadataPlan,
+    proProductId: pro,
+    founderProductId: founder,
+  });
 
-  const cartProductIds = Array.isArray(data.product_cart)
-    ? data.product_cart
-        .map((item) => (item && typeof item === 'object' ? (item as { product_id?: string }).product_id : null))
-        .filter((id): id is string => typeof id === 'string')
-    : [];
-
-  const metadataPlan =
-    metadata && typeof metadata === 'object'
-      ? (metadata as Record<string, unknown>).seenly_plan
-      : null;
-
-  const subscriptionId = typeof data.subscription_id === 'string' ? data.subscription_id : null;
-  const nextBilling = parseDate(data.next_billing_date);
-  const paymentId =
-    typeof data.payment_id === 'string'
-      ? data.payment_id
-      : typeof data.id === 'string'
-        ? data.id
-        : null;
+  const nextBilling = parseDate(parsed.nextBilling);
 
   switch (type) {
     case 'payment.succeeded': {
-      const isFounderPayment =
-        productId === founder ||
-        cartProductIds.includes(founder) ||
-        metadataPlan === 'founder';
-
-      if (isFounderPayment && !subscriptionId) {
-        await applyFounderPlan(userId, customerId);
-        await recordBillingPayment(userId, {
-          plan: 'founder',
-          amountLabel: PLAN_PRICES.founder.amount,
-          paymentId,
+      if (paidPlan === 'founder') {
+        await activatePaidPlan(userId, 'founder', {
+          customerId: parsed.customerId,
+          paymentId: parsed.paymentId,
         });
-      } else if (
-        productId === pro ||
-        cartProductIds.includes(pro) ||
-        metadataPlan === 'pro' ||
-        subscriptionId
-      ) {
-        await recordBillingPayment(userId, {
-          plan: 'pro',
-          amountLabel: `${PLAN_PRICES.pro.amount}${PLAN_PRICES.pro.period}`,
-          paymentId,
+      } else if (paidPlan === 'pro' || parsed.subscriptionId) {
+        await activatePaidPlan(userId, 'pro', {
+          customerId: parsed.customerId,
+          subscriptionId: parsed.subscriptionId,
+          expiresAt: nextBilling,
+          paymentId: parsed.paymentId,
         });
       }
       break;
     }
     case 'subscription.active':
     case 'subscription.renewed': {
-      if (productId === pro || !productId) {
+      if (paidPlan === 'founder') {
+        await activatePaidPlan(userId, 'founder', {
+          customerId: parsed.customerId,
+          paymentId: parsed.paymentId,
+        });
+      } else {
         await applyProSubscription(userId, {
-          subscriptionId,
-          customerId,
+          subscriptionId: parsed.subscriptionId,
+          customerId: parsed.customerId,
           expiresAt: nextBilling,
           status: 'active',
         });
@@ -288,8 +345,8 @@ export async function handleDodoWebhookEvent(event: {
     }
     case 'subscription.on_hold': {
       await applyProSubscription(userId, {
-        subscriptionId,
-        customerId,
+        subscriptionId: parsed.subscriptionId,
+        customerId: parsed.customerId,
         expiresAt: nextBilling,
         status: 'on_hold',
       });
@@ -297,8 +354,8 @@ export async function handleDodoWebhookEvent(event: {
     }
     case 'subscription.cancelled': {
       await applyProSubscription(userId, {
-        subscriptionId,
-        customerId,
+        subscriptionId: parsed.subscriptionId,
+        customerId: parsed.customerId,
         expiresAt: nextBilling,
         status: 'cancelled',
       });
@@ -312,4 +369,24 @@ export async function handleDodoWebhookEvent(event: {
     default:
       break;
   }
+}
+
+export async function getUserBillingState(userId: string) {
+  if (!isDbAvailable()) return null;
+  await ensureBillingSchema();
+  const [row] = await db
+    .select({
+      plan: users.plan,
+      planStatus: users.planStatus,
+      planExpiresAt: users.planExpiresAt,
+      isFounder: users.isFounder,
+      dodoCustomerId: users.dodoCustomerId,
+      dodoSubscriptionId: users.dodoSubscriptionId,
+      pendingCheckoutPlan: users.pendingCheckoutPlan,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!row) return null;
+  return { ...row, tier: getEffectiveTier(row) };
 }

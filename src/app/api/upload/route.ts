@@ -93,7 +93,7 @@ export async function POST(request: Request) {
 
     if (kind === 'thumbnail' && !entitlements.customThumbnail) {
       return NextResponse.json(
-        { error: 'Custom thumbnails require Seenly Pro or Founder.' },
+        { error: 'Custom thumbnails require Seenly Pro or Final boss.' },
         { status: 403 }
       );
     }

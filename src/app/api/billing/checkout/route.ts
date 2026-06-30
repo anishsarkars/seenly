@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { getUserProfile } from '@/db/actions';
+import { db } from '@/db/index';
+import { users } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 import { getDodoClient, getDodoProductIds, getAppBaseUrl } from '@/lib/billing/dodo-client';
+import { ensureBillingSchema } from '@/lib/billing/webhook-handler';
 import { getEffectiveTier } from '@/lib/plans';
 
 function formatCheckoutError(error: unknown): { message: string; status: number } {
@@ -87,6 +91,23 @@ export async function POST(request: Request) {
 
     if (!session.checkout_url) {
       return NextResponse.json({ error: 'Could not start checkout.' }, { status: 500 });
+    }
+
+    const sessionId =
+      typeof session.session_id === 'string'
+        ? session.session_id
+        : null;
+
+    if (sessionId && process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('your-supabase')) {
+      await ensureBillingSchema();
+      await db
+        .update(users)
+        .set({
+          pendingCheckoutPlan: plan,
+          dodoCheckoutSessionId: sessionId,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, user.id));
     }
 
     return NextResponse.json({ checkoutUrl: session.checkout_url });

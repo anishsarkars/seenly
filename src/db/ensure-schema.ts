@@ -34,6 +34,8 @@ export async function ensureProfileSchema() {
     sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_founder boolean DEFAULT false NOT NULL`,
     sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dodo_customer_id varchar(64)`,
     sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dodo_subscription_id varchar(64)`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dodo_checkout_session_id varchar(64)`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS pending_checkout_plan varchar(20)`,
     sql`CREATE TABLE IF NOT EXISTS billing_webhook_events (
       id varchar(128) PRIMARY KEY,
       event_type varchar(64) NOT NULL,

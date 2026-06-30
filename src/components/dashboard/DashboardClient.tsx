@@ -93,11 +93,49 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   useEffect(() => {
     const billing = searchParams.get('billing');
     const plan = searchParams.get('plan');
-    if (billing === 'success' && (plan === 'pro' || plan === 'founder')) {
-      setBillingSuccessPlan(plan);
-      setActiveTab('settings');
-      router.replace('/dashboard?tab=settings', { scroll: false });
-    }
+    if (billing !== 'success' || (plan !== 'pro' && plan !== 'founder')) return;
+
+    setBillingSuccessPlan(plan);
+    setActiveTab('settings');
+
+    const paymentId = searchParams.get('payment_id');
+    const subscriptionId = searchParams.get('subscription_id');
+    const status = searchParams.get('status');
+
+    (async () => {
+      try {
+        const res = await fetch('/api/billing/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({
+            plan,
+            paymentId,
+            subscriptionId,
+            status,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.profile) {
+          setProfile(data.profile);
+        } else if (res.status === 202) {
+          // Webhook may still be processing — retry once after a short delay
+          await new Promise((r) => setTimeout(r, 2500));
+          const retry = await fetch('/api/billing/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ plan, paymentId, subscriptionId, status }),
+          });
+          const retryData = await retry.json().catch(() => ({}));
+          if (retryData.profile) setProfile(retryData.profile);
+        }
+      } catch {
+        // Webhook may still apply the plan
+      }
+    })();
+
+    router.replace('/dashboard?tab=settings', { scroll: false });
   }, [searchParams, router]);
 
   const toggleWhatsNew = () => {
