@@ -5,6 +5,7 @@ import { ArrowRight, Menu, X } from 'lucide-react';
 import SeenlyLogo from '@/components/SeenlyLogo';
 import UsernameClaimBar from '@/components/landing/UsernameClaimBar';
 import HeroPhonePreview from '@/components/landing/HeroPhonePreview';
+import LandingPricing from '@/components/landing/LandingPricing';
 import SiteFooter from '@/components/SiteFooter';
 import { createClient } from '@/utils/supabase/client';
 import { getUserProfile } from '@/db/actions';
@@ -327,6 +328,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <LandingPricing />
 
       {/* Claim username — bottom CTA above footer */}
       {authState === 'guest' && (

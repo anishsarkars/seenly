@@ -17,8 +17,9 @@ import WhatsNewPanel from '@/components/dashboard/WhatsNewPanel';
 import { useDashboardSidebar } from '@/components/dashboard/useDashboardSidebar';
 import { useDashboardPreview } from '@/components/dashboard/useDashboardPreview';
 import SeenlyLogo from '@/components/SeenlyLogo';
-import SiteFooter from '@/components/SiteFooter';
 import BillingPanel from '@/components/billing/BillingPanel';
+import BillingSuccessOverlay from '@/components/billing/BillingSuccessOverlay';
+import PlanBadge from '@/components/billing/PlanBadge';
 import { formatVideoDurationLimit, formatUploadLimit } from '@/lib/video-limits';
 import { getEntitlements } from '@/lib/plans';
 import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
@@ -56,6 +57,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [hasUnreadWhatsNew, setHasUnreadWhatsNew] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const [billingSuccessPlan, setBillingSuccessPlan] = useState<'pro' | 'founder' | null>(null);
   const sidebar = useDashboardSidebar();
   const preview = useDashboardPreview();
   const entitlements = useMemo(
@@ -87,6 +89,16 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
       document.body.style.overflow = '';
     };
   }, [mobilePreviewOpen]);
+
+  useEffect(() => {
+    const billing = searchParams.get('billing');
+    const plan = searchParams.get('plan');
+    if (billing === 'success' && (plan === 'pro' || plan === 'founder')) {
+      setBillingSuccessPlan(plan);
+      setActiveTab('settings');
+      router.replace('/dashboard?tab=settings', { scroll: false });
+    }
+  }, [searchParams, router]);
 
   const toggleWhatsNew = () => {
     setWhatsNewOpen((prev) => !prev);
@@ -233,8 +245,26 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     );
   };
 
+  const billingUser = {
+    plan: profile?.user?.plan,
+    planStatus: profile?.user?.planStatus,
+    planExpiresAt: profile?.user?.planExpiresAt,
+    isFounder: profile?.user?.isFounder,
+  };
+
   return (
-    <div className={`${shell} flex min-h-dvh flex-col`}>
+    <div className={`${shell} flex h-dvh flex-col overflow-hidden`}>
+      {billingSuccessPlan && (
+        <BillingSuccessOverlay
+          plan={billingSuccessPlan}
+          onDismiss={() => setBillingSuccessPlan(null)}
+          onSignInAgain={async () => {
+            setBillingSuccessPlan(null);
+            await supabase.auth.signOut();
+            router.push('/login?next=/dashboard');
+          }}
+        />
+      )}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
         {/* Nav sidebar — resizable & closable */}
         <aside
@@ -337,6 +367,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
               )}
               <SeenlyLogo size="sm" className="shrink-0 lg:hidden" />
               <h1 className={`${sectionTitle} truncate text-base sm:text-lg`}>{TAB_META[activeTab].label}</h1>
+              <PlanBadge user={billingUser} />
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button
@@ -545,7 +576,12 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                       <Plus className="h-3.5 w-3.5" /> Add project
                     </button>
                     {projects.length >= entitlements.maxProjects && entitlements.maxProjects !== Number.POSITIVE_INFINITY && (
-                      <p className="text-xs text-white/40">Free plan limit: {entitlements.maxProjects} projects. <a href="/pricing" className="text-white/60 underline">Upgrade</a></p>
+                      <p className="text-xs text-white/40">
+                        Free plan limit: {entitlements.maxProjects} projects.{' '}
+                        <button type="button" onClick={() => setActiveTab('settings')} className="text-white/60 underline hover:text-white/80">
+                          Upgrade
+                        </button>
+                      </p>
                     )}
                   </div>
                 </div>
@@ -575,9 +611,6 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                         {profile?.user?.isPublic === false ? 'Make public' : 'Make private'}
                       </button>
                     )},
-                    { title: 'Sign out', desc: 'End session on this device', action: (
-                      <button type="button" onClick={handleSignOut} className={btnSecondary}>Sign out</button>
-                    )},
                     { title: 'Delete account', desc: 'Permanently remove profile and uploads', action: (
                       <button type="button" className={`${btnSecondary} text-red-400/80 hover:text-red-400`}>Delete</button>
                     )},
@@ -595,6 +628,13 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
               )}
 
             </main>
+          </div>
+
+          <div className="shrink-0 border-t border-white/10 px-4 py-3 lg:hidden">
+            <p className="truncate text-xs text-white/45" title={profile?.user?.email}>{profile?.user?.email}</p>
+            <button type="button" onClick={handleSignOut} className="mt-1 text-xs text-white/40 transition-colors hover:text-white/70">
+              Sign out
+            </button>
           </div>
           </div>
 
@@ -660,12 +700,6 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           )}
         </div>
       </div>
-      <SiteFooter
-        variant="member"
-        compact
-        username={profile?.user?.username}
-        className="shrink-0"
-      />
     </div>
   );
 }
