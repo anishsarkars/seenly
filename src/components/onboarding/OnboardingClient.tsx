@@ -28,6 +28,7 @@ import Confetti from '@/components/Confetti';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { signInWithGoogle } from '@/lib/auth-client';
+import { LoadingLabel } from '@/components/ui/ActionStatus';
 
 export default function OnboardingClient() {
   const router = useRouter();
@@ -43,6 +44,7 @@ export default function OnboardingClient() {
   const [authError, setAuthError] = useState('');
   const [authSuccessMsg, setAuthSuccessMsg] = useState('');
   const [oauthLoading, setOauthLoading] = useState(false);
+  const [passwordAuthLoading, setPasswordAuthLoading] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   // Form State
@@ -173,6 +175,7 @@ export default function OnboardingClient() {
     }
 
     try {
+      setPasswordAuthLoading(true);
       if (authMode === 'signup') {
         const { data, error } = await supabase.auth.signUp({
           email: emailInput,
@@ -206,6 +209,8 @@ export default function OnboardingClient() {
       }
     } catch (err: any) {
       setAuthError(err.message || 'Authentication failed.');
+    } finally {
+      setPasswordAuthLoading(false);
     }
   };
 
@@ -610,10 +615,18 @@ export default function OnboardingClient() {
 
                         <button 
                           type="submit"
-                          disabled={oauthLoading}
+                          disabled={oauthLoading || passwordAuthLoading}
                           className="w-full bg-white text-black py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm disabled:opacity-50"
                         >
-                          {authMode === 'signup' ? 'Create Account' : 'Sign In'} <ArrowRight className="h-4 w-4" />
+                          <LoadingLabel
+                            loading={passwordAuthLoading}
+                            loadingText={authMode === 'signup' ? 'Creating account…' : 'Signing in…'}
+                          >
+                            <>
+                              {authMode === 'signup' ? 'Create Account' : 'Sign In'}{' '}
+                              <ArrowRight className="h-4 w-4" />
+                            </>
+                          </LoadingLabel>
                         </button>
 
                         <div className="text-center text-xs pt-2">

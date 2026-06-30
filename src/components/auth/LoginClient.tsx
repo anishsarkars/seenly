@@ -9,7 +9,10 @@ import { getUserProfile } from '@/db/actions';
 import { signInWithGoogle } from '@/lib/auth-client';
 import SeenlyLogo from '@/components/SeenlyLogo';
 import SiteFooter from '@/components/SiteFooter';
+import ActionStatus, { LoadingLabel } from '@/components/ui/ActionStatus';
 import { btnPrimary, btnSecondary, input, panel } from '@/lib/platform-ui';
+
+type AuthAction = 'google' | 'password' | 'magic' | null;
 
 function GoogleIcon() {
   return (
@@ -31,7 +34,9 @@ export default function LoginClient() {
   const [authMethod, setAuthMethod] = useState<'password' | 'magic'>('password');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [authAction, setAuthAction] = useState<AuthAction>(null);
+
+  const isLoading = authAction !== null;
 
   useEffect(() => {
     if (searchParams.get('error') === 'auth') {
@@ -63,14 +68,15 @@ export default function LoginClient() {
 
   const handleGoogleSignIn = async () => {
     setError('');
-    setLoading(true);
+    setMessage('');
+    setAuthAction('google');
     const nextPath = searchParams.get('next');
     const oauthNext =
       nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : '/onboarding';
     const { error: authError } = await signInWithGoogle(supabase, oauthNext);
     if (authError) {
       setError(authError.message);
-      setLoading(false);
+      setAuthAction(null);
     }
   };
 
@@ -78,25 +84,25 @@ export default function LoginClient() {
     e.preventDefault();
     setError('');
     setMessage('');
-    setLoading(true);
+    setAuthAction('password');
 
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (authError) {
       setError(authError.message);
-      setLoading(false);
+      setAuthAction(null);
       return;
     }
 
     await redirectAfterAuth();
-    setLoading(false);
+    setAuthAction(null);
   };
 
   const sendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setMessage('');
-    setLoading(true);
+    setAuthAction('magic');
 
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
@@ -110,11 +116,24 @@ export default function LoginClient() {
     } else {
       setMessage('Check your email for a magic link.');
     }
-    setLoading(false);
+    setAuthAction(null);
   };
+
+  const statusMessage =
+    authAction === 'google'
+      ? 'Redirecting to Google…'
+      : authAction === 'password'
+        ? 'Signing in…'
+        : authAction === 'magic'
+          ? 'Sending magic link…'
+          : null;
 
   return (
     <div className="flex min-h-dvh flex-col bg-black font-geist text-white selection:bg-white selection:text-black">
+      <ActionStatus
+        status={statusMessage ? { type: 'loading', message: statusMessage } : null}
+      />
+
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row lg:overflow-hidden">
         <div className="hidden w-[42%] max-w-md shrink-0 flex-col justify-between border-r border-white/10 p-10 lg:flex xl:p-14">
           <SeenlyLogo size="lg" />
@@ -138,7 +157,7 @@ export default function LoginClient() {
               <p className="text-sm text-white/45">Sign in to your profile</p>
             </div>
 
-            <div className={`${panel} space-y-5 p-6 sm:p-7`}>
+            <div className={`${panel} space-y-5 p-6 sm:p-7 transition-opacity ${isLoading ? 'opacity-90' : ''}`}>
               <div className="space-y-1">
                 <h2 className="text-xl font-semibold tracking-tight">Welcome back</h2>
                 <p className="text-sm text-white/45">Continue with Google, email & password, or a magic link.</p>
@@ -146,12 +165,16 @@ export default function LoginClient() {
 
               <button
                 type="button"
-                disabled={loading}
+                disabled={isLoading}
                 onClick={handleGoogleSignIn}
                 className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-50"
               >
-                <GoogleIcon />
-                Continue with Google
+                <LoadingLabel loading={authAction === 'google'} loadingText="Redirecting…">
+                  <>
+                    <GoogleIcon />
+                    Continue with Google
+                  </>
+                </LoadingLabel>
               </button>
 
               <div className="flex items-center gap-3">
@@ -163,8 +186,9 @@ export default function LoginClient() {
               <div className="flex rounded-lg border border-white/10 p-0.5">
                 <button
                   type="button"
+                  disabled={isLoading}
                   onClick={() => setAuthMethod('password')}
-                  className={`flex-1 rounded-md py-2 text-xs font-medium transition-colors ${
+                  className={`flex-1 rounded-md py-2 text-xs font-medium transition-colors disabled:opacity-50 ${
                     authMethod === 'password' ? 'bg-white/10 text-white' : 'text-white/45 hover:text-white/70'
                   }`}
                 >
@@ -172,8 +196,9 @@ export default function LoginClient() {
                 </button>
                 <button
                   type="button"
+                  disabled={isLoading}
                   onClick={() => setAuthMethod('magic')}
-                  className={`flex-1 rounded-md py-2 text-xs font-medium transition-colors ${
+                  className={`flex-1 rounded-md py-2 text-xs font-medium transition-colors disabled:opacity-50 ${
                     authMethod === 'magic' ? 'bg-white/10 text-white' : 'text-white/45 hover:text-white/70'
                   }`}
                 >
@@ -186,6 +211,7 @@ export default function LoginClient() {
                   <input
                     type="email"
                     required
+                    disabled={isLoading}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@email.com"
@@ -194,13 +220,16 @@ export default function LoginClient() {
                   <input
                     type="password"
                     required
+                    disabled={isLoading}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Password"
                     className={input}
                   />
-                  <button type="submit" disabled={loading} className={`${btnPrimary} w-full`}>
-                    Sign in with password
+                  <button type="submit" disabled={isLoading} className={`${btnPrimary} w-full`}>
+                    <LoadingLabel loading={authAction === 'password'} loadingText="Signing in…">
+                      Sign in with password
+                    </LoadingLabel>
                   </button>
                 </form>
               ) : (
@@ -208,18 +237,21 @@ export default function LoginClient() {
                   <input
                     type="email"
                     required
+                    disabled={isLoading}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@email.com"
                     className={input}
                   />
-                  <button type="submit" disabled={loading} className={`${btnSecondary} w-full`}>
-                    Send magic link
+                  <button type="submit" disabled={isLoading} className={`${btnSecondary} w-full`}>
+                    <LoadingLabel loading={authAction === 'magic'} loadingText="Sending…">
+                      Send magic link
+                    </LoadingLabel>
                   </button>
                 </form>
               )}
 
-              {message && <p className="text-center text-sm text-emerald-400/90">{message}</p>}
+              {message && <p className="text-center text-sm text-white/60">{message}</p>}
               {error && <p className="text-center text-sm text-red-400/90">{error}</p>}
             </div>
 

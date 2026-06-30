@@ -25,6 +25,7 @@ import { getEntitlements } from '@/lib/plans';
 import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
 import { hasUnreadUpdates, SEENLY_UPDATES_VERSION } from '@/lib/seenly-updates';
 import { btnPrimary, btnSecondary, input, muted, panel, sectionTitle, shell } from '@/lib/platform-ui';
+import ActionStatus, { LoadingLabel, type ActionStatusState } from '@/components/ui/ActionStatus';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface DashboardClientProps {
@@ -54,6 +55,8 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isTogglingPrivacy, setIsTogglingPrivacy] = useState(false);
+  const [actionStatus, setActionStatus] = useState<ActionStatusState>(null);
   const [hasUnreadWhatsNew, setHasUnreadWhatsNew] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
@@ -211,6 +214,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
+    setActionStatus({ type: 'loading', message: 'Saving profile…' });
     const res = await saveOnboardingData(profile?.user?.id, {
       username: profile?.user?.username,
       email: profile?.user?.email,
@@ -227,8 +231,11 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
         user: { ...profile.user, fullName, headline, location, bio, avatar },
         experiences, projects, socials,
       });
+      setActionStatus({ type: 'success', message: 'Profile saved' });
     } else if (res.error) {
-      alert(res.error);
+      setActionStatus({ type: 'error', message: res.error });
+    } else {
+      setActionStatus(null);
     }
   };
 
@@ -236,15 +243,19 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     const file = e.target.files?.[0];
     if (!file || !profile?.user?.id) return;
     if (file.size > entitlements.maxUploadBytes) {
-      alert(`Video must be ${formatUploadLimit(entitlements.maxUploadBytes)} or smaller on your plan.`);
+      setActionStatus({
+        type: 'error',
+        message: `Video must be ${formatUploadLimit(entitlements.maxUploadBytes)} or smaller on your plan.`,
+      });
       return;
     }
     const validation = await validateVideoFile(file, entitlements.maxVideoSec, entitlements.maxUploadBytes);
     if (!validation.ok) {
-      alert(validation.error);
+      setActionStatus({ type: 'error', message: validation.error });
       return;
     }
     setIsUploadingVideo(true);
+    setActionStatus({ type: 'loading', message: 'Uploading video…' });
     try {
       const previewUrl = URL.createObjectURL(file);
       const videoUrl = await uploadProfileVideo(file, file.name, {
@@ -273,10 +284,12 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
         socials: profile.socials,
       });
       setProfile({ ...profile, user: { ...profile.user, videoUrl, thumbnailUrl } });
+      setActionStatus({ type: 'success', message: 'Video updated' });
     } catch (err: any) {
-      alert(err.message || 'Failed to upload video.');
+      setActionStatus({ type: 'error', message: err.message || 'Failed to upload video.' });
     } finally {
       setIsUploadingVideo(false);
+      e.target.value = '';
     }
   };
 
@@ -287,7 +300,12 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
 
   const handleTogglePrivacy = async () => {
     const nextValue = !profile?.user?.isPublic;
-    await saveOnboardingData(profile.user.id, {
+    setIsTogglingPrivacy(true);
+    setActionStatus({
+      type: 'loading',
+      message: nextValue ? 'Making profile public…' : 'Making profile private…',
+    });
+    const res = await saveOnboardingData(profile.user.id, {
       username: profile.user.username,
       email: profile.user.email,
       fullName: profile.user.fullName,
@@ -302,7 +320,16 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
       socials: profile.socials,
       isPublic: nextValue,
     });
-    setProfile({ ...profile, user: { ...profile.user, isPublic: nextValue } });
+    setIsTogglingPrivacy(false);
+    if (res.success) {
+      setProfile({ ...profile, user: { ...profile.user, isPublic: nextValue } });
+      setActionStatus({
+        type: 'success',
+        message: nextValue ? 'Profile is now public' : 'Profile is now private',
+      });
+    } else {
+      setActionStatus({ type: 'error', message: res.error || 'Could not update visibility.' });
+    }
   };
 
   const NavButton = ({ tab }: { tab: keyof typeof TAB_META }) => {
@@ -331,6 +358,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
 
   return (
     <div className={`${shell} flex h-dvh flex-col overflow-hidden`}>
+      <ActionStatus status={actionStatus} onDismiss={() => setActionStatus(null)} />
       {billingSuccessPlan && (
         <BillingSuccessOverlay
           plan={billingSuccessPlan}
@@ -598,7 +626,9 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                   <div className="flex items-center justify-between gap-4">
                     <p className={muted}>Edit your public profile</p>
                     <button type="button" onClick={handleSaveProfile} disabled={isSaving} className={btnPrimary}>
-                      {isSaving ? 'Saving…' : 'Save'}
+                      <LoadingLabel loading={isSaving} loadingText="Saving…">
+                        Save
+                      </LoadingLabel>
                     </button>
                   </div>
                   <AvatarPicker value={avatar} onChange={setAvatar} compact />
@@ -668,12 +698,16 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
 
               {activeTab === 'video' && (
                 <div className={`${panel} space-y-4 p-8 text-center sm:p-10`}>
-                  <Film className="mx-auto h-5 w-5 text-white/40" strokeWidth={1.5} />
-                  <p className="text-sm text-white/70">Replace your intro video</p>
+                  <Film className={`mx-auto h-5 w-5 text-white/40 ${isUploadingVideo ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
+                  <p className="text-sm text-white/70">
+                    {isUploadingVideo ? 'Uploading your video…' : 'Replace your intro video'}
+                  </p>
                   <p className={muted}>MP4 or WEBM · {formatUploadLimit(entitlements.maxUploadBytes)} · {formatVideoDurationLimit(entitlements.maxVideoSec)}</p>
-                  <input type="file" accept="video/mp4,video/webm" className="hidden" id="dash-vid-uploader" onChange={handleVideoReplace} />
+                  <input type="file" accept="video/mp4,video/webm" className="hidden" id="dash-vid-uploader" onChange={handleVideoReplace} disabled={isUploadingVideo} />
                   <label htmlFor="dash-vid-uploader" className={`${btnPrimary} mt-2 inline-block cursor-pointer ${isUploadingVideo ? 'pointer-events-none opacity-50' : ''}`}>
-                    {isUploadingVideo ? 'Uploading…' : 'Upload video'}
+                    <LoadingLabel loading={isUploadingVideo} loadingText="Uploading…">
+                      Upload video
+                    </LoadingLabel>
                   </label>
                 </div>
               )}
@@ -686,8 +720,13 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                   <div className={`${panel} divide-y divide-white/10`}>
                   {[
                     { title: 'Visibility', desc: profile?.user?.isPublic === false ? 'Profile is private' : 'Profile is public', action: (
-                      <button type="button" onClick={handleTogglePrivacy} className={btnSecondary}>
-                        {profile?.user?.isPublic === false ? 'Make public' : 'Make private'}
+                      <button type="button" onClick={handleTogglePrivacy} disabled={isTogglingPrivacy} className={btnSecondary}>
+                        <LoadingLabel
+                          loading={isTogglingPrivacy}
+                          loadingText="Updating…"
+                        >
+                          {profile?.user?.isPublic === false ? 'Make public' : 'Make private'}
+                        </LoadingLabel>
                       </button>
                     )},
                     { title: 'Delete account', desc: 'Permanently remove profile and uploads', action: (
