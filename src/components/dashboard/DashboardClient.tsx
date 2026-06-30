@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
 import { createClient } from '@/utils/supabase/client';
-import { captureVideoThumbnail, uploadProfileResume, uploadProfileThumbnail, uploadProfileVideo, validateVideoFile } from '@/lib/storage';
+import { captureVideoThumbnail, fetchUploadLimits, uploadProfileResume, uploadProfileThumbnail, uploadProfileVideo, validateVideoFile } from '@/lib/storage';
 import ProfileLivePreview from '@/components/profile/ProfileLivePreview';
 import type { ProfileViewData } from '@/components/profile/ProfileView';
 import AvatarPicker from '@/components/profile/AvatarPicker';
@@ -243,26 +243,34 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const handleVideoReplace = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !profile?.user?.id) return;
-    if (file.size > entitlements.maxUploadBytes) {
+
+    const limits = await fetchUploadLimits();
+    if (file.size > limits.maxUploadBytes) {
       setActionStatus({
         type: 'error',
-        message: `Video must be ${formatUploadLimit(entitlements.maxUploadBytes)} or smaller on your plan.`,
+        message: `Video must be ${formatUploadLimit(limits.maxUploadBytes)} or smaller on your plan.`,
       });
+      e.target.value = '';
       return;
     }
-    const validation = await validateVideoFile(file, entitlements.maxVideoSec, entitlements.maxUploadBytes);
+    const validation = await validateVideoFile(file, limits.maxVideoSec, limits.maxUploadBytes);
     if (!validation.ok) {
       setActionStatus({ type: 'error', message: validation.error });
+      e.target.value = '';
       return;
     }
     setIsUploadingVideo(true);
     setActionStatus({ type: 'loading', message: 'Uploading video…' });
     try {
       const previewUrl = URL.createObjectURL(file);
-      const videoUrl = await uploadProfileVideo(file, file.name, {
-        maxVideoSec: entitlements.maxVideoSec,
-        maxUploadBytes: entitlements.maxUploadBytes,
-      });
+      const videoUrl = await uploadProfileVideo(
+        file,
+        file.name,
+        limits,
+        (percent) => {
+          setActionStatus({ type: 'loading', message: `Uploading video… ${percent}%` });
+        }
+      );
       let thumbnailUrl = profile.user.thumbnailUrl;
       try {
         const thumbnailBlob = await captureVideoThumbnail(previewUrl);
@@ -271,7 +279,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
         console.warn('Thumbnail upload skipped:', thumbErr);
       }
       URL.revokeObjectURL(previewUrl);
-      await saveOnboardingData(profile.user.id, {
+      const saveRes = await saveOnboardingData(profile.user.id, {
         username: profile.user.username,
         email: profile.user.email,
         fullName: profile.user.fullName,
@@ -284,6 +292,9 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
         projects: profile.projects,
         socials: profile.socials,
       });
+      if (!saveRes?.success) {
+        throw new Error(saveRes?.error || 'Video uploaded but profile could not be saved.');
+      }
       setProfile({ ...profile, user: { ...profile.user, videoUrl, thumbnailUrl } });
       setActionStatus({ type: 'success', message: 'Video updated' });
     } catch (err: any) {

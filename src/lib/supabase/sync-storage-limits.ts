@@ -58,6 +58,7 @@ export async function getGlobalStorageLimit(): Promise<number | null> {
   try {
     const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/config/storage`, {
       headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
     });
     if (!res.ok) return null;
     const data = (await res.json()) as { fileSizeLimit?: number };
@@ -65,6 +66,17 @@ export async function getGlobalStorageLimit(): Promise<number | null> {
   } catch {
     return null;
   }
+}
+
+async function getGlobalStorageLimitWithRetry(attempts = 4, delayMs = 750): Promise<number | null> {
+  for (let i = 0; i < attempts; i++) {
+    const limit = await getGlobalStorageLimit();
+    if (limit != null) return limit;
+    if (i < attempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+  return null;
 }
 
 export async function syncStorageBucketsAdmin(admin: SupabaseClient): Promise<void> {
@@ -100,7 +112,8 @@ export async function syncStorageBucketsAdmin(admin: SupabaseClient): Promise<vo
 export async function verifyBucketCanAccept(
   admin: SupabaseClient,
   bucket: string,
-  fileSize: number
+  fileSize: number,
+  options?: { globalSynced?: boolean }
 ): Promise<{ ok: true } | { ok: false; bucketLimit: number | null; message: string }> {
   const { data: bucketInfo, error } = await admin.storage.getBucket(bucket);
   if (error || !bucketInfo) {
@@ -112,23 +125,30 @@ export async function verifyBucketCanAccept(
   }
 
   const bucketLimit = bucketInfo.file_size_limit ?? null;
-  const global = await getGlobalStorageLimit();
-  const effectiveLimit = Math.min(
-    bucketLimit ?? MAX_BUCKET_FILE_BYTES,
-    global ?? MAX_BUCKET_FILE_BYTES
-  );
+  const global = options?.globalSynced
+    ? await getGlobalStorageLimitWithRetry()
+    : await getGlobalStorageLimit();
+
+  const effectiveGlobal =
+    options?.globalSynced && fileSize <= MAX_BUCKET_FILE_BYTES
+      ? Math.max(global ?? 0, MAX_BUCKET_FILE_BYTES)
+      : global;
+
+  const effectiveLimit =
+    effectiveGlobal != null
+      ? Math.min(bucketLimit ?? MAX_BUCKET_FILE_BYTES, effectiveGlobal)
+      : bucketLimit ?? MAX_BUCKET_FILE_BYTES;
 
   if (fileSize > effectiveLimit) {
-    const globalMb = global ? Math.round(global / (1024 * 1024)) : 50;
+    const globalMb = effectiveGlobal ? Math.round(effectiveGlobal / (1024 * 1024)) : 50;
     return {
       ok: false,
       bucketLimit: bucketLimit,
       message:
         `File is too large for storage (${Math.round(fileSize / (1024 * 1024))} MB). ` +
-        `Bucket limit is ${Math.round(effectiveLimit / (1024 * 1024))} MB` +
-        (global ? ` and project global limit is ${globalMb} MB.` : '.') +
-        ` Set Supabase → Storage → Settings → Global file size limit to at least 250 MB, ` +
-        `or add SUPABASE_MANAGEMENT_TOKEN to Vercel to auto-sync.`,
+        `Effective limit is ${Math.round(effectiveLimit / (1024 * 1024))} MB` +
+        (effectiveGlobal ? ` (project global: ${globalMb} MB).` : '.') +
+        ` Raise Supabase → Storage → Settings → Global file size limit to 250 MB.`,
     };
   }
 
@@ -142,5 +162,15 @@ export async function syncAllStorageLimits(admin: SupabaseClient) {
     console.warn('Global storage limit sync failed:', global.error);
   }
   await syncStorageBucketsAdmin(admin);
+
+  if (global.ok) {
+    const confirmed = await getGlobalStorageLimitWithRetry();
+    if (confirmed != null && confirmed < MAX_BUCKET_FILE_BYTES) {
+      console.warn(
+        `Global storage limit is ${confirmed} bytes after sync; expected ${MAX_BUCKET_FILE_BYTES}.`
+      );
+    }
+  }
+
   return global;
 }

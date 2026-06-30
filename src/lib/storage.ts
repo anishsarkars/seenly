@@ -1,6 +1,7 @@
 import { PLANS } from '@/lib/plans';
 import { createClient } from '@/utils/supabase/client';
 import { isStorageSizeError, storageSizeErrorMessage } from '@/lib/storage-limits';
+import { shouldUseResumableUpload, uploadViaTus } from '@/lib/storage-tus';
 
 export type VideoUploadLimits = {
   maxVideoSec: number;
@@ -24,13 +25,23 @@ type PreparePayload = {
 
 async function uploadBytesToStorage(
   payload: PreparePayload,
-  file: Blob,
   fileBuffer: ArrayBuffer,
   contentType: string
 ) {
   const supabase = createClient();
 
-  // 1) Direct authenticated upload with raw bytes (recommended for large videos)
+  if (payload.token) {
+    const { error: signedError } = await supabase.storage
+      .from(payload.bucket)
+      .uploadToSignedUrl(payload.path, payload.token, fileBuffer, {
+        contentType,
+        cacheControl: '3600',
+        upsert: true,
+      });
+
+    if (!signedError) return;
+  }
+
   const { error: directError } = await supabase.storage
     .from(payload.bucket)
     .upload(payload.path, fileBuffer, {
@@ -41,20 +52,6 @@ async function uploadBytesToStorage(
 
   if (!directError) return;
 
-  // 2) Signed URL upload with raw bytes (avoids multipart FormData limits)
-  if (payload.token) {
-    const { error: signedError } = await supabase.storage
-      .from(payload.bucket)
-      .uploadToSignedUrl(payload.path, payload.token, fileBuffer, {
-        contentType,
-        cacheControl: '3600',
-      });
-
-    if (!signedError) return;
-    if (signedError.message) throw signedError;
-  }
-
-  // 3) Raw PUT to signed URL
   if (payload.signedUrl) {
     const putRes = await fetch(payload.signedUrl, {
       method: 'PUT',
@@ -73,7 +70,8 @@ export async function uploadFile(
   file: Blob,
   kind: 'video' | 'thumbnail' | 'resume' | 'avatar',
   fileName?: string,
-  extraFields?: Record<string, string>
+  extraFields?: Record<string, string>,
+  onProgress?: (percent: number) => void
 ): Promise<string> {
   const prepResponse = await fetch('/api/upload/prepare', {
     method: 'POST',
@@ -105,8 +103,21 @@ export async function uploadFile(
     typeof payload.maxUploadBytes === 'number' ? payload.maxUploadBytes : PLANS.free.maxUploadBytes;
 
   try {
-    const fileBuffer = await file.arrayBuffer();
-    await uploadBytesToStorage(payload, file, fileBuffer, contentType);
+    if (shouldUseResumableUpload(file, kind)) {
+      await uploadViaTus(
+        file,
+        {
+          bucket: payload.bucket,
+          path: payload.path,
+          token: payload.token,
+          contentType,
+        },
+        onProgress
+      );
+    } else {
+      const fileBuffer = await file.arrayBuffer();
+      await uploadBytesToStorage(payload, fileBuffer, contentType);
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Upload to storage failed.';
     if (isStorageSizeError(message)) {
@@ -210,11 +221,12 @@ export async function captureVideoThumbnail(source: string): Promise<Blob> {
 export async function uploadProfileVideo(
   file: Blob,
   fileName?: string,
-  limits: VideoUploadLimits = FREE_VIDEO_LIMITS
+  limits: VideoUploadLimits = FREE_VIDEO_LIMITS,
+  onProgress?: (percent: number) => void
 ) {
   const validation = await validateVideoFile(file, limits.maxVideoSec, limits.maxUploadBytes);
   if (!validation.ok) throw new Error(validation.error);
-  return uploadFile(file, 'video', fileName);
+  return uploadFile(file, 'video', fileName, undefined, onProgress);
 }
 
 export async function uploadProfileThumbnail(file: Blob) {
@@ -226,4 +238,15 @@ export async function uploadProfileResume(file: File) {
     throw new Error('Resume must be a PDF file.');
   }
   return uploadFile(file, 'resume', file.name);
+}
+
+export async function fetchUploadLimits(): Promise<VideoUploadLimits> {
+  const res = await fetch('/api/billing/entitlements', { credentials: 'same-origin' });
+  if (!res.ok) return FREE_VIDEO_LIMITS;
+  const data = await res.json();
+  return {
+    maxVideoSec: typeof data.maxVideoSec === 'number' ? data.maxVideoSec : PLANS.free.maxVideoSec,
+    maxUploadBytes:
+      typeof data.maxUploadBytes === 'number' ? data.maxUploadBytes : PLANS.free.maxUploadBytes,
+  };
 }

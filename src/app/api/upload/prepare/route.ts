@@ -91,14 +91,16 @@ export async function POST(request: Request) {
     await ensureStorageBuckets().catch((err) => {
       console.warn('SQL storage ensure skipped:', err);
     });
-    await syncAllStorageLimits(admin);
+    const globalSync = await syncAllStorageLimits(admin);
 
     const bucket = UPLOAD_BUCKETS[kind] as StorageBucketName;
     const path = pathFor(kind, user.id, fileMeta);
     const contentType = contentTypeFor(kind, fileMeta);
 
-    const bucketCheck = await verifyBucketCanAccept(admin, bucket, fileSize);
-    if (!bucketCheck.ok) {
+    const bucketCheck = await verifyBucketCanAccept(admin, bucket, fileSize, {
+      globalSynced: globalSync.ok,
+    });
+    if (!bucketCheck.ok && !globalSync.ok) {
       return NextResponse.json({ error: bucketCheck.message }, { status: 413 });
     }
 
