@@ -8,6 +8,16 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'api.dicebear.com' },
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/embed/:username*',
+        headers: [
+          { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
+        ],
+      },
+    ];
+  },
   experimental: {
     serverActions: {
       allowedOrigins: ["seenly.tech", "*.seenly.tech"],

@@ -13,6 +13,7 @@ export const users = pgTable('users', {
   thumbnailUrl: text('thumbnail_url'),
   resumeUrl: text('resume_url'),
   isPublic: boolean('is_public').default(true).notNull(),
+  embedEnabled: boolean('embed_enabled').default(false).notNull(),
   plan: varchar('plan', { length: 20 }).default('free').notNull(),
   planStatus: varchar('plan_status', { length: 20 }),
   planExpiresAt: timestamp('plan_expires_at'),

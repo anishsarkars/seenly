@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
 import { createClient } from '@/utils/supabase/client';
+import DeveloperEmbedPanel from '@/components/dashboard/DeveloperEmbedPanel';
+import { hasDeveloperAccess } from '@/lib/developer-access';
 import { captureVideoThumbnail, fetchUploadLimits, isPersistedMediaUrl, uploadProfileResume, uploadProfileThumbnail, uploadProfileVideo, validateVideoFile } from '@/lib/storage';
 import ProfileLivePreview from '@/components/profile/ProfileLivePreview';
 import type { ProfileViewData } from '@/components/profile/ProfileView';
@@ -82,6 +84,10 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
         isFounder: profile?.user?.isFounder,
       }),
     [profile?.user?.plan, profile?.user?.planStatus, profile?.user?.planExpiresAt, profile?.user?.isFounder]
+  );
+  const canUseDeveloperOptions = useMemo(
+    () => hasDeveloperAccess(profile?.user?.email),
+    [profile?.user?.email]
   );
 
   useEffect(() => {
@@ -964,6 +970,22 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                   <Suspense fallback={<div className={`${panel} p-6 text-sm text-white/45`}>Loading billing…</div>}>
                     <BillingPanel user={profile?.user ?? {}} />
                   </Suspense>
+
+                  {canUseDeveloperOptions && profile?.user?.username && (
+                    <DeveloperEmbedPanel
+                      username={profile.user.username}
+                      embedEnabled={!!profile.user.embedEnabled}
+                      isPublic={profile.user.isPublic !== false}
+                      onEmbedEnabledChange={(enabled) =>
+                        setProfile({
+                          ...profile,
+                          user: { ...profile.user, embedEnabled: enabled },
+                        })
+                      }
+                      onStatus={(message, type) => setActionStatus({ type, message })}
+                    />
+                  )}
+
                   <div className={`${panel} divide-y divide-white/10`}>
                   {[
                     { title: 'Visibility', desc: profile?.user?.isPublic === false ? 'Profile is private' : 'Profile is public', action: (

@@ -9,6 +9,8 @@ import { ensureStorageBuckets } from './ensure-storage';
 import { DEFAULT_PROFILE_AVATAR } from '@/lib/profile-avatars';
 import { countFilledSocialLinks, getEntitlements } from '@/lib/plans';
 import { sanitizeProfileMedia } from '@/lib/profile-media';
+import { createClient } from '@/utils/supabase/server';
+import { hasDeveloperAccess } from '@/lib/developer-access';
 
 // Mock in-memory database fallback for easy developer review/testing
 const mockStore: {
@@ -603,5 +605,40 @@ export async function getProfileAnalytics(profileId: string) {
       referrers: [],
       history: [],
     };
+  }
+}
+
+export async function setProfileEmbedEnabled(enabled: boolean) {
+  const supabase = await createClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  if (!authUser) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  const profile = await getUserProfile(authUser.id);
+  if (!profile?.user?.email || !hasDeveloperAccess(profile.user.email)) {
+    return { success: false, error: 'Developer access required.' };
+  }
+
+  if (!isDbAvailable()) {
+    if (mockStore.users[authUser.id]) {
+      mockStore.users[authUser.id].embedEnabled = enabled;
+    }
+    return { success: true };
+  }
+
+  try {
+    await ensureProfileSchema();
+    await db
+      .update(users)
+      .set({ embedEnabled: enabled, updatedAt: new Date() })
+      .where(eq(users.id, authUser.id));
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to set embed enabled:', error);
+    return { success: false, error: 'Could not update embed setting.' };
   }
 }

@@ -53,6 +53,8 @@ export async function ensureProfileSchema() {
     sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_theme varchar(20) DEFAULT 'minimal' NOT NULL`,
     sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_section_order text`,
     sql`UPDATE users SET profile_theme = 'minimal' WHERE profile_theme IS NULL`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS embed_enabled boolean DEFAULT false NOT NULL`,
+    sql`UPDATE users SET embed_enabled = false WHERE embed_enabled IS NULL`,
   ];
 
   for (const statement of statements) {
