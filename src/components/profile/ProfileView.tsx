@@ -76,11 +76,12 @@ function IntroVideo({
   const [videoReady, setVideoReady] = useState(false);
 
   const canPlay = !!videoUrl && (preview || isPersistedMediaUrl(videoUrl));
-  const mediaClass = `block w-full h-auto ${maxHeightClass} bg-black`;
+  const shellClass = `relative w-full overflow-hidden bg-black ${className}`;
+  const mediaClass = `block w-full h-auto ${maxHeightClass}`;
 
   if (!canPlay && preview && thumbnailUrl) {
     return (
-      <div className={`relative ${className}`}>
+      <div className={shellClass}>
         <img src={thumbnailUrl} alt="" className={`${mediaClass} object-contain`} />
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/95 shadow-lg">
@@ -94,7 +95,7 @@ function IntroVideo({
   if (!canPlay) {
     return (
       <div
-        className={`flex min-h-[10rem] w-full items-center justify-center bg-zinc-950 px-6 text-center text-sm text-zinc-500 ${className}`}
+        className={`flex min-h-[10rem] w-full items-center justify-center px-6 text-center text-sm text-zinc-500 ${shellClass}`}
       >
         No intro video yet.
       </div>
@@ -102,7 +103,7 @@ function IntroVideo({
   }
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={shellClass}>
       {thumbnailUrl && !videoReady && (
         <img
           src={thumbnailUrl}
@@ -114,11 +115,16 @@ function IntroVideo({
       <video
         ref={videoRef}
         src={videoUrl}
-        className={`${mediaClass} object-contain ${videoReady ? 'relative' : 'absolute inset-0 opacity-0'}`}
+        className={
+          videoReady
+            ? `${mediaClass}`
+            : `absolute inset-0 h-full w-full ${maxHeightClass} object-contain opacity-0`
+        }
         controls
         playsInline
         preload="auto"
         onLoadedData={() => setVideoReady(true)}
+        onCanPlay={() => setVideoReady(true)}
         onPlay={onPlay}
       />
     </div>
@@ -472,14 +478,17 @@ export default function ProfileView({
 
             {/* Main — video hero + content */}
             <div className="md:col-span-8 space-y-10">
-              <div className={`relative rounded-2xl bg-zinc-950 shadow-2xl shadow-black/40 ${isCinema ? 'ring-1 ring-amber-500/15' : 'ring-1 ring-white/10'}`}>
+              <div
+                className={`relative overflow-hidden rounded-2xl bg-black shadow-2xl shadow-black/40 ${
+                  isCinema ? 'ring-1 ring-amber-500/15' : 'ring-1 ring-white/10'
+                }`}
+              >
                 <IntroVideo
                   videoUrl={user.videoUrl}
                   thumbnailUrl={user.thumbnailUrl}
                   preview={preview}
                   userId={user.id}
                   onPlay={handleVideoPlay}
-                  className="rounded-2xl"
                   maxHeightClass="max-h-[min(70dvh,560px)]"
                 />
               </div>
@@ -555,15 +564,16 @@ export default function ProfileView({
         </div>
 
         <div className={mainClass}>
-          <IntroVideo
-            videoUrl={user.videoUrl}
-            thumbnailUrl={user.thumbnailUrl}
-            preview={preview}
-            userId={user.id}
-            onPlay={handleVideoPlay}
-            className="rounded-xl ring-1 ring-white/10"
-            maxHeightClass={embedded ? 'max-h-[50vh]' : 'max-h-[60vh]'}
-          />
+          <div className="overflow-hidden rounded-xl ring-1 ring-white/10">
+            <IntroVideo
+              videoUrl={user.videoUrl}
+              thumbnailUrl={user.thumbnailUrl}
+              preview={preview}
+              userId={user.id}
+              onPlay={handleVideoPlay}
+              maxHeightClass={embedded ? 'max-h-[50vh]' : 'max-h-[60vh]'}
+            />
+          </div>
 
           {(user.bio || preview) && (
             <p className="text-sm leading-relaxed text-zinc-400">
