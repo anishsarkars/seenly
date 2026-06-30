@@ -8,9 +8,13 @@ function formatCheckoutError(error: unknown): { message: string; status: number 
   const raw = error instanceof Error ? error.message : String(error);
 
   if (raw.includes('401') || raw.toLowerCase().includes('unauthorized')) {
+    const env = process.env.DODO_PAYMENTS_ENV === 'test_mode' ? 'test_mode' : 'live_mode';
+    const hint =
+      env === 'live_mode'
+        ? 'Your key may be a Test Mode key. In Vercel set DODO_PAYMENTS_ENV=test_mode, or copy your Live API key from Dodo Dashboard (toggle off Test Mode → Developer → API Keys).'
+        : 'Copy your Test Mode API key from Dodo Dashboard (Test Mode ON → Developer → API Keys) and set DODO_PAYMENTS_ENV=test_mode.';
     return {
-      message:
-        'Dodo Payments rejected the API key. On Vercel, verify DODO_PAYMENTS_API_KEY is set and matches live_mode (or set DODO_PAYMENTS_ENV=test_mode for test keys).',
+      message: `Dodo Payments rejected the API key (currently using ${env}). ${hint}`,
       status: 502,
     };
   }
