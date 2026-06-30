@@ -59,11 +59,9 @@ function IntroVideo({
   videoUrl,
   thumbnailUrl,
   preview,
-  userId,
   onPlay,
   className = '',
   maxHeightClass = 'max-h-[75dvh]',
-  objectFit = 'contain',
 }: {
   videoUrl?: string;
   thumbnailUrl?: string;
@@ -72,28 +70,17 @@ function IntroVideo({
   onPlay?: () => void;
   className?: string;
   maxHeightClass?: string;
-  objectFit?: 'contain' | 'cover';
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoReady, setVideoReady] = useState(false);
-  const [aspectRatio, setAspectRatio] = useState<number>(16 / 9);
 
   const canPlay = !!videoUrl && (preview || isPersistedMediaUrl(videoUrl));
-
-  const handleMetadata = (video: HTMLVideoElement) => {
-    if (video.videoWidth > 0 && video.videoHeight > 0) {
-      setAspectRatio(video.videoWidth / video.videoHeight);
-    }
-    setVideoReady(true);
-  };
+  const mediaClass = `block w-full h-auto ${maxHeightClass} bg-black`;
 
   if (!canPlay && preview && thumbnailUrl) {
     return (
-      <div
-        className={`relative w-full overflow-hidden bg-black ${maxHeightClass} ${className}`}
-        style={{ aspectRatio }}
-      >
-        <img src={thumbnailUrl} alt="" className={`h-full w-full ${objectFit === 'cover' ? 'object-cover' : 'object-contain'}`} />
+      <div className={`relative ${className}`}>
+        <img src={thumbnailUrl} alt="" className={`${mediaClass} object-contain`} />
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
           <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/95 shadow-lg">
             <div className="ml-0.5 h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-black" />
@@ -106,8 +93,7 @@ function IntroVideo({
   if (!canPlay) {
     return (
       <div
-        className={`flex w-full items-center justify-center bg-zinc-950 px-6 text-center text-sm text-zinc-500 ${className}`}
-        style={{ aspectRatio: 16 / 9 }}
+        className={`flex min-h-[10rem] w-full items-center justify-center bg-zinc-950 px-6 text-center text-sm text-zinc-500 ${className}`}
       >
         No intro video yet.
       </div>
@@ -115,15 +101,12 @@ function IntroVideo({
   }
 
   return (
-    <div
-      className={`relative w-full overflow-hidden bg-black ${maxHeightClass} ${className}`}
-      style={{ aspectRatio }}
-    >
+    <div className={`relative ${className}`}>
       {thumbnailUrl && !videoReady && (
         <img
           src={thumbnailUrl}
           alt=""
-          className={`absolute inset-0 h-full w-full ${objectFit === 'cover' ? 'object-cover' : 'object-contain'}`}
+          className={`${mediaClass} object-contain`}
           fetchPriority="high"
         />
       )}
@@ -131,11 +114,11 @@ function IntroVideo({
         ref={videoRef}
         src={videoUrl}
         poster={thumbnailUrl || undefined}
-        className={`relative h-full w-full ${objectFit === 'cover' ? 'object-cover' : 'object-contain'}`}
+        className={`${mediaClass} object-contain ${videoReady ? 'relative' : 'absolute inset-0 opacity-0'}`}
         controls
         playsInline
         preload="auto"
-        onLoadedMetadata={(e) => handleMetadata(e.currentTarget)}
+        onLoadedData={() => setVideoReady(true)}
         onPlay={onPlay}
       />
     </div>
@@ -143,18 +126,26 @@ function IntroVideo({
 }
 
 function ProfilePublicFooter({ username }: { username?: string }) {
+  const handle = username || 'yourusername';
+
   return (
-    <footer className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-5">
+    <footer className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-4 sm:pb-6">
       <Link
         href="/onboarding"
-        className="pointer-events-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-full border border-white/10 bg-black/85 px-5 py-2.5 text-xs text-white/50 shadow-lg backdrop-blur-md transition-all hover:border-white/20 hover:text-white/70"
+        className="pointer-events-auto group inline-flex max-w-[min(100%,22rem)] flex-col items-center gap-1.5 rounded-2xl border border-white/10 bg-black/90 px-4 py-3 text-center shadow-2xl shadow-black/50 backdrop-blur-xl transition-all hover:border-white/20 hover:bg-zinc-950/95 sm:max-w-none sm:flex-row sm:gap-3 sm:px-5 sm:text-left"
       >
-        <span>Built with</span>
-        <span className="font-semibold text-white/80">seenly.tech</span>
-        <span className="hidden text-white/25 sm:inline">·</span>
-        <span>
-          make yours with{' '}
-          <span className="font-semibold text-white/80">{username ? `/${username}` : 'your username'}</span>
+        <span className="inline-flex items-center gap-1.5 font-semibold tracking-tight text-white">
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-[10px] font-bold text-black">
+            S
+          </span>
+          Seenly
+        </span>
+        <span className="hidden h-4 w-px shrink-0 bg-white/10 sm:block" aria-hidden />
+        <span className="text-[11px] leading-snug text-white/50 sm:text-xs">
+          Make yours with{' '}
+          <span className="font-semibold text-white/90 transition-colors group-hover:text-white">
+            seenly.tech/{handle}
+          </span>
         </span>
       </Link>
     </footer>
@@ -398,8 +389,12 @@ export default function ProfileView({
     return (
       <div className={`min-h-screen ${pageBg} text-white selection:bg-white selection:text-black py-10 md:py-16`}>
         <div className="mx-auto max-w-4xl px-4 sm:px-6 pb-28">
-          <header className="mb-10 flex items-center justify-between">
-            <SeenlyLogo size="sm" showBeta={false} />
+          <header className="mb-8 flex items-center md:mb-10">
+            <SeenlyLogo
+              size="md"
+              showBeta={false}
+              className="rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 shadow-lg shadow-black/20 backdrop-blur-md transition-all hover:border-white/15 hover:bg-white/[0.07]"
+            />
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
@@ -456,7 +451,7 @@ export default function ProfileView({
 
             {/* Main — video hero + content */}
             <div className="md:col-span-8 space-y-10">
-              <div className={`relative overflow-hidden rounded-2xl shadow-2xl ${isCinema ? 'border border-amber-500/15 bg-zinc-950' : 'border border-white/10 bg-zinc-950'}`}>
+              <div className={`relative rounded-2xl bg-zinc-950 shadow-2xl shadow-black/40 ${isCinema ? 'ring-1 ring-amber-500/15' : 'ring-1 ring-white/10'}`}>
                 <IntroVideo
                   videoUrl={user.videoUrl}
                   thumbnailUrl={user.thumbnailUrl}
@@ -464,8 +459,7 @@ export default function ProfileView({
                   userId={user.id}
                   onPlay={handleVideoPlay}
                   className="rounded-2xl"
-                  maxHeightClass="max-h-[min(70dvh,520px)]"
-                  objectFit="cover"
+                  maxHeightClass="max-h-[min(70dvh,560px)]"
                 />
               </div>
 
@@ -474,7 +468,7 @@ export default function ProfileView({
           </div>
         </div>
 
-        <ProfilePublicFooter username={user.username} />
+        {!removeBranding && <ProfilePublicFooter username={user.username} />}
       </div>
     );
   }
