@@ -4,9 +4,10 @@ import { useEffect } from 'react';
 
 interface ConfettiProps {
   active: boolean;
+  intensity?: 'normal' | 'subtle';
 }
 
-export default function Confetti({ active }: ConfettiProps) {
+export default function Confetti({ active, intensity = 'normal' }: ConfettiProps) {
   useEffect(() => {
     if (!active) return;
 
@@ -30,15 +31,17 @@ export default function Confetti({ active }: ConfettiProps) {
     window.addEventListener('resize', resize);
 
     const colors = ['#ffffff', '#a1a1aa', '#34d399', '#f472b6', '#60a5fa'];
-    const particles = Array.from({ length: 120 }, () => ({
+    const isSubtle = intensity === 'subtle';
+    const particleCount = isSubtle ? 36 : 120;
+    const particles = Array.from({ length: particleCount }, () => ({
       x: window.innerWidth / 2,
-      y: window.innerHeight * 0.35,
-      vx: (Math.random() - 0.5) * 14,
-      vy: Math.random() * -14 - 4,
-      size: Math.random() * 6 + 3,
+      y: window.innerHeight * (isSubtle ? 0.42 : 0.35),
+      vx: (Math.random() - 0.5) * (isSubtle ? 8 : 14),
+      vy: Math.random() * (isSubtle ? -10 : -14) - (isSubtle ? 2 : 4),
+      size: Math.random() * (isSubtle ? 4 : 6) + (isSubtle ? 2 : 3),
       color: colors[Math.floor(Math.random() * colors.length)],
       rotation: Math.random() * 360,
-      spin: (Math.random() - 0.5) * 10,
+      spin: (Math.random() - 0.5) * (isSubtle ? 6 : 10),
       life: 1,
     }));
 
@@ -57,7 +60,7 @@ export default function Confetti({ active }: ConfettiProps) {
         p.vy += 0.35;
         p.vx *= 0.99;
         p.rotation += p.spin;
-        p.life -= 0.012;
+        p.life -= isSubtle ? 0.022 : 0.012;
 
         ctx.save();
         ctx.translate(p.x, p.y);
@@ -69,7 +72,7 @@ export default function Confetti({ active }: ConfettiProps) {
       });
 
       frame += 1;
-      if (alive && frame < 180) {
+      if (alive && frame < (isSubtle ? 100 : 180)) {
         raf = requestAnimationFrame(draw);
       } else {
         window.removeEventListener('resize', resize);
@@ -84,7 +87,7 @@ export default function Confetti({ active }: ConfettiProps) {
       window.removeEventListener('resize', resize);
       canvas.remove();
     };
-  }, [active]);
+  }, [active, intensity]);
 
   return null;
 }

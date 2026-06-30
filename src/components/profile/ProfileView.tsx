@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   FileText, Share2, MapPin, ExternalLink,
-  Mail, Globe,
+  Mail, Globe, Play, Pause,
 } from 'lucide-react';
 import { isPersistedMediaUrl } from '@/lib/storage';
 import { logAnalyticEvent } from '@/db/actions';
@@ -49,7 +49,6 @@ interface ProfileViewProps {
   layout?: 'mobile' | 'desktop';
   embedded?: boolean;
   removeBranding?: boolean;
-  isOwner?: boolean;
   showProBadge?: boolean;
   showFounderBadge?: boolean;
   profileTheme?: ProfileTheme;
@@ -74,18 +73,45 @@ function IntroVideo({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoReady, setVideoReady] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const canPlay = !!videoUrl && (preview || isPersistedMediaUrl(videoUrl));
-  const shellClass = `relative w-full overflow-hidden bg-black ${className}`;
+  const shellClass = `group relative w-full overflow-hidden bg-black ${className}`;
   const mediaClass = `block w-full h-auto ${maxHeightClass}`;
+
+  const togglePlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      void video.play();
+    } else {
+      video.pause();
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    const video = videoRef.current;
+    if (!video?.duration) return;
+    setProgress(video.currentTime / video.duration);
+  };
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const video = videoRef.current;
+    if (!video?.duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    video.currentTime = ratio * video.duration;
+    setProgress(ratio);
+  };
 
   if (!canPlay && preview && thumbnailUrl) {
     return (
       <div className={shellClass}>
         <img src={thumbnailUrl} alt="" className={`${mediaClass} object-contain`} />
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/95 shadow-lg">
-            <div className="ml-0.5 h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-black" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 shadow-lg">
+            <Play className="ml-0.5 h-5 w-5 fill-black text-black" />
           </div>
         </div>
       </div>
@@ -120,32 +146,69 @@ function IntroVideo({
             ? `${mediaClass}`
             : `absolute inset-0 h-full w-full ${maxHeightClass} object-contain opacity-0`
         }
-        controls
         playsInline
         preload="auto"
         onLoadedData={() => setVideoReady(true)}
         onCanPlay={() => setVideoReady(true)}
-        onPlay={onPlay}
+        onPlay={() => {
+          setPlaying(true);
+          onPlay?.();
+        }}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+        onTimeUpdate={handleTimeUpdate}
+        onClick={togglePlay}
       />
+
+      {videoReady && (
+        <>
+          {!playing && (
+            <button
+              type="button"
+              onClick={togglePlay}
+              className="absolute inset-0 flex items-center justify-center bg-black/25 transition-opacity group-hover:bg-black/35"
+              aria-label="Play video"
+            >
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-xl backdrop-blur-sm transition-transform hover:scale-105">
+                <Play className="ml-1 h-6 w-6 fill-black text-black" />
+              </span>
+            </button>
+          )}
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-3 pt-10 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+            <div className="pointer-events-auto flex items-center gap-3">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePlay();
+                }}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                aria-label={playing ? 'Pause' : 'Play'}
+              >
+                {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />}
+              </button>
+              <div
+                role="slider"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(progress * 100)}
+                className="relative h-1 flex-1 cursor-pointer rounded-full bg-white/20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSeek(e);
+                }}
+              >
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full bg-white/90"
+                  style={{ width: `${progress * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
-  );
-}
-
-function ProfilePublicPromo({ username }: { username?: string }) {
-  const handle = username || 'yourusername';
-
-  return (
-    <Link
-      href="/onboarding"
-      className="group mt-2 block w-full rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left transition-all hover:border-white/20 hover:bg-white/[0.07]"
-    >
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">Seenly</p>
-      <p className="mt-1.5 text-sm font-medium leading-snug text-white/80 group-hover:text-white">
-        Make yours with{' '}
-        <span className="font-semibold text-white">seenly.tech/{handle}</span>
-      </p>
-      <p className="mt-2 text-[11px] text-white/40">Create your video-first profile →</p>
-    </Link>
   );
 }
 
@@ -153,24 +216,18 @@ function ProfilePublicFooter({ username }: { username?: string }) {
   const handle = username || 'yourusername';
 
   return (
-    <footer className="flex justify-center pb-6">
+    <footer className="flex justify-center pb-8">
       <Link
         href="/onboarding"
-        className="group inline-flex w-full max-w-lg flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-4 text-center shadow-lg shadow-black/30 transition-all hover:border-white/25 hover:bg-white/[0.09] sm:flex-row sm:gap-3 sm:text-left"
+        className="group inline-flex w-full max-w-md flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-4 text-center transition-all hover:border-white/25 hover:bg-white/[0.09] sm:px-6"
       >
-        <span className="inline-flex items-center gap-1.5 font-semibold tracking-tight text-white">
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-[10px] font-bold text-black">
-            S
-          </span>
-          Seenly
-        </span>
-        <span className="hidden h-4 w-px shrink-0 bg-white/10 sm:block" aria-hidden />
-        <span className="text-[11px] leading-snug text-white/50 sm:text-xs">
-          Make yours with{' '}
-          <span className="font-semibold text-white/90 transition-colors group-hover:text-white">
-            seenly.tech/{handle}
-          </span>
-        </span>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Seenly</p>
+        <p className="text-sm font-medium leading-snug text-white/85 group-hover:text-white">
+          Claim yours — make your profile
+        </p>
+        <p className="font-mono text-xs text-white/55 group-hover:text-white/75">
+          seenly.tech/{handle}
+        </p>
       </Link>
     </footer>
   );
@@ -182,7 +239,6 @@ export default function ProfileView({
   layout,
   embedded = false,
   removeBranding = false,
-  isOwner = false,
   showProBadge = false,
   showFounderBadge = false,
   profileTheme: profileThemeProp,
@@ -472,8 +528,6 @@ export default function ProfileView({
               </div>
 
               {renderSidebarSocials()}
-
-              {!isOwner && <ProfilePublicPromo username={user.username} />}
             </div>
 
             {/* Main — video hero + content */}

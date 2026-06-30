@@ -86,7 +86,8 @@ export async function POST(request: Request) {
         seenly_user_id: user.id,
         seenly_plan: plan,
       },
-      return_url: `${baseUrl}/dashboard?tab=settings&billing=success&plan=${plan}`,
+      return_url: `${baseUrl}/dashboard?tab=settings&billing=return&plan=${plan}`,
+      cancel_url: `${baseUrl}/dashboard?tab=settings&billing=cancelled&plan=${plan}`,
     });
 
     if (!session.checkout_url) {

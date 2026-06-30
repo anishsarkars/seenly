@@ -29,6 +29,7 @@ import {
 } from '@/lib/profile-customization';
 import { formatVideoDurationLimit, formatUploadLimit } from '@/lib/video-limits';
 import { getEntitlements } from '@/lib/plans';
+import { isPaymentFailureStatus, isPaymentSuccessStatus } from '@/lib/billing-return';
 import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
 import { hasUnreadUpdates, SEENLY_UPDATES_VERSION } from '@/lib/seenly-updates';
 import { btnPrimary, btnSecondary, input, muted, panel, sectionTitle, shell } from '@/lib/platform-ui';
@@ -142,49 +143,100 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   useEffect(() => {
     const billing = searchParams.get('billing');
     const plan = searchParams.get('plan');
-    if (billing !== 'success' || (plan !== 'pro' && plan !== 'founder')) return;
-
-    setBillingSuccessPlan(plan);
-    setActiveTab('settings');
-
+    const paymentStatus = searchParams.get('status');
     const paymentId = searchParams.get('payment_id');
     const subscriptionId = searchParams.get('subscription_id');
-    const status = searchParams.get('status');
+
+    if (!billing) return;
+
+    setActiveTab('settings');
+    const clearBillingParams = () => router.replace('/dashboard?tab=settings', { scroll: false });
+
+    if (billing === 'cancelled') {
+      setActionStatus({
+        type: 'error',
+        message: 'Payment cancelled. No charges were made.',
+      });
+      clearBillingParams();
+      return;
+    }
+
+    if (billing === 'failed' || isPaymentFailureStatus(paymentStatus)) {
+      setActionStatus({
+        type: 'error',
+        message: 'Payment did not go through. You can try again anytime.',
+      });
+      clearBillingParams();
+      return;
+    }
+
+    const isPaidPlan = plan === 'pro' || plan === 'founder';
+    const isSuccessFlow =
+      isPaidPlan &&
+      (billing === 'success' ||
+        (billing === 'return' &&
+          (!paymentStatus || isPaymentSuccessStatus(paymentStatus))));
+
+    if (!isSuccessFlow) {
+      if (billing === 'return') {
+        setActionStatus({
+          type: 'error',
+          message: 'Payment was not completed.',
+        });
+        clearBillingParams();
+      }
+      return;
+    }
+
+    setBillingSuccessPlan(plan);
+    setActionStatus({ type: 'loading', message: 'Confirming your payment…' });
 
     (async () => {
       try {
+        const syncBody = { plan, paymentId, subscriptionId, status: paymentStatus };
         const res = await fetch('/api/billing/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify({
-            plan,
-            paymentId,
-            subscriptionId,
-            status,
-          }),
+          body: JSON.stringify(syncBody),
         });
         const data = await res.json().catch(() => ({}));
         if (data.profile) {
           setProfile(data.profile);
+          setActionStatus({ type: 'success', message: 'Payment confirmed — your plan is active.' });
         } else if (res.status === 202) {
-          // Webhook may still be processing — retry once after a short delay
           await new Promise((r) => setTimeout(r, 2500));
           const retry = await fetch('/api/billing/sync', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'same-origin',
-            body: JSON.stringify({ plan, paymentId, subscriptionId, status }),
+            body: JSON.stringify(syncBody),
           });
           const retryData = await retry.json().catch(() => ({}));
-          if (retryData.profile) setProfile(retryData.profile);
+          if (retryData.profile) {
+            setProfile(retryData.profile);
+            setActionStatus({ type: 'success', message: 'Payment confirmed — your plan is active.' });
+          } else {
+            setActionStatus({
+              type: 'success',
+              message: 'Payment received. Your plan will activate in a moment.',
+            });
+          }
+        } else {
+          setActionStatus({
+            type: 'success',
+            message: 'Payment received. Your plan will activate in a moment.',
+          });
         }
       } catch {
-        // Webhook may still apply the plan
+        setActionStatus({
+          type: 'success',
+          message: 'Payment received. Your plan will activate in a moment.',
+        });
       }
     })();
 
-    router.replace('/dashboard?tab=settings', { scroll: false });
+    clearBillingParams();
   }, [searchParams, router]);
 
   const toggleWhatsNew = () => {

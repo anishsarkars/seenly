@@ -68,7 +68,6 @@ export default function ProfileClient({ profileData, isOwner = false }: ProfileC
       <div className={isOwner ? 'pb-28' : undefined}>
         <ProfileView
           profileData={profileData}
-          isOwner={isOwner}
           removeBranding={entitlements.removeBranding}
           showProBadge={entitlements.showProBadge}
           showFounderBadge={entitlements.showFounderBadge}

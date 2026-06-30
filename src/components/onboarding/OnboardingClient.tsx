@@ -50,6 +50,7 @@ export default function OnboardingClient() {
   const [betaCode, setBetaCode] = useState('');
   const [betaError, setBetaError] = useState('');
   const [betaChecking, setBetaChecking] = useState(false);
+  const [betaConfetti, setBetaConfetti] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   // Form State
@@ -153,6 +154,8 @@ export default function OnboardingClient() {
       }
       setBetaUnlocked(true);
       setBetaError('');
+      setBetaConfetti(true);
+      window.setTimeout(() => setBetaConfetti(false), 2200);
     } catch (err: any) {
       setBetaUnlocked(false);
       setBetaError(err.message || 'Invalid beta code.');
@@ -553,6 +556,7 @@ export default function OnboardingClient() {
   return (
     <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-black font-geist text-white selection:bg-white selection:text-black lg:flex-row">
       <Confetti active={step === 9} />
+      <Confetti active={betaConfetti} intensity="subtle" />
 
       {/* Onboarding Input Column */}
       <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden border-white/10 px-5 py-6 md:px-7 md:py-8 lg:max-w-md lg:border-r xl:max-w-lg">
