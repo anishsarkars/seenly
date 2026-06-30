@@ -1,4 +1,4 @@
-import { MAX_VIDEO_DURATION_SEC, MAX_VIDEO_SIZE_BYTES } from '@/lib/video-limits';
+import { PLANS } from '@/lib/plans';
 
 export async function uploadFile(
   file: Blob,
@@ -55,10 +55,11 @@ async function getMediaDuration(src: string): Promise<number> {
 
 export async function validateVideoFile(
   file: Blob,
-  maxSeconds = MAX_VIDEO_DURATION_SEC
+  maxSeconds = PLANS.free.maxVideoSec,
+  maxBytes = PLANS.free.maxUploadBytes
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (file.size > MAX_VIDEO_SIZE_BYTES) {
-    return { ok: false, error: 'Video must be 150MB or smaller.' };
+  if (file.size > maxBytes) {
+    return { ok: false, error: `Video must be ${Math.round(maxBytes / (1024 * 1024))}MB or smaller.` };
   }
 
   const url = URL.createObjectURL(file);

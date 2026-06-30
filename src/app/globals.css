@@ -69,6 +69,31 @@ body {
   }
 }
 
+@keyframes gradientColorDrift {
+  0%, 100% { opacity: 0.5; transform: scale(0.96); }
+  50% { opacity: 0.85; transform: scale(1.05); }
+}
+
+@keyframes gradientColorDriftAlt {
+  0%, 100% { opacity: 0.4; transform: scale(1.03) translate(0, 0); }
+  50% { opacity: 0.7; transform: scale(0.94) translate(1%, -1%); }
+}
+
+@keyframes gradientRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes gradientPulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.45; }
+}
+
+@keyframes sectionGlow {
+  0%, 100% { opacity: 0.35; transform: scaleX(0.92); }
+  50% { opacity: 0.9; transform: scaleX(1); }
+}
+
 
 /* Glassmorphism utility */
 .glass {

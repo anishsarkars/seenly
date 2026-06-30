@@ -13,6 +13,12 @@ export const users = pgTable('users', {
   thumbnailUrl: text('thumbnail_url'),
   resumeUrl: text('resume_url'),
   isPublic: boolean('is_public').default(true).notNull(),
+  plan: varchar('plan', { length: 20 }).default('free').notNull(),
+  planStatus: varchar('plan_status', { length: 20 }),
+  planExpiresAt: timestamp('plan_expires_at'),
+  isFounder: boolean('is_founder').default(false).notNull(),
+  dodoCustomerId: varchar('dodo_customer_id', { length: 64 }),
+  dodoSubscriptionId: varchar('dodo_subscription_id', { length: 64 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

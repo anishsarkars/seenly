@@ -28,6 +28,17 @@ export async function ensureProfileSchema() {
     )`,
     sql`CREATE INDEX IF NOT EXISTS profile_views_profile_id_idx ON profile_views(profile_id)`,
     sql`CREATE INDEX IF NOT EXISTS profile_views_created_at_idx ON profile_views(created_at)`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan varchar(20) DEFAULT 'free' NOT NULL`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_status varchar(20)`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at timestamp`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_founder boolean DEFAULT false NOT NULL`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dodo_customer_id varchar(64)`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS dodo_subscription_id varchar(64)`,
+    sql`CREATE TABLE IF NOT EXISTS billing_webhook_events (
+      id varchar(128) PRIMARY KEY,
+      event_type varchar(64) NOT NULL,
+      processed_at timestamp DEFAULT now() NOT NULL
+    )`,
   ];
 
   for (const statement of statements) {

@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { ensureStorageBuckets } from '@/db/ensure-storage';
+import { db } from '@/db/index';
+import { users } from '@/db/schema';
+import { eq } from 'drizzle-orm';
+import { getEntitlements } from '@/lib/plans';
+import { ensureProfileSchema } from '@/db/ensure-schema';
 
 const BUCKETS = {
   video: 'videos',
@@ -14,7 +19,7 @@ type UploadKind = keyof typeof BUCKETS;
 
 async function ensureBuckets(admin: NonNullable<ReturnType<typeof createAdminClient>>) {
   for (const bucket of Object.values(BUCKETS)) {
-    await admin.storage.createBucket(bucket, { public: true, fileSizeLimit: 157286400 }).catch(() => {});
+    await admin.storage.createBucket(bucket, { public: true, fileSizeLimit: 262144000 }).catch(() => {});
   }
 }
 
@@ -31,6 +36,26 @@ function pathFor(kind: UploadKind, userId: string, file: File) {
     case 'avatar':
       return `${userId}/avatar.jpg`;
   }
+}
+
+async function getUserEntitlements(userId: string) {
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('your-supabase')) {
+    return getEntitlements({});
+  }
+
+  await ensureProfileSchema();
+  const [row] = await db
+    .select({
+      plan: users.plan,
+      planStatus: users.planStatus,
+      planExpiresAt: users.planExpiresAt,
+      isFounder: users.isFounder,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return getEntitlements(row ?? {});
 }
 
 export async function POST(request: Request) {
@@ -52,8 +77,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid upload request.' }, { status: 400 });
     }
 
-    if (kind === 'video' && file.size > 150 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Video must be 150MB or smaller.' }, { status: 400 });
+    const entitlements = await getUserEntitlements(user.id);
+
+    if (kind === 'video' && file.size > entitlements.maxUploadBytes) {
+      return NextResponse.json(
+        { error: `Video must be ${Math.round(entitlements.maxUploadBytes / (1024 * 1024))}MB or smaller on your plan.` },
+        { status: 400 }
+      );
+    }
+
+    if (kind === 'thumbnail' && !entitlements.customThumbnail) {
+      return NextResponse.json(
+        { error: 'Custom thumbnails require Seenly Pro or Founder.' },
+        { status: 403 }
+      );
     }
 
     if (kind === 'resume' && file.size > 10 * 1024 * 1024) {
@@ -68,7 +105,6 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const storageClient = admin ?? supabase;
 
-    // Create buckets via Postgres (works without service role key on Vercel)
     await ensureStorageBuckets();
 
     if (admin) {
@@ -81,7 +117,6 @@ export async function POST(request: Request) {
       cacheControl: '3600',
     });
 
-    // Retry once after ensuring buckets if the first attempt failed
     if (uploadResult.error?.message?.toLowerCase().includes('bucket not found')) {
       await ensureStorageBuckets();
       if (admin) await ensureBuckets(admin);

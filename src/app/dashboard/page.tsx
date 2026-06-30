@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/utils/supabase/server';
 import { getUserProfile, getProfileAnalytics } from '@/db/actions';
@@ -8,15 +8,12 @@ export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  // If not logged in, redirect to onboarding login screen
   if (!user) {
     redirect('/login');
   }
 
-  // Fetch the logged-in user's profile and analytics
   const profileData = await getUserProfile(user.id);
-  
-  // If user signed up but hasn't completed onboarding details, redirect to onboarding
+
   if (!profileData?.user?.username) {
     redirect('/onboarding');
   }
@@ -24,9 +21,11 @@ export default async function DashboardPage() {
   const analyticsData = await getProfileAnalytics(user.id);
 
   return (
-    <DashboardClient 
-      initialProfile={profileData} 
-      initialAnalytics={analyticsData} 
-    />
+    <Suspense fallback={<div className="flex min-h-dvh items-center justify-center bg-black text-white/50">Loading dashboard…</div>}>
+      <DashboardClient
+        initialProfile={profileData}
+        initialAnalytics={analyticsData}
+      />
+    </Suspense>
   );
 }

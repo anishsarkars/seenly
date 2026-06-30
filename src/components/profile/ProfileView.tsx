@@ -21,6 +21,10 @@ export interface ProfileViewData {
     videoUrl?: string;
     thumbnailUrl?: string;
     resumeUrl?: string;
+    plan?: string | null;
+    planStatus?: string | null;
+    planExpiresAt?: Date | string | null;
+    isFounder?: boolean | null;
   };
   experiences: Array<{ role: string; company: string; duration: string }>;
   projects: Array<{ title: string; description: string; website?: string; github?: string }>;
@@ -32,6 +36,8 @@ interface ProfileViewProps {
   preview?: boolean;
   layout?: 'mobile' | 'desktop';
   embedded?: boolean;
+  removeBranding?: boolean;
+  showFounderBadge?: boolean;
 }
 
 export default function ProfileView({
@@ -39,6 +45,8 @@ export default function ProfileView({
   preview = false,
   layout,
   embedded = false,
+  removeBranding = false,
+  showFounderBadge = false,
 }: ProfileViewProps) {
   const { user, experiences, projects, socials } = profileData;
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -172,7 +180,14 @@ export default function ProfileView({
           </div>
 
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
+              {showFounderBadge && (
+                <span className="inline-flex items-center rounded-full border border-violet-400/25 bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-violet-300/90">
+                  Founder
+                </span>
+              )}
+            </div>
             <p className="text-zinc-400 text-sm leading-relaxed">{displayHeadline}</p>
             {(user.location || preview) && (
               <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
@@ -517,7 +532,7 @@ export default function ProfileView({
         </div>
       </div>
 
-      {!embedded && (
+      {!embedded && !removeBranding && (
         <footer className="px-6 pb-12 pt-10">
           <div className="mx-auto max-w-4xl flex justify-center">
             <Link

@@ -128,98 +128,98 @@ export default function LoginClient() {
             </div>
 
             <div className={`${panel} space-y-5 p-6 sm:p-7`}>
-            <div className="space-y-1">
-              <h2 className="text-xl font-semibold tracking-tight">Welcome back</h2>
-              <p className="text-sm text-white/45">Continue with Google, email & password, or a magic link.</p>
-            </div>
+              <div className="space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight">Welcome back</h2>
+                <p className="text-sm text-white/45">Continue with Google, email & password, or a magic link.</p>
+              </div>
 
-            <button
-              type="button"
-              disabled={loading}
-              onClick={handleGoogleSignIn}
-              className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-50"
-            >
-              <GoogleIcon />
-              Continue with Google
-            </button>
-
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-white/10" />
-              <span className="text-[11px] uppercase tracking-widest text-white/30">or</span>
-              <div className="h-px flex-1 bg-white/10" />
-            </div>
-
-            <div className="flex rounded-lg border border-white/10 p-0.5">
               <button
                 type="button"
-                onClick={() => setAuthMethod('password')}
-                className={`flex-1 rounded-md py-2 text-xs font-medium transition-colors ${
-                  authMethod === 'password' ? 'bg-white/10 text-white' : 'text-white/45 hover:text-white/70'
-                }`}
+                disabled={loading}
+                onClick={handleGoogleSignIn}
+                className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-white px-4 py-3 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-50"
               >
-                Email & password
+                <GoogleIcon />
+                Continue with Google
               </button>
-              <button
-                type="button"
-                onClick={() => setAuthMethod('magic')}
-                className={`flex-1 rounded-md py-2 text-xs font-medium transition-colors ${
-                  authMethod === 'magic' ? 'bg-white/10 text-white' : 'text-white/45 hover:text-white/70'
-                }`}
-              >
-                Magic link
-              </button>
+
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/10" />
+                <span className="text-[11px] uppercase tracking-widest text-white/30">or</span>
+                <div className="h-px flex-1 bg-white/10" />
+              </div>
+
+              <div className="flex rounded-lg border border-white/10 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setAuthMethod('password')}
+                  className={`flex-1 rounded-md py-2 text-xs font-medium transition-colors ${
+                    authMethod === 'password' ? 'bg-white/10 text-white' : 'text-white/45 hover:text-white/70'
+                  }`}
+                >
+                  Email & password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthMethod('magic')}
+                  className={`flex-1 rounded-md py-2 text-xs font-medium transition-colors ${
+                    authMethod === 'magic' ? 'bg-white/10 text-white' : 'text-white/45 hover:text-white/70'
+                  }`}
+                >
+                  Magic link
+                </button>
+              </div>
+
+              {authMethod === 'password' ? (
+                <form onSubmit={handlePasswordSignIn} className="space-y-3">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    className={input}
+                  />
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Password"
+                    className={input}
+                  />
+                  <button type="submit" disabled={loading} className={`${btnPrimary} w-full`}>
+                    Sign in with password
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={sendMagicLink} className="space-y-3">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    className={input}
+                  />
+                  <button type="submit" disabled={loading} className={`${btnSecondary} w-full`}>
+                    Send magic link
+                  </button>
+                </form>
+              )}
+
+              {message && <p className="text-center text-sm text-emerald-400/90">{message}</p>}
+              {error && <p className="text-center text-sm text-red-400/90">{error}</p>}
             </div>
 
-            {authMethod === 'password' ? (
-              <form onSubmit={handlePasswordSignIn} className="space-y-3">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  className={input}
-                />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  className={input}
-                />
-                <button type="submit" disabled={loading} className={`${btnPrimary} w-full`}>
-                  Sign in with password
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={sendMagicLink} className="space-y-3">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  className={input}
-                />
-                <button type="submit" disabled={loading} className={`${btnSecondary} w-full`}>
-                  Send magic link
-                </button>
-              </form>
-            )}
-
-            {message && <p className="text-center text-sm text-emerald-400/90">{message}</p>}
-            {error && <p className="text-center text-sm text-red-400/90">{error}</p>}
+            <p className="text-center text-sm text-white/40">
+              New here?{' '}
+              <Link href="/onboarding" className="inline-flex items-center gap-1 text-white/70 hover:text-white">
+                Create your profile <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </p>
           </div>
-
-          <p className="text-center text-sm text-white/40">
-            New here?{' '}
-            <Link href="/onboarding" className="inline-flex items-center gap-1 text-white/70 hover:text-white">
-              Create your profile <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </p>
         </div>
-      </div>
       </div>
 
       <SiteFooter variant="login" compact className="shrink-0 border-t border-white/[0.06]" />

@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { LayoutDashboard, Pencil } from 'lucide-react';
 import { logAnalyticEvent } from '@/db/actions';
+import { getEntitlements } from '@/lib/plans';
 import ProfileView, { type ProfileViewData } from './ProfileView';
 
 interface ProfileClientProps {
@@ -13,6 +14,16 @@ interface ProfileClientProps {
 
 export default function ProfileClient({ profileData, isOwner = false }: ProfileClientProps) {
   const { user } = profileData;
+  const entitlements = useMemo(
+    () =>
+      getEntitlements({
+        plan: user.plan,
+        planStatus: user.planStatus,
+        planExpiresAt: user.planExpiresAt,
+        isFounder: user.isFounder,
+      }),
+    [user.plan, user.planStatus, user.planExpiresAt, user.isFounder]
+  );
 
   useEffect(() => {
     if (!user.id) return;
@@ -55,7 +66,11 @@ export default function ProfileClient({ profileData, isOwner = false }: ProfileC
       )}
 
       <div className={isOwner ? 'pb-28' : undefined}>
-        <ProfileView profileData={profileData} />
+        <ProfileView
+          profileData={profileData}
+          removeBranding={entitlements.removeBranding}
+          showFounderBadge={entitlements.showFounderBadge}
+        />
       </div>
     </>
   );

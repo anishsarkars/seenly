@@ -20,6 +20,20 @@ CREATE TABLE IF NOT EXISTS profile_views (
 CREATE INDEX IF NOT EXISTS profile_views_profile_id_idx ON profile_views(profile_id);
 CREATE INDEX IF NOT EXISTS profile_views_created_at_idx ON profile_views(created_at);
 
+-- Billing / plan columns
+ALTER TABLE users ADD COLUMN IF NOT EXISTS plan varchar(20) DEFAULT 'free' NOT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_status varchar(20);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS plan_expires_at timestamp;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_founder boolean DEFAULT false NOT NULL;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS dodo_customer_id varchar(64);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS dodo_subscription_id varchar(64);
+
+CREATE TABLE IF NOT EXISTS billing_webhook_events (
+  id varchar(128) PRIMARY KEY,
+  event_type varchar(64) NOT NULL,
+  processed_at timestamp DEFAULT now() NOT NULL
+);
+
 -- Storage buckets
 INSERT INTO storage.buckets (id, name, public)
 VALUES

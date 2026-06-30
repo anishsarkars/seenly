@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { XAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import {
   TrendingUp, Play, Download, Eye, Edit3, Film, Settings,
@@ -18,11 +18,13 @@ import { useDashboardSidebar } from '@/components/dashboard/useDashboardSidebar'
 import { useDashboardPreview } from '@/components/dashboard/useDashboardPreview';
 import SeenlyLogo from '@/components/SeenlyLogo';
 import SiteFooter from '@/components/SiteFooter';
-import { formatVideoDurationLimit } from '@/lib/video-limits';
+import BillingPanel from '@/components/billing/BillingPanel';
+import { formatVideoDurationLimit, formatUploadLimit } from '@/lib/video-limits';
+import { getEntitlements } from '@/lib/plans';
 import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
 import { hasUnreadUpdates, SEENLY_UPDATES_VERSION } from '@/lib/seenly-updates';
 import { btnPrimary, btnSecondary, input, muted, panel, sectionTitle, shell } from '@/lib/platform-ui';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface DashboardClientProps {
   initialProfile: any;
@@ -40,8 +42,12 @@ const TAB_META = {
 
 export default function DashboardClient({ initialProfile, initialAnalytics }: DashboardClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab');
   const [supabase] = useState(() => createClient());
-  const [activeTab, setActiveTab] = useState<'analytics' | 'edit' | 'video' | 'settings'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'edit' | 'video' | 'settings'>(
+    initialTab === 'settings' || initialTab === 'edit' || initialTab === 'video' ? initialTab : 'analytics'
+  );
   const [profile, setProfile] = useState(initialProfile);
   const [analytics, setAnalytics] = useState(initialAnalytics);
   const [copied, setCopied] = useState(false);
@@ -52,6 +58,16 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const sidebar = useDashboardSidebar();
   const preview = useDashboardPreview();
+  const entitlements = useMemo(
+    () =>
+      getEntitlements({
+        plan: profile?.user?.plan,
+        planStatus: profile?.user?.planStatus,
+        planExpiresAt: profile?.user?.planExpiresAt,
+        isFounder: profile?.user?.isFounder,
+      }),
+    [profile?.user?.plan, profile?.user?.planStatus, profile?.user?.planExpiresAt, profile?.user?.isFounder]
+  );
 
   useEffect(() => {
     const lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY);
@@ -130,17 +146,19 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
         user: { ...profile.user, fullName, headline, location, bio, avatar },
         experiences, projects, socials,
       });
+    } else if (res.error) {
+      alert(res.error);
     }
   };
 
   const handleVideoReplace = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !profile?.user?.id) return;
-    if (file.size > 150 * 1024 * 1024) {
-      alert('Video must be 150MB or smaller.');
+    if (file.size > entitlements.maxUploadBytes) {
+      alert(`Video must be ${formatUploadLimit(entitlements.maxUploadBytes)} or smaller on your plan.`);
       return;
     }
-    const validation = await validateVideoFile(file);
+    const validation = await validateVideoFile(file, entitlements.maxVideoSec, entitlements.maxUploadBytes);
     if (!validation.ok) {
       alert(validation.error);
       return;
@@ -523,9 +541,12 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                         <button type="button" onClick={() => setProjects(projects.filter((_, i) => i !== idx))} className="text-xs text-white/40 hover:text-white">Remove</button>
                       </div>
                     ))}
-                    <button type="button" onClick={() => setProjects([...projects, { title: '', description: '', website: '', github: '' }])} className={`${btnSecondary} inline-flex items-center gap-1.5`}>
+                    <button type="button" onClick={() => setProjects([...projects, { title: '', description: '', website: '', github: '' }])} disabled={projects.length >= entitlements.maxProjects} className={`${btnSecondary} inline-flex items-center gap-1.5 disabled:opacity-40`}>
                       <Plus className="h-3.5 w-3.5" /> Add project
                     </button>
+                    {projects.length >= entitlements.maxProjects && entitlements.maxProjects !== Number.POSITIVE_INFINITY && (
+                      <p className="text-xs text-white/40">Free plan limit: {entitlements.maxProjects} projects. <a href="/pricing" className="text-white/60 underline">Upgrade</a></p>
+                    )}
                   </div>
                 </div>
               )}
@@ -534,7 +555,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 <div className={`${panel} space-y-4 p-8 text-center sm:p-10`}>
                   <Film className="mx-auto h-5 w-5 text-white/40" strokeWidth={1.5} />
                   <p className="text-sm text-white/70">Replace your intro video</p>
-                  <p className={muted}>MP4 or WEBM · 150MB · {formatVideoDurationLimit()}</p>
+                  <p className={muted}>MP4 or WEBM · {formatUploadLimit(entitlements.maxUploadBytes)} · {formatVideoDurationLimit(entitlements.maxVideoSec)}</p>
                   <input type="file" accept="video/mp4,video/webm" className="hidden" id="dash-vid-uploader" onChange={handleVideoReplace} />
                   <label htmlFor="dash-vid-uploader" className={`${btnPrimary} mt-2 inline-block cursor-pointer ${isUploadingVideo ? 'pointer-events-none opacity-50' : ''}`}>
                     {isUploadingVideo ? 'Uploading…' : 'Upload video'}
@@ -543,7 +564,11 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
               )}
 
               {activeTab === 'settings' && (
-                <div className={`${panel} divide-y divide-white/10`}>
+                <div className="space-y-6">
+                  <Suspense fallback={<div className={`${panel} p-6 text-sm text-white/45`}>Loading billing…</div>}>
+                    <BillingPanel user={profile?.user ?? {}} />
+                  </Suspense>
+                  <div className={`${panel} divide-y divide-white/10`}>
                   {[
                     { title: 'Visibility', desc: profile?.user?.isPublic === false ? 'Profile is private' : 'Profile is public', action: (
                       <button type="button" onClick={handleTogglePrivacy} className={btnSecondary}>
@@ -565,6 +590,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                       {action}
                     </div>
                   ))}
+                  </div>
                 </div>
               )}
 

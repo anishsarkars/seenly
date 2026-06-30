@@ -7,6 +7,7 @@ import { suggestUsernames, validateUsername } from '@/lib/username';
 import { ensureProfileSchema } from './ensure-schema';
 import { ensureStorageBuckets } from './ensure-storage';
 import { DEFAULT_PROFILE_AVATAR } from '@/lib/profile-avatars';
+import { countFilledSocialLinks, getEntitlements } from '@/lib/plans';
 
 // Mock in-memory database fallback for easy developer review/testing
 const mockStore: {
@@ -38,6 +39,10 @@ mockStore.users[SEED_MOCK_USER_ID] = {
   thumbnailUrl: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=800&h=450',
   resumeUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
   isPublic: true,
+  plan: 'free',
+  planStatus: null,
+  planExpiresAt: null,
+  isFounder: false,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -255,6 +260,35 @@ export async function saveOnboardingData(userId: string, data: any) {
   try {
     await ensureProfileSchema();
     await ensureStorageBuckets();
+
+    const [billingRow] = await db
+      .select({
+        plan: users.plan,
+        planStatus: users.planStatus,
+        planExpiresAt: users.planExpiresAt,
+        isFounder: users.isFounder,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const entitlements = getEntitlements(billingRow ?? {});
+
+    const projectCount = (projList || []).filter((p: { title?: string }) => p.title?.trim()).length;
+    if (projectCount > entitlements.maxProjects) {
+      return {
+        success: false,
+        error: `Free plan allows up to ${entitlements.maxProjects} projects. Upgrade to Pro for unlimited projects.`,
+      };
+    }
+
+    const socialCount = countFilledSocialLinks(socialData || {});
+    if (socialCount > entitlements.maxSocialLinks) {
+      return {
+        success: false,
+        error: `Free plan allows up to ${entitlements.maxSocialLinks} social links. Upgrade to Pro for unlimited links.`,
+      };
+    }
 
     await db.insert(users).values({
       id: userId,
