@@ -12,5 +12,9 @@ export function isStorageSizeError(message: string) {
 }
 
 export function storageSizeErrorMessage(planLimitBytes: number) {
-  return `Upload failed: file is larger than the current storage limit. Your plan allows up to ${formatBytesLimit(planLimitBytes)}. If this keeps happening, storage limits are still syncing — try again in a minute.`;
+  return (
+    `Upload failed: file exceeds the storage limit. Your plan allows up to ${formatBytesLimit(planLimitBytes)}. ` +
+    `Supabase may still be capped at 50 MB globally — set Storage → Settings → Global file size limit to 250 MB, ` +
+    `or add SUPABASE_MANAGEMENT_TOKEN to auto-sync.`
+  );
 }

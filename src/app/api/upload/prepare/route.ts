@@ -10,9 +10,12 @@ import {
   type UploadKind,
 } from '@/lib/upload-config';
 import { getUserEntitlements } from '@/lib/upload-entitlements';
-import { syncStorageBucketsAdmin } from '@/lib/supabase/storage-server';
-import type { StorageBucketName } from '@/lib/supabase/storage-server';
-import { isStorageSizeError, storageSizeErrorMessage } from '@/lib/storage-limits';
+import {
+  syncAllStorageLimits,
+  verifyBucketCanAccept,
+} from '@/lib/supabase/sync-storage-limits';
+import type { StorageBucketName } from '@/lib/upload-config';
+import { isStorageSizeError } from '@/lib/storage-limits';
 
 type PrepareBody = {
   kind?: UploadKind;
@@ -88,11 +91,16 @@ export async function POST(request: Request) {
     await ensureStorageBuckets().catch((err) => {
       console.warn('SQL storage ensure skipped:', err);
     });
-    await syncStorageBucketsAdmin(admin);
+    await syncAllStorageLimits(admin);
 
     const bucket = UPLOAD_BUCKETS[kind] as StorageBucketName;
     const path = pathFor(kind, user.id, fileMeta);
     const contentType = contentTypeFor(kind, fileMeta);
+
+    const bucketCheck = await verifyBucketCanAccept(admin, bucket, fileSize);
+    if (!bucketCheck.ok) {
+      return NextResponse.json({ error: bucketCheck.message }, { status: 413 });
+    }
 
     const { data, error } = await admin.storage
       .from(bucket)
@@ -111,6 +119,7 @@ export async function POST(request: Request) {
       bucket,
       path,
       token: data.token,
+      signedUrl: data.signedUrl,
       contentType,
       publicUrl: publicUrlFor(bucket, path, supabaseUrl),
       tier: entitlements.tier,

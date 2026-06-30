@@ -6,6 +6,8 @@ export const UPLOAD_BUCKETS = {
 } as const;
 
 export type UploadKind = keyof typeof UPLOAD_BUCKETS;
+export const STORAGE_BUCKET_NAMES = Object.values(UPLOAD_BUCKETS);
+export type StorageBucketName = (typeof UPLOAD_BUCKETS)[UploadKind];
 
 export type UploadFileMeta = {
   name: string;

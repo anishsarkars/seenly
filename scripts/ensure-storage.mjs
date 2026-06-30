@@ -73,9 +73,32 @@ async function ensureViaApi() {
   }
 }
 
+async function syncGlobalLimit() {
+  const token = process.env.SUPABASE_MANAGEMENT_TOKEN?.trim();
+  if (!token || !supabaseUrl) {
+    console.warn('SUPABASE_MANAGEMENT_TOKEN not set — skipping global 50 MB cap sync.');
+    return;
+  }
+  const ref = new URL(supabaseUrl).hostname.split('.')[0];
+  const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/config/storage`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ fileSizeLimit: FILE_SIZE_LIMIT }),
+  });
+  if (!res.ok) {
+    console.error('Global storage limit sync failed:', await res.text().catch(() => res.status));
+    return;
+  }
+  console.log(`Global storage limit synced → ${FILE_SIZE_LIMIT}`);
+}
+
 async function main() {
   await ensureViaSql();
   await ensureViaApi();
+  await syncGlobalLimit();
   console.log('Storage setup complete.');
 }
 

@@ -12,6 +12,63 @@ export const FREE_VIDEO_LIMITS: VideoUploadLimits = {
   maxUploadBytes: PLANS.free.maxUploadBytes,
 };
 
+type PreparePayload = {
+  bucket: string;
+  path: string;
+  token?: string;
+  signedUrl?: string;
+  contentType?: string;
+  publicUrl: string;
+  maxUploadBytes?: number;
+};
+
+async function uploadBytesToStorage(
+  payload: PreparePayload,
+  file: Blob,
+  fileBuffer: ArrayBuffer,
+  contentType: string
+) {
+  const supabase = createClient();
+
+  // 1) Direct authenticated upload with raw bytes (recommended for large videos)
+  const { error: directError } = await supabase.storage
+    .from(payload.bucket)
+    .upload(payload.path, fileBuffer, {
+      upsert: true,
+      contentType,
+      cacheControl: '3600',
+    });
+
+  if (!directError) return;
+
+  // 2) Signed URL upload with raw bytes (avoids multipart FormData limits)
+  if (payload.token) {
+    const { error: signedError } = await supabase.storage
+      .from(payload.bucket)
+      .uploadToSignedUrl(payload.path, payload.token, fileBuffer, {
+        contentType,
+        cacheControl: '3600',
+      });
+
+    if (!signedError) return;
+    if (signedError.message) throw signedError;
+  }
+
+  // 3) Raw PUT to signed URL
+  if (payload.signedUrl) {
+    const putRes = await fetch(payload.signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': contentType },
+      body: fileBuffer,
+    });
+    if (putRes.ok) return;
+    const putText = await putRes.text().catch(() => '');
+    throw new Error(putText || `Upload failed (${putRes.status})`);
+  }
+
+  throw directError;
+}
+
 export async function uploadFile(
   file: Blob,
   kind: 'video' | 'thumbnail' | 'resume' | 'avatar',
@@ -31,34 +88,34 @@ export async function uploadFile(
     }),
   });
 
-  const payload = await prepResponse.json().catch(() => ({}));
+  const payload = (await prepResponse.json().catch(() => ({}))) as PreparePayload & {
+    error?: string;
+  };
 
   if (!prepResponse.ok) {
     throw new Error(typeof payload.error === 'string' ? payload.error : 'Upload failed.');
   }
 
-  if (!payload.bucket || !payload.path || !payload.token || !payload.publicUrl) {
+  if (!payload.bucket || !payload.path || !payload.publicUrl) {
     throw new Error('Upload could not be prepared. Please try again.');
   }
 
-  const supabase = createClient();
-  const { error } = await supabase.storage
-    .from(payload.bucket)
-    .uploadToSignedUrl(payload.path, payload.token, file, {
-      contentType: payload.contentType || file.type || 'application/octet-stream',
-      cacheControl: '3600',
-    });
+  const contentType = payload.contentType || file.type || 'application/octet-stream';
+  const planLimit =
+    typeof payload.maxUploadBytes === 'number' ? payload.maxUploadBytes : PLANS.free.maxUploadBytes;
 
-  if (error) {
-    const planLimit =
-      typeof payload.maxUploadBytes === 'number' ? payload.maxUploadBytes : PLANS.free.maxUploadBytes;
-    if (isStorageSizeError(error.message || '')) {
+  try {
+    const fileBuffer = await file.arrayBuffer();
+    await uploadBytesToStorage(payload, file, fileBuffer, contentType);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Upload to storage failed.';
+    if (isStorageSizeError(message)) {
       throw new Error(storageSizeErrorMessage(planLimit));
     }
-    throw new Error(error.message || 'Upload to storage failed.');
+    throw new Error(message);
   }
 
-  return payload.publicUrl as string;
+  return payload.publicUrl;
 }
 
 export function isPersistedMediaUrl(url?: string | null) {
@@ -105,7 +162,6 @@ export async function validateVideoFile(
     }
     return { ok: true };
   } catch {
-    // Recorded WebM blobs may not expose duration reliably in all browsers.
     return { ok: true };
   } finally {
     URL.revokeObjectURL(url);

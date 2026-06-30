@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/utils/supabase/admin';
-import { getStorageConfigErrors, syncStorageBucketsAdmin } from '@/lib/supabase/storage-server';
+import { getStorageConfigErrors, syncAllStorageLimits } from '@/lib/supabase/storage-server';
+import { getGlobalStorageLimit } from '@/lib/supabase/sync-storage-limits';
 import { MAX_BUCKET_FILE_BYTES } from '@/lib/storage-limits';
+import { STORAGE_BUCKET_NAMES } from '@/lib/upload-config';
 
 /** Diagnostic: verify storage env + buckets (admin only). */
 export async function GET() {
@@ -13,16 +15,17 @@ export async function GET() {
       ok: false,
       configErrors,
       buckets: [],
+      globalFileSizeLimit: null,
       message: 'Add SUPABASE_SERVICE_ROLE_KEY to enable uploads.',
     });
   }
 
   try {
-    await syncStorageBucketsAdmin(admin);
-    const required = ['videos', 'thumbnails', 'resumes', 'avatars'] as const;
+    const globalSync = await syncAllStorageLimits(admin);
+    const globalFileSizeLimit = await getGlobalStorageLimit();
     const bucketDetails = [];
 
-    for (const id of required) {
+    for (const id of STORAGE_BUCKET_NAMES) {
       const { data: bucket, error: bucketError } = await admin.storage.getBucket(id);
       if (bucketError || !bucket) {
         bucketDetails.push({ id, public: false, fileSizeLimit: null, ok: false });
@@ -38,14 +41,19 @@ export async function GET() {
     }
 
     const missing = bucketDetails.filter((b) => !b.ok).map((b) => b.id);
-    const limitsOk = bucketDetails.length === required.length && bucketDetails.every((b) => b.ok);
+    const limitsOk = bucketDetails.length === STORAGE_BUCKET_NAMES.length && bucketDetails.every((b) => b.ok);
+    const globalOk =
+      globalFileSizeLimit == null || globalFileSizeLimit >= MAX_BUCKET_FILE_BYTES;
 
     return NextResponse.json({
-      ok: missing.length === 0 && limitsOk && configErrors.length === 0,
+      ok: missing.length === 0 && limitsOk && globalOk && configErrors.length === 0,
       configErrors,
       buckets: bucketDetails,
       missing,
       requiredBucketLimit: MAX_BUCKET_FILE_BYTES,
+      globalFileSizeLimit,
+      globalSync,
+      globalOk,
     });
   } catch (error) {
     return NextResponse.json(

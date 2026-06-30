@@ -1,9 +1,12 @@
 import { createAdminClient } from '@/utils/supabase/admin';
-import { MAX_BUCKET_FILE_BYTES } from '@/lib/storage-limits';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  syncAllStorageLimits,
+  syncStorageBucketsAdmin,
+} from '@/lib/supabase/sync-storage-limits';
+import type { StorageBucketName } from '@/lib/upload-config';
 
-export const STORAGE_BUCKET_NAMES = ['videos', 'thumbnails', 'resumes', 'avatars'] as const;
-export type StorageBucketName = (typeof STORAGE_BUCKET_NAMES)[number];
+export { syncAllStorageLimits, syncStorageBucketsAdmin };
+export type { StorageBucketName };
 
 export function getStorageConfigErrors(): string[] {
   const errors: string[] = [];
@@ -16,43 +19,12 @@ export function getStorageConfigErrors(): string[] {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
     errors.push('SUPABASE_SERVICE_ROLE_KEY is missing (required for server uploads).');
   }
+  if (!process.env.SUPABASE_MANAGEMENT_TOKEN?.trim()) {
+    errors.push(
+      'SUPABASE_MANAGEMENT_TOKEN is missing (needed to raise the 50 MB Supabase global upload cap).'
+    );
+  }
   return errors;
-}
-
-/** Ensure buckets exist and always sync file size limits to the paid-plan maximum. */
-export async function syncStorageBucketsAdmin(admin: SupabaseClient): Promise<void> {
-  const { data: buckets, error: listError } = await admin.storage.listBuckets();
-  if (listError) {
-    throw new Error(`Could not list storage buckets: ${listError.message}`);
-  }
-
-  const existing = new Set((buckets ?? []).map((b) => b.id));
-
-  for (const name of STORAGE_BUCKET_NAMES) {
-    if (!existing.has(name)) {
-      const { error } = await admin.storage.createBucket(name, {
-        public: true,
-        fileSizeLimit: MAX_BUCKET_FILE_BYTES,
-      });
-      if (error && !/already exists|duplicate/i.test(error.message)) {
-        console.warn(`createBucket(${name}) warning:`, error.message);
-      }
-    }
-
-    const { error: updateError } = await admin.storage.updateBucket(name, {
-      public: true,
-      fileSizeLimit: MAX_BUCKET_FILE_BYTES,
-    });
-
-    if (updateError) {
-      console.warn(`updateBucket(${name}) warning:`, updateError.message);
-    }
-  }
-}
-
-/** @deprecated Use syncStorageBucketsAdmin */
-export async function ensureStorageBucketsAdmin(admin: SupabaseClient): Promise<void> {
-  await syncStorageBucketsAdmin(admin);
 }
 
 export async function uploadWithAdminStorage({
@@ -73,7 +45,7 @@ export async function uploadWithAdminStorage({
     );
   }
 
-  await syncStorageBucketsAdmin(admin);
+  await syncAllStorageLimits(admin);
 
   const { error } = await admin.storage.from(bucket).upload(path, data, {
     upsert: true,
