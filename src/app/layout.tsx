@@ -12,7 +12,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://seenly.tech').replace(/\/$/, '');
+
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
   title: "Seenly — Show who you are, not just what's on your resume",
   description: "Seenly is a minimalist platform where professionals create a shareable profile centered around a single 60-second video.",
   openGraph: {

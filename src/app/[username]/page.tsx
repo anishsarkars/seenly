@@ -37,15 +37,18 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
     openGraph: {
       title: `${displayName} • Seenly`,
       description,
-      type: 'profile',
+      type: 'website',
       url: profileUrl,
       siteName: 'Seenly',
+      locale: 'en_US',
       images: [
         {
           url: ogImage,
+          secureUrl: ogImage,
           width: PROFILE_OG_SIZE.width,
           height: PROFILE_OG_SIZE.height,
           alt: `${displayName} on Seenly`,
+          type: 'image/png',
         },
       ],
     },

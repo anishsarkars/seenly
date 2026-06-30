@@ -49,6 +49,7 @@ interface ProfileViewProps {
   layout?: 'mobile' | 'desktop';
   embedded?: boolean;
   removeBranding?: boolean;
+  isOwner?: boolean;
   showProBadge?: boolean;
   showFounderBadge?: boolean;
   profileTheme?: ProfileTheme;
@@ -124,14 +125,32 @@ function IntroVideo({
   );
 }
 
+function ProfilePublicPromo({ username }: { username?: string }) {
+  const handle = username || 'yourusername';
+
+  return (
+    <Link
+      href="/onboarding"
+      className="group mt-2 block w-full rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left transition-all hover:border-white/20 hover:bg-white/[0.07]"
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">Seenly</p>
+      <p className="mt-1.5 text-sm font-medium leading-snug text-white/80 group-hover:text-white">
+        Make yours with{' '}
+        <span className="font-semibold text-white">seenly.tech/{handle}</span>
+      </p>
+      <p className="mt-2 text-[11px] text-white/40">Create your video-first profile →</p>
+    </Link>
+  );
+}
+
 function ProfilePublicFooter({ username }: { username?: string }) {
   const handle = username || 'yourusername';
 
   return (
-    <footer className="flex justify-center">
+    <footer className="flex justify-center pb-6">
       <Link
         href="/onboarding"
-        className="group inline-flex max-w-full flex-col items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-center transition-all hover:border-white/20 hover:bg-white/[0.05] sm:flex-row sm:gap-3 sm:px-5 sm:text-left"
+        className="group inline-flex w-full max-w-lg flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-4 text-center shadow-lg shadow-black/30 transition-all hover:border-white/25 hover:bg-white/[0.09] sm:flex-row sm:gap-3 sm:text-left"
       >
         <span className="inline-flex items-center gap-1.5 font-semibold tracking-tight text-white">
           <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-[10px] font-bold text-black">
@@ -157,6 +176,7 @@ export default function ProfileView({
   layout,
   embedded = false,
   removeBranding = false,
+  isOwner = false,
   showProBadge = false,
   showFounderBadge = false,
   profileTheme: profileThemeProp,
@@ -446,6 +466,8 @@ export default function ProfileView({
               </div>
 
               {renderSidebarSocials()}
+
+              {!isOwner && <ProfilePublicPromo username={user.username} />}
             </div>
 
             {/* Main — video hero + content */}
@@ -466,11 +488,9 @@ export default function ProfileView({
             </div>
           </div>
 
-          {!removeBranding && (
-            <div className="mt-14 border-t border-white/[0.06] pt-10 md:mt-16">
-              <ProfilePublicFooter username={user.username} />
-            </div>
-          )}
+          <div className="mt-16 border-t border-white/10 pt-12 md:mt-20 md:pt-14">
+            <ProfilePublicFooter username={user.username} />
+          </div>
         </div>
       </div>
     );
