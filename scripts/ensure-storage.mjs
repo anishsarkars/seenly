@@ -10,7 +10,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const buckets = ['videos', 'thumbnails', 'resumes', 'avatars'];
-const FILE_SIZE_LIMIT = 262144000;
+const FILE_SIZE_LIMIT = 104857600; // 100 MB — matches Pro / Final boss upload limit
 
 async function ensureViaSql() {
   if (!dbUrl) {

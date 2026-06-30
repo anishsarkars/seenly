@@ -6,7 +6,7 @@ export const SUPPORT_EMAIL = 'hello@anishsarkar.site';
 export const PLAN_MARKETING_BENEFITS: Record<Exclude<PlanTier, 'free'>, string[]> = {
   pro: [
     '3-minute intro video',
-    '250 MB uploads',
+    '100 MB uploads',
     'Blue verified tick on profile',
     'Unlimited projects & links',
     'Custom video thumbnail',

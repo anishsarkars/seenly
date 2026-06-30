@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getR2Config, isR2Configured } from '@/lib/r2/client';
+import { MAX_BUCKET_FILE_BYTES, formatBytesLimit } from '@/lib/storage-limits';
 
 /** Check Cloudflare R2 configuration for Pro video uploads. */
 export async function GET() {
@@ -12,7 +13,7 @@ export async function GET() {
     bucketName: config?.bucketName ?? null,
     publicUrl: config?.publicUrl ?? null,
     hint: configured
-      ? 'R2 is ready for Pro video uploads (up to 250 MB).'
+      ? `R2 is ready for Pro video uploads (up to ${formatBytesLimit(MAX_BUCKET_FILE_BYTES)}).`
       : 'Add R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, and R2_PUBLIC_URL to enable Pro video uploads.',
   });
 }

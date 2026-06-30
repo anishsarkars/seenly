@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { MAX_BUCKET_FILE_BYTES } from '@/lib/storage-limits';
+import { MAX_BUCKET_FILE_BYTES, formatBytesLimit } from '@/lib/storage-limits';
 import { STORAGE_BUCKET_NAMES } from '@/lib/upload-config';
 
 const SUPABASE_FREE_TIER_BYTES = 50 * 1024 * 1024;
@@ -194,8 +194,8 @@ export function formatStorageCapacityError(
   if (globalLimit != null && globalLimit <= SUPABASE_FREE_TIER_BYTES && fileSize > globalLimit) {
     return (
       `Cannot upload ${fileMb} MB — your Supabase project storage is capped at ${globalMb} MB. ` +
-      `Seenly Pro allows 250 MB, but Supabase must allow it too: open Supabase Dashboard → Storage → Settings → ` +
-      `set Global file size limit to 250 MB (requires Supabase Pro plan on your Supabase project).`
+      `Seenly Pro allows ${formatBytesLimit(MAX_BUCKET_FILE_BYTES)}, but Supabase must allow it too: open Supabase Dashboard → Storage → Settings → ` +
+      `set Global file size limit to ${formatBytesLimit(MAX_BUCKET_FILE_BYTES)} (requires Supabase Pro plan on your Supabase project).`
     );
   }
 
@@ -210,7 +210,7 @@ export function formatStorageCapacityError(
     (globalMb ? ` (global: ${globalMb} MB` : '') +
     (bucketMb ? `${globalMb ? ', ' : ' ('}bucket: ${bucketMb} MB` : '') +
     `${globalMb || bucketMb ? ')' : ''}. ` +
-    `Raise Supabase → Storage → Settings → Global file size limit to 250 MB.`
+    `Raise Supabase → Storage → Settings → Global file size limit to ${formatBytesLimit(MAX_BUCKET_FILE_BYTES)}.`
   );
 }
 

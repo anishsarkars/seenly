@@ -5,7 +5,7 @@ import {
   getGlobalStorageLimit,
   syncAllStorageLimits,
 } from '@/lib/supabase/sync-storage-limits';
-import { MAX_BUCKET_FILE_BYTES } from '@/lib/storage-limits';
+import { MAX_BUCKET_FILE_BYTES, formatBytesLimit } from '@/lib/storage-limits';
 import { STORAGE_BUCKET_NAMES } from '@/lib/upload-config';
 
 /** Force storage limit sync — call after adding SUPABASE_MANAGEMENT_TOKEN. */
@@ -45,8 +45,8 @@ export async function POST() {
       globalOk,
       buckets,
       hint: globalOk
-        ? 'Storage is ready for 250 MB uploads.'
-        : 'Supabase storage is still capped at 50 MB. Upgrade your Supabase project to Pro and set Storage → Settings → Global file size limit to 250 MB.',
+        ? `Storage is ready for ${formatBytesLimit(MAX_BUCKET_FILE_BYTES)} uploads.`
+        : `Supabase storage is still capped at 50 MB. Upgrade your Supabase project to Pro and set Storage → Settings → Global file size limit to ${formatBytesLimit(MAX_BUCKET_FILE_BYTES)}.`,
     });
   } catch (error) {
     return NextResponse.json(
