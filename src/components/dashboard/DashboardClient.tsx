@@ -801,6 +801,37 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                       </p>
                     )}
                   </div>
+                  <div className="space-y-4 border-t border-white/10 pt-6">
+                    <div>
+                      <p className={muted}>Social & portfolio links</p>
+                      <p className="mt-1 text-xs text-white/40">
+                        Shown on your public profile sidebar and contact section.
+                      </p>
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {(
+                        [
+                          { key: 'email', label: 'Email', placeholder: 'you@email.com', type: 'email' },
+                          { key: 'linkedin', label: 'LinkedIn', placeholder: 'https://linkedin.com/in/username' },
+                          { key: 'github', label: 'GitHub', placeholder: 'https://github.com/username' },
+                          { key: 'portfolio', label: 'Portfolio', placeholder: 'https://yourportfolio.com' },
+                          { key: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/username' },
+                          { key: 'website', label: 'Website', placeholder: 'https://yoursite.com' },
+                        ] as const
+                      ).map((field) => (
+                        <div key={field.key} className="space-y-1.5">
+                          <label className="text-xs font-medium text-white/50">{field.label}</label>
+                          <input
+                            type={'type' in field ? field.type : 'text'}
+                            placeholder={field.placeholder}
+                            value={socials[field.key] || ''}
+                            onChange={(e) => setSocials({ ...socials, [field.key]: e.target.value })}
+                            className={input}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               )}
 

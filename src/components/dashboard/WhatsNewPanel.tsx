@@ -15,6 +15,22 @@ export default function WhatsNewPanel({
 }: WhatsNewPanelProps) {
   return (
     <div className="space-y-3">
+      <div className={`${panel} space-y-3 ${compact ? 'p-3' : 'p-4'}`}>
+        <div className="space-y-0.5">
+          <p className={`font-semibold text-white ${compact ? 'text-xs' : 'text-sm'}`}>
+            Social & portfolio links in profile editor
+          </p>
+          <p className={`text-white/45 ${compact ? 'text-[10px] leading-relaxed' : 'text-xs leading-relaxed'}`}>
+            Edit LinkedIn, GitHub, portfolio, and other links directly from the dashboard Profile tab — no need to redo onboarding.
+          </p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5">
+          <p className={`text-white/70 ${compact ? 'text-[11px]' : 'text-xs'}`}>
+            Open Profile → scroll to Social & portfolio links → Save. Links appear on your public page sidebar and contact section.
+          </p>
+        </div>
+      </div>
+
       <div className={`${panel} space-y-2.5 ${compact ? 'p-3' : 'p-4'}`}>
         <div className="space-y-0.5">
           <p className={`font-semibold text-white ${compact ? 'text-xs' : 'text-sm'}`}>
