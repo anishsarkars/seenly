@@ -1,4 +1,5 @@
 import { PLANS } from '@/lib/plans';
+import { createClient } from '@/utils/supabase/client';
 
 export type VideoUploadLimits = {
   maxVideoSec: number;
@@ -16,32 +17,42 @@ export async function uploadFile(
   fileName?: string,
   extraFields?: Record<string, string>
 ): Promise<string> {
-  const formData = new FormData();
-  formData.append('kind', kind);
-  formData.append('file', file, fileName || `${kind}.bin`);
-  if (extraFields) {
-    for (const [key, value] of Object.entries(extraFields)) {
-      formData.append(key, value);
-    }
-  }
-
-  const response = await fetch('/api/upload', {
+  const prepResponse = await fetch('/api/upload/prepare', {
     method: 'POST',
-    body: formData,
+    headers: { 'Content-Type': 'application/json' },
     credentials: 'same-origin',
+    body: JSON.stringify({
+      kind,
+      fileSize: file.size,
+      contentType: file.type || 'application/octet-stream',
+      fileName: fileName || `${kind}.bin`,
+      ...extraFields,
+    }),
   });
 
-  const payload = await response.json().catch(() => ({}));
+  const payload = await prepResponse.json().catch(() => ({}));
 
-  if (!response.ok) {
-    throw new Error(payload.error || 'Upload failed.');
+  if (!prepResponse.ok) {
+    throw new Error(typeof payload.error === 'string' ? payload.error : 'Upload failed.');
   }
 
-  if (!payload.url || typeof payload.url !== 'string') {
-    throw new Error('Upload succeeded but no URL was returned.');
+  if (!payload.bucket || !payload.path || !payload.token || !payload.publicUrl) {
+    throw new Error('Upload could not be prepared. Please try again.');
   }
 
-  return payload.url;
+  const supabase = createClient();
+  const { error } = await supabase.storage
+    .from(payload.bucket)
+    .uploadToSignedUrl(payload.path, payload.token, file, {
+      contentType: payload.contentType || file.type || 'application/octet-stream',
+      cacheControl: '3600',
+    });
+
+  if (error) {
+    throw new Error(error.message || 'Upload to storage failed.');
+  }
+
+  return payload.publicUrl as string;
 }
 
 export function isPersistedMediaUrl(url?: string | null) {

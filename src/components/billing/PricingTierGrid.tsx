@@ -2,14 +2,21 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Check, Loader2, Sparkles, Zap } from 'lucide-react';
-import { FreeTierIcon, FounderTierIcon, ProTierIcon } from '@/components/billing/pricing-tier-icons';
+import { Check, Loader2 } from 'lucide-react';
 import { getPlanFeatureList } from '@/lib/plan-features';
 import { PLAN_PRICES, FINAL_BOSS_LABEL, SUPPORT_EMAIL } from '@/lib/plan-marketing';
+import { btnPrimary, btnSecondary } from '@/lib/platform-ui';
 import { type PlanTier } from '@/lib/plans';
+
+const COMPARE_FEATURES: Record<PlanTier, string[]> = {
+  free: ['60s video', '50 MB upload', 'Seenly watermark'],
+  pro: ['3 min video', '250 MB upload', 'No branding'],
+  founder: ['Pro forever', 'Golden tick', 'One-time payment'],
+};
 
 interface PricingTierGridProps {
   variant?: 'landing' | 'checkout';
+  layout?: 'grid' | 'compare';
   currentTier?: PlanTier;
   isSignedIn?: boolean;
   showHeader?: boolean;
@@ -19,6 +26,7 @@ interface PricingTierGridProps {
 
 export default function PricingTierGrid({
   variant = 'landing',
+  layout = 'grid',
   currentTier = 'free',
   isSignedIn = false,
   showHeader = true,
@@ -26,6 +34,7 @@ export default function PricingTierGrid({
   className = '',
 }: PricingTierGridProps) {
   const [loadingPlan, setLoadingPlan] = useState<'pro' | 'founder' | null>(null);
+  const isCompare = layout === 'compare';
 
   const startCheckout = async (plan: 'pro' | 'founder') => {
     if (!isSignedIn) {
@@ -64,89 +73,71 @@ export default function PricingTierGrid({
     price: string;
     period?: string;
     wasPrice?: string;
-    icon: React.ReactNode;
-    accent: 'neutral' | 'emerald' | 'gold';
-    launchRibbon?: string;
-    popular?: boolean;
+    note?: string;
     landingHref: string;
     landingLabel: string;
   }> = [
     {
       id: 'free',
       label: 'Free',
-      tagline: 'Perfect for getting started.',
+      tagline: 'Get started with a video profile.',
       price: '₹0',
-      icon: <FreeTierIcon />,
-      accent: 'neutral',
       landingHref: '/onboarding',
-      landingLabel: 'Get started free',
+      landingLabel: 'Get started',
     },
     {
       id: 'pro',
       label: 'Seenly Pro',
-      tagline: 'For serious job seekers & creators.',
+      tagline: 'Longer videos and a cleaner profile.',
       price: PLAN_PRICES.pro.amount,
       period: PLAN_PRICES.pro.period,
-      icon: <ProTierIcon />,
-      accent: 'emerald',
-      popular: true,
       landingHref: '/pricing',
       landingLabel: 'Upgrade to Pro',
     },
     {
       id: 'founder',
       label: FINAL_BOSS_LABEL,
-      tagline: 'Pro forever. One payment. No renewals.',
+      tagline: 'Pro forever. One payment.',
       price: PLAN_PRICES.founder.amount,
       period: ' one-time',
       wasPrice: PLAN_PRICES.founder.was,
-      icon: <FounderTierIcon />,
-      accent: 'gold',
-      launchRibbon: 'Launch offer · save 33%',
+      note: 'Launch offer',
       landingHref: '/pricing',
-      landingLabel: 'Claim Final boss',
+      landingLabel: 'Get Final boss',
     },
   ];
 
   const renderCta = (tierId: PlanTier, landingHref: string, landingLabel: string) => {
-    const goldBtn =
-      'inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 px-5 py-2.5 text-sm font-bold text-amber-950 shadow-[0_0_24px_-4px_rgba(245,158,11,0.5)] transition-transform hover:scale-[1.02] disabled:opacity-50';
-    const primaryBtn =
-      'inline-flex w-full items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-[1.02] hover:bg-zinc-100 disabled:opacity-50';
-    const ghostBtn =
-      'inline-flex w-full items-center justify-center rounded-xl border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50';
+    const ctaClass = isCompare
+      ? `${btnPrimary} w-full !py-2 text-xs`
+      : `${btnPrimary} w-full`;
+    const ghostClass = isCompare
+      ? `${btnSecondary} w-full !py-2 text-xs`
+      : `${btnSecondary} w-full`;
 
     if (variant === 'landing') {
-      if (tierId === 'founder') {
-        return (
-          <Link href={landingHref} className={goldBtn}>
-            <Sparkles className="h-4 w-4" />
-            {landingLabel}
-          </Link>
-        );
-      }
       if (tierId === 'pro') {
-        return <Link href={landingHref} className={primaryBtn}>{landingLabel}</Link>;
+        return <Link href={landingHref} className={ctaClass}>{landingLabel}</Link>;
       }
-      return <Link href={landingHref} className={ghostBtn}>{landingLabel}</Link>;
+      return <Link href={landingHref} className={ghostClass}>{landingLabel}</Link>;
     }
 
     if (tierId === 'free') {
       if (currentTier === 'free') {
-        return <p className="text-center text-xs font-medium uppercase tracking-widest text-white/35">Current plan</p>;
+        return <p className="text-center text-xs text-white/40">Current plan</p>;
       }
-      return <p className="text-center text-xs text-white/40">Included with every account</p>;
+      return <p className="text-center text-xs text-white/35">Included</p>;
     }
 
     if (tierId === 'pro') {
       if (currentTier === 'pro' || currentTier === 'founder') {
-        return <p className="text-center text-xs font-semibold uppercase tracking-widest text-emerald-400/80">Active</p>;
+        return <p className="text-center text-xs text-white/40">Active</p>;
       }
       return (
-        <button type="button" disabled={loadingPlan === 'pro'} onClick={() => startCheckout('pro')} className={primaryBtn}>
+        <button type="button" disabled={loadingPlan === 'pro'} onClick={() => startCheckout('pro')} className={ctaClass}>
           {loadingPlan === 'pro' ? (
-            <span className="inline-flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" /> Starting…
+            <span className="inline-flex items-center justify-center gap-2">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Starting…
             </span>
           ) : (
             'Upgrade to Pro'
@@ -156,11 +147,7 @@ export default function PricingTierGrid({
     }
 
     if (currentTier === 'founder') {
-      return (
-        <p className="text-center text-xs font-semibold text-amber-300/90">
-          You&apos;re Final boss — golden tick unlocked
-        </p>
-      );
+      return <p className="text-center text-xs text-white/40">Your plan</p>;
     }
 
     return (
@@ -168,145 +155,136 @@ export default function PricingTierGrid({
         type="button"
         disabled={loadingPlan === 'founder'}
         onClick={() => startCheckout('founder')}
-        className={currentTier === 'pro' ? ghostBtn : goldBtn}
+        className={currentTier === 'pro' ? ghostClass : ctaClass}
       >
-        {loadingPlan === 'founder' ? (
-          'Starting…'
-        ) : (
-          <>
-            <Sparkles className="h-4 w-4" />
-            Get Final boss · {PLAN_PRICES.founder.amount}
-          </>
-        )}
+        {loadingPlan === 'founder' ? 'Starting…' : `Get Final boss · ${PLAN_PRICES.founder.amount}`}
       </button>
     );
   };
 
   const cardShell = (tier: (typeof tiers)[number]) => {
-    const features = getPlanFeatureList(tier.id);
-    const visibleFeatures = compact ? features.slice(0, compact && tier.id === 'pro' ? 5 : 4) : features;
+    const features = isCompare
+      ? COMPARE_FEATURES[tier.id]
+      : getPlanFeatureList(tier.id);
+    const visibleFeatures = compact && !isCompare
+      ? features.slice(0, tier.id === 'pro' ? 5 : 4)
+      : features;
     const isCurrent = variant === 'checkout' && currentTier === tier.id;
 
-    const accentStyles = {
-      neutral: {
-        card: 'border-white/10 bg-white/[0.03]',
-        icon: 'text-white/45',
-        check: 'text-white/40',
-        glow: '',
-      },
-      emerald: {
-        card: 'border-emerald-500/30 bg-gradient-to-b from-emerald-500/[0.08] to-transparent ring-1 ring-emerald-500/15',
-        icon: 'text-emerald-400/80',
-        check: 'text-emerald-400/90',
-        glow: 'shadow-[0_0_40px_-12px_rgba(16,185,129,0.25)]',
-      },
-      gold: {
-        card: 'border-amber-400/35 bg-gradient-to-b from-amber-500/[0.12] via-amber-500/[0.04] to-transparent ring-1 ring-amber-400/20',
-        icon: 'text-amber-300/90',
-        check: 'text-amber-300/90',
-        glow: 'shadow-[0_0_48px_-10px_rgba(245,158,11,0.35)]',
-      },
-    }[tier.accent];
+    if (isCompare) {
+      return (
+        <div
+          key={tier.id}
+          className={`flex flex-col rounded-lg border border-white/10 bg-white/[0.03] p-4 ${
+            isCurrent ? 'ring-1 ring-white/20' : ''
+          }`}
+        >
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-sm font-medium text-white">{tier.label}</p>
+            {tier.note && (
+              <span className="text-[10px] uppercase tracking-wider text-white/35">{tier.note}</span>
+            )}
+          </div>
+          <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+            {tier.wasPrice && (
+              <span className="text-sm text-white/30 line-through">{tier.wasPrice}</span>
+            )}
+            <span className="text-xl font-semibold tracking-tight text-white">
+              {tier.price}
+              {tier.period && <span className="text-xs font-normal text-white/40">{tier.period}</span>}
+            </span>
+          </div>
+          <ul className="mt-3 flex-1 space-y-1.5">
+            {visibleFeatures.map((feature) => (
+              <li key={feature} className="flex items-center gap-2 text-xs text-white/50">
+                <Check className="h-3 w-3 shrink-0 text-white/30" strokeWidth={2} />
+                {feature}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4">{renderCta(tier.id, tier.landingHref, tier.landingLabel)}</div>
+        </div>
+      );
+    }
 
     return (
       <div
         key={tier.id}
-        className={`relative flex h-full flex-col rounded-2xl border p-5 text-left sm:p-6 ${accentStyles.card} ${accentStyles.glow} ${
-          isCurrent ? 'ring-2 ring-white/25' : ''
+        className={`relative flex h-full flex-col rounded-lg border border-white/10 bg-white/[0.03] p-5 text-left sm:p-6 ${
+          isCurrent ? 'ring-1 ring-white/20' : ''
         }`}
       >
-        {tier.popular && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-950">
-              <Zap className="h-3 w-3" fill="currentColor" />
-              Most popular
-            </span>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold tracking-tight text-white">{tier.label}</p>
+            <p className="mt-1 text-xs leading-relaxed text-white/45">{tier.tagline}</p>
           </div>
-        )}
-
-        {tier.launchRibbon && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-gradient-to-r from-amber-500 to-amber-400 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-950 shadow-lg shadow-amber-500/20">
-              <Sparkles className="h-3 w-3" />
-              {tier.launchRibbon}
+          {tier.note && (
+            <span className="shrink-0 text-[10px] font-medium uppercase tracking-wider text-white/35">
+              {tier.note}
             </span>
-          </div>
-        )}
-
-        <div className={`mb-4 mt-1 ${accentStyles.icon}`}>{tier.icon}</div>
-
-        <p className="text-sm font-semibold tracking-tight text-white">{tier.label}</p>
-        <p className="mt-1 text-xs leading-relaxed text-white/45">{tier.tagline}</p>
-
-        <div className="mt-4 flex flex-wrap items-baseline gap-2">
-          {tier.wasPrice && (
-            <span className="text-lg font-medium text-white/30 line-through">{tier.wasPrice}</span>
           )}
-          <span className="text-3xl font-bold tracking-tight text-white">
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-baseline gap-2">
+          {tier.wasPrice && (
+            <span className="text-base font-medium text-white/30 line-through">{tier.wasPrice}</span>
+          )}
+          <span className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             {tier.price}
-            {tier.period && (
-              <span className="text-sm font-normal text-white/40">{tier.period}</span>
-            )}
+            {tier.period && <span className="text-sm font-normal text-white/40">{tier.period}</span>}
           </span>
         </div>
 
-        {tier.wasPrice && !compact && (
-          <p className="mt-2 text-xs font-medium text-amber-300/80">
-            Limited launch pricing — pay once, keep Pro forever
-          </p>
-        )}
-
         <ul className={`mt-5 flex-1 space-y-2 ${compact ? 'text-xs' : 'text-sm'}`}>
           {visibleFeatures.map((feature) => (
-            <li key={feature} className="flex items-start gap-2 text-white/60">
-              <Check className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${accentStyles.check}`} strokeWidth={2.5} />
-              <span className={feature.endsWith(':') ? 'font-medium text-white/75' : ''}>{feature}</span>
+            <li key={feature} className="flex items-start gap-2 text-white/55">
+              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/30" strokeWidth={2} />
+              <span className={feature.endsWith(':') ? 'font-medium text-white/70' : ''}>{feature}</span>
             </li>
           ))}
         </ul>
 
-        <div className="mt-6 pt-2">
-          {renderCta(tier.id, tier.landingHref, tier.landingLabel)}
-        </div>
+        <div className="mt-6">{renderCta(tier.id, tier.landingHref, tier.landingLabel)}</div>
       </div>
     );
   };
 
   return (
-    <div className={`mx-auto flex w-full max-w-5xl flex-col items-center ${compact ? 'gap-8' : 'gap-12 sm:gap-14'} ${className}`}>
-      {showHeader && (
-        <div className="max-w-2xl space-y-4 text-center sm:space-y-5">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/60">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
-            Pricing
-          </span>
-          <h2 className="text-2xl font-bold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl">
-            Start free. Scale when you&apos;re ready.<br />
-            <span className="text-white/55">Lock in the launch offer before it&apos;s gone.</span>
+    <div
+      className={`mx-auto flex w-full flex-col items-center ${
+        isCompare ? 'gap-4' : compact ? 'gap-8' : 'gap-10 sm:gap-12'
+      } ${className}`}
+    >
+      {showHeader && !isCompare && (
+        <div className="max-w-xl space-y-3 text-center">
+          <p className="text-xs font-medium uppercase tracking-widest text-white/40">Pricing</p>
+          <h2 className="text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl">
+            Simple plans. Start free.
           </h2>
+          <p className="text-sm text-white/45">
+            Upgrade when you need longer videos, bigger uploads, or no watermark.
+          </p>
         </div>
       )}
 
       <div
-        className={`grid w-full gap-5 ${
-          compact ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-3 md:gap-6'
+        className={`grid w-full gap-4 ${
+          isCompare
+            ? 'grid-cols-1 sm:grid-cols-3'
+            : compact
+              ? 'grid-cols-1 lg:grid-cols-3'
+              : 'grid-cols-1 md:grid-cols-3 md:gap-5'
         }`}
       >
         {tiers.map((tier) => cardShell(tier))}
       </div>
 
-      {!compact && (
-        <div className="w-full max-w-lg rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-transparent to-emerald-500/10 px-5 py-4 text-center backdrop-blur-sm">
-          <p className="text-sm text-white/55">
-            <span className="font-semibold text-amber-200/90">Final boss launch</span>
-            {' '}— {PLAN_PRICES.founder.amount} one-time
-            {PLAN_PRICES.founder.was && (
-              <span className="text-white/35"> (was {PLAN_PRICES.founder.was})</span>
-            )}
-            . Includes a{' '}
-            <span className="font-semibold text-amber-200/80">golden verified tick</span> on your profile.
-          </p>
-        </div>
+      {!compact && !isCompare && variant === 'landing' && (
+        <p className="max-w-md text-center text-xs text-white/40">
+          {FINAL_BOSS_LABEL} is {PLAN_PRICES.founder.amount} one-time
+          {PLAN_PRICES.founder.was && ` (was ${PLAN_PRICES.founder.was})`} — includes a golden verified tick.
+        </p>
       )}
     </div>
   );
@@ -316,7 +294,7 @@ export function PricingPageFooter() {
   return (
     <p className="text-center text-sm text-white/50">
       Questions or billing issues?{' '}
-      <Link href={`mailto:${SUPPORT_EMAIL}`} className="font-medium text-white/70 transition-colors hover:text-white">
+      <Link href={`mailto:${SUPPORT_EMAIL}`} className="text-white/70 transition-colors hover:text-white">
         {SUPPORT_EMAIL}
       </Link>
     </p>

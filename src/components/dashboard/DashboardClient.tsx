@@ -251,8 +251,13 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
         maxVideoSec: entitlements.maxVideoSec,
         maxUploadBytes: entitlements.maxUploadBytes,
       });
-      const thumbnailBlob = await captureVideoThumbnail(previewUrl);
-      const thumbnailUrl = await uploadProfileThumbnail(thumbnailBlob);
+      let thumbnailUrl = profile.user.thumbnailUrl;
+      try {
+        const thumbnailBlob = await captureVideoThumbnail(previewUrl);
+        thumbnailUrl = await uploadProfileThumbnail(thumbnailBlob);
+      } catch (thumbErr) {
+        console.warn('Thumbnail upload skipped:', thumbErr);
+      }
       URL.revokeObjectURL(previewUrl);
       await saveOnboardingData(profile.user.id, {
         username: profile.user.username,

@@ -54,7 +54,7 @@ export default async function PricingPage() {
       </header>
 
       <main className="flex-1">
-        <section className="relative bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-36 lg:px-16">
+        <section className="relative bg-black px-5 py-16 sm:px-6 sm:py-24 md:px-12 md:py-28 lg:px-16">
           <PricingTierGrid variant="checkout" currentTier={currentTier} isSignedIn={!!user} />
         </section>
 

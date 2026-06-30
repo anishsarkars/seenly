@@ -122,8 +122,7 @@ export default function BillingPanel({ user }: BillingPanelProps) {
       <div className={`${cardClass} px-5 py-5 sm:px-6`}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="text-left">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-widest text-white/50">
-              <span className="h-1 w-1 rounded-full bg-emerald-400/80" />
+            <span className="text-[10px] font-medium uppercase tracking-widest text-white/40">
               Current plan
             </span>
             <p className="mt-2 text-base font-semibold tracking-tight text-white">{entitlements.label}</p>
@@ -256,22 +255,15 @@ export default function BillingPanel({ user }: BillingPanelProps) {
           </div>
         </div>
 
-      {/* Compare plans */}
-      <div className={`${cardClass} px-4 py-6 sm:px-6 sm:py-8`}>
-        <div className="mb-6 text-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/60">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
-            Compare plans
-          </span>
-          <p className="mt-3 text-sm text-white/50">Same plans as our pricing page — pick what fits.</p>
-        </div>
+      {/* Compare plans — compact */}
+      <div className={`${cardClass} px-4 py-4 sm:px-5 sm:py-5`}>
+        <p className="mb-4 text-sm font-medium text-white">Compare plans</p>
         <PricingTierGrid
           variant="checkout"
-          compact
+          layout="compare"
           showHeader={false}
           currentTier={tier}
           isSignedIn
-          className="gap-10 sm:gap-12"
         />
       </div>
     </div>
