@@ -394,6 +394,54 @@ export async function saveOnboardingData(userId: string, data: any) {
   }
 }
 
+export async function saveProfileCustomization(
+  userId: string,
+  data: { profileTheme?: string; profileSectionOrder?: string }
+) {
+  if (!userId) return { success: false, error: 'Not signed in.' };
+
+  if (!isDbAvailable()) {
+    return { success: true };
+  }
+
+  try {
+    await ensureProfileSchema();
+
+    const [billingRow] = await db
+      .select({ plan: users.plan, planStatus: users.planStatus, planExpiresAt: users.planExpiresAt, isFounder: users.isFounder })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    const entitlements = getEntitlements(billingRow ?? {});
+    if (!entitlements.customProfileLayout) {
+      return { success: false, error: 'Profile customization is a Final boss feature.' };
+    }
+
+    const updates: Record<string, string> = {};
+    if (typeof data.profileTheme === 'string') {
+      updates.profileTheme = data.profileTheme === 'cinema' ? 'cinema' : 'minimal';
+    }
+    if (typeof data.profileSectionOrder === 'string') {
+      updates.profileSectionOrder = data.profileSectionOrder;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return { success: false, error: 'Nothing to save.' };
+    }
+
+    await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to save profile customization:', error);
+    return { success: false, error: 'Could not save customization. Please try again.' };
+  }
+}
+
 export async function logAnalyticEvent(profileId: string, type: 'views' | 'plays' | 'downloads', meta?: { country?: string; device?: string; browser?: string; referrer?: string }) {
   if (!isDbAvailable()) {
     if (type === 'views') {

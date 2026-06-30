@@ -13,6 +13,7 @@ export interface PlanEntitlements {
   showProBadge: boolean;
   showFounderBadge: boolean;
   prioritySupport: boolean;
+  customProfileLayout: boolean;
 }
 
 export const PLANS: Record<PlanTier, PlanEntitlements> = {
@@ -28,6 +29,7 @@ export const PLANS: Record<PlanTier, PlanEntitlements> = {
     showProBadge: false,
     showFounderBadge: false,
     prioritySupport: false,
+    customProfileLayout: false,
   },
   pro: {
     tier: 'pro',
@@ -41,6 +43,7 @@ export const PLANS: Record<PlanTier, PlanEntitlements> = {
     showProBadge: true,
     showFounderBadge: false,
     prioritySupport: false,
+    customProfileLayout: false,
   },
   founder: {
     tier: 'founder',
@@ -54,6 +57,7 @@ export const PLANS: Record<PlanTier, PlanEntitlements> = {
     showProBadge: false,
     showFounderBadge: true,
     prioritySupport: true,
+    customProfileLayout: true,
   },
 };
 

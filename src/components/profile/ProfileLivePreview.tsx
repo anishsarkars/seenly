@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Monitor, Smartphone, Lock, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProfileView, { type ProfileViewData } from '@/components/profile/ProfileView';
 import PhoneFrame, { PHONE_OUTER_WIDTH } from '@/components/profile/PhoneFrame';
+import type { ProfileSectionId, ProfileTheme } from '@/lib/profile-customization';
 
 const DESKTOP_PREVIEW_WIDTH = 896;
 
@@ -17,6 +18,8 @@ interface ProfileLivePreviewProps {
   removeBranding?: boolean;
   showProBadge?: boolean;
   showFounderBadge?: boolean;
+  profileTheme?: ProfileTheme;
+  profileSectionOrder?: ProfileSectionId[];
 }
 
 function DesktopFrame({
@@ -71,6 +74,8 @@ export default function ProfileLivePreview({
   removeBranding = false,
   showProBadge = false,
   showFounderBadge = false,
+  profileTheme,
+  profileSectionOrder,
 }: ProfileLivePreviewProps) {
   const [layout, setLayout] = useState<'mobile' | 'desktop'>(defaultLayout);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -181,6 +186,8 @@ export default function ProfileLivePreview({
               removeBranding={removeBranding}
               showProBadge={showProBadge}
               showFounderBadge={showFounderBadge}
+              profileTheme={profileTheme}
+              profileSectionOrder={profileSectionOrder}
             />
           </PhoneFrame>
         ) : (
@@ -206,6 +213,8 @@ export default function ProfileLivePreview({
                     removeBranding={removeBranding}
                     showProBadge={showProBadge}
                     showFounderBadge={showFounderBadge}
+                    profileTheme={profileTheme}
+                    profileSectionOrder={profileSectionOrder}
                   />
                 </div>
               </div>

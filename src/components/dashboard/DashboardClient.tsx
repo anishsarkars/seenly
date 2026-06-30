@@ -20,6 +20,13 @@ import SeenlyLogo from '@/components/SeenlyLogo';
 import BillingPanel from '@/components/billing/BillingPanel';
 import BillingSuccessOverlay from '@/components/billing/BillingSuccessOverlay';
 import PlanBadge from '@/components/billing/PlanBadge';
+import ProfileCustomizePanel from '@/components/dashboard/ProfileCustomizePanel';
+import {
+  parseProfileSectionOrder,
+  parseProfileTheme,
+  type ProfileSectionId,
+  type ProfileTheme,
+} from '@/lib/profile-customization';
 import { formatVideoDurationLimit, formatUploadLimit } from '@/lib/video-limits';
 import { getEntitlements } from '@/lib/plans';
 import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
@@ -38,7 +45,7 @@ const WHATS_NEW_STORAGE_KEY = 'seenly-whats-new-seen';
 const TAB_META = {
   analytics: { label: 'Performance', icon: TrendingUp },
   edit: { label: 'Profile', icon: Edit3 },
-  video: { label: 'Video', icon: Film },
+  video: { label: 'Video & style', icon: Film },
   settings: { label: 'Settings', icon: Settings },
 } as const;
 
@@ -194,6 +201,12 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [socials, setSocials] = useState(profile?.socials || {
     linkedin: '', github: '', portfolio: '', twitter: '', website: '', email: '', phone: '',
   });
+  const [profileTheme, setProfileTheme] = useState<ProfileTheme>(() =>
+    parseProfileTheme(profile?.user?.profileTheme)
+  );
+  const [profileSectionOrder, setProfileSectionOrder] = useState<ProfileSectionId[]>(() =>
+    parseProfileSectionOrder(profile?.user?.profileSectionOrder)
+  );
 
   const previewProfileData = useMemo<ProfileViewData>(() => ({
     user: {
@@ -207,11 +220,13 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
       videoUrl: profile?.user?.videoUrl,
       thumbnailUrl: profile?.user?.thumbnailUrl,
       resumeUrl: profile?.user?.resumeUrl,
+      profileTheme,
+      profileSectionOrder: JSON.stringify(profileSectionOrder),
     },
     experiences,
     projects,
     socials,
-  }), [profile, fullName, headline, location, bio, avatar, experiences, projects, socials]);
+  }), [profile, fullName, headline, location, bio, avatar, experiences, projects, socials, profileTheme, profileSectionOrder]);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}/${profile?.user?.username}`);
@@ -790,18 +805,44 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
               )}
 
               {activeTab === 'video' && (
-                <div className={`${panel} space-y-4 p-8 text-center sm:p-10`}>
-                  <Film className={`mx-auto h-5 w-5 text-white/40 ${isUploadingVideo ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
-                  <p className="text-sm text-white/70">
-                    {isUploadingVideo ? 'Uploading your video…' : 'Replace your intro video'}
-                  </p>
-                  <p className={muted}>MP4 or WEBM · {formatUploadLimit(entitlements.maxUploadBytes)} · {formatVideoDurationLimit(entitlements.maxVideoSec)}</p>
-                  <input type="file" accept="video/mp4,video/webm" className="hidden" id="dash-vid-uploader" onChange={handleVideoReplace} disabled={isUploadingVideo} />
-                  <label htmlFor="dash-vid-uploader" className={`${btnPrimary} mt-2 inline-block cursor-pointer ${isUploadingVideo ? 'pointer-events-none opacity-50' : ''}`}>
-                    <LoadingLabel loading={isUploadingVideo} loadingText="Uploading…">
-                      Upload video
-                    </LoadingLabel>
-                  </label>
+                <div className="space-y-6">
+                  <div className={`${panel} space-y-4 p-8 text-center sm:p-10`}>
+                    <Film className={`mx-auto h-5 w-5 text-white/40 ${isUploadingVideo ? 'animate-pulse' : ''}`} strokeWidth={1.5} />
+                    <p className="text-sm text-white/70">
+                      {isUploadingVideo ? 'Uploading your video…' : 'Replace your intro video'}
+                    </p>
+                    <p className={muted}>MP4 or WEBM · {formatUploadLimit(entitlements.maxUploadBytes)} · {formatVideoDurationLimit(entitlements.maxVideoSec)}</p>
+                    <input type="file" accept="video/mp4,video/webm" className="hidden" id="dash-vid-uploader" onChange={handleVideoReplace} disabled={isUploadingVideo} />
+                    <label htmlFor="dash-vid-uploader" className={`${btnPrimary} mt-2 inline-block cursor-pointer ${isUploadingVideo ? 'pointer-events-none opacity-50' : ''}`}>
+                      <LoadingLabel loading={isUploadingVideo} loadingText="Uploading…">
+                        Upload video
+                      </LoadingLabel>
+                    </label>
+                  </div>
+
+                  {entitlements.customProfileLayout && profile?.user?.id && (
+                    <ProfileCustomizePanel
+                      userId={profile.user.id}
+                      initialTheme={parseProfileTheme(profile.user.profileTheme)}
+                      initialSectionOrder={parseProfileSectionOrder(profile.user.profileSectionOrder)}
+                      onChange={(theme, order) => {
+                        setProfileTheme(theme);
+                        setProfileSectionOrder(order);
+                        setProfile((prev: typeof initialProfile) =>
+                          prev?.user
+                            ? {
+                                ...prev,
+                                user: {
+                                  ...prev.user,
+                                  profileTheme: theme,
+                                  profileSectionOrder: JSON.stringify(order),
+                                },
+                              }
+                            : prev
+                        );
+                      }}
+                    />
+                  )}
                 </div>
               )}
 
@@ -873,6 +914,8 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 removeBranding={entitlements.removeBranding}
                 showProBadge={entitlements.showProBadge}
                 showFounderBadge={entitlements.showFounderBadge}
+                profileTheme={profileTheme}
+                profileSectionOrder={profileSectionOrder}
               />
             </div>
           )}
@@ -905,6 +948,8 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 removeBranding={entitlements.removeBranding}
                 showProBadge={entitlements.showProBadge}
                 showFounderBadge={entitlements.showFounderBadge}
+                profileTheme={profileTheme}
+                profileSectionOrder={profileSectionOrder}
               />
               <div
                 role="separator"

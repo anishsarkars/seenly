@@ -27,6 +27,7 @@ export const PLAN_FEATURE_LISTS: Record<PlanTier, string[]> = {
   founder: [
     'Everything in Pro, forever.',
     'Golden verified tick on profile',
+    'Custom page style & section order',
     'All future Pro features',
     'Lifetime updates',
     'Coming soon: more',

@@ -21,6 +21,8 @@ export const users = pgTable('users', {
   dodoSubscriptionId: varchar('dodo_subscription_id', { length: 64 }),
   dodoCheckoutSessionId: varchar('dodo_checkout_session_id', { length: 64 }),
   pendingCheckoutPlan: varchar('pending_checkout_plan', { length: 20 }),
+  profileTheme: varchar('profile_theme', { length: 20 }).default('minimal').notNull(),
+  profileSectionOrder: text('profile_section_order'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

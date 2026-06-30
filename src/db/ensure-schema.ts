@@ -50,6 +50,9 @@ export async function ensureProfileSchema() {
       paid_at timestamp DEFAULT now() NOT NULL
     )`,
     sql`CREATE INDEX IF NOT EXISTS billing_payments_user_id_idx ON billing_payments(user_id)`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_theme varchar(20) DEFAULT 'minimal' NOT NULL`,
+    sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_section_order text`,
+    sql`UPDATE users SET profile_theme = 'minimal' WHERE profile_theme IS NULL`,
   ];
 
   for (const statement of statements) {
