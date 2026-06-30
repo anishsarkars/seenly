@@ -11,6 +11,7 @@ import { countFilledSocialLinks, getEntitlements } from '@/lib/plans';
 import { sanitizeProfileMedia } from '@/lib/profile-media';
 import { createClient } from '@/utils/supabase/server';
 import { hasDeveloperAccess } from '@/lib/developer-access';
+import { revalidatePath } from 'next/cache';
 
 // Mock in-memory database fallback for easy developer review/testing
 const mockStore: {
@@ -636,6 +637,13 @@ export async function setProfileEmbedEnabled(enabled: boolean) {
       .update(users)
       .set({ embedEnabled: enabled, updatedAt: new Date() })
       .where(eq(users.id, authUser.id));
+
+    const username = profile.user.username;
+    if (username) {
+      revalidatePath(`/embed/${username}`);
+      revalidatePath(`/${username}`);
+    }
+
     return { success: true };
   } catch (error) {
     console.error('Failed to set embed enabled:', error);

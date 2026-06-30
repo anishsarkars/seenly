@@ -63,7 +63,7 @@ export default function DeveloperEmbedPanel({
             <p className="text-sm font-medium text-white">Developer options</p>
           </div>
           <p className="mt-1 text-xs text-white/45">
-            Embed your public profile on any website with an iframe.
+            Embed your profile on any website with an iframe. Works even if your main Seenly link is private.
           </p>
         </div>
         <button
@@ -87,8 +87,8 @@ export default function DeveloperEmbedPanel({
       {embedEnabled && (
         <div className="space-y-3 px-5 py-4">
           {!isPublic && (
-            <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200/90">
-              Your profile is private. Make it public for the embed to work.
+            <p className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-white/50">
+              Your main link at seenly.tech/{username} stays private. Only sites using this embed can show your profile.
             </p>
           )}
 

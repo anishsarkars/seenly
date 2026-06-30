@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getProfileByUsername } from '@/db/actions';
 import ProfileView from '@/components/profile/ProfileView';
 import { getEntitlements } from '@/lib/plans';
+import { isProfileEmbeddable } from '@/lib/profile-embed';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,14 +22,21 @@ export default async function EmbedProfilePage({ params }: EmbedProfilePageProps
   const { username } = await params;
   const profileData = await getProfileByUsername(username);
 
-  if (
-    !profileData ||
-    profileData.user.isPublic === false ||
-    !profileData.user.embedEnabled
-  ) {
+  if (!profileData) {
     return (
       <div className="flex min-h-[320px] items-center justify-center bg-black px-6 text-center text-sm text-white/50">
-        This profile embed is not available.
+        Profile not found.
+      </div>
+    );
+  }
+
+  if (!isProfileEmbeddable(profileData.user)) {
+    return (
+      <div className="flex min-h-[320px] flex-col items-center justify-center gap-2 bg-black px-6 text-center text-sm text-white/50">
+        <p>This profile embed is not enabled.</p>
+        <p className="text-xs text-white/35">
+          Turn on Developer options → embed in your Seenly dashboard.
+        </p>
       </div>
     );
   }
