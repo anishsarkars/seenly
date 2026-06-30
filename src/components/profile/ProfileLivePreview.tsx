@@ -14,6 +14,9 @@ interface ProfileLivePreviewProps {
   className?: string;
   alwaysVisible?: boolean;
   panelMode?: 'side' | 'bottom';
+  removeBranding?: boolean;
+  showProBadge?: boolean;
+  showFounderBadge?: boolean;
 }
 
 function DesktopFrame({
@@ -65,6 +68,9 @@ export default function ProfileLivePreview({
   className = '',
   alwaysVisible = false,
   panelMode = 'side',
+  removeBranding = false,
+  showProBadge = false,
+  showFounderBadge = false,
 }: ProfileLivePreviewProps) {
   const [layout, setLayout] = useState<'mobile' | 'desktop'>(defaultLayout);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -167,7 +173,15 @@ export default function ProfileLivePreview({
                 : 'min(calc(100dvh - 11rem), 680px)'
             }
           >
-            <ProfileView profileData={profileData} preview layout="mobile" embedded />
+            <ProfileView
+              profileData={profileData}
+              preview
+              layout="mobile"
+              embedded
+              removeBranding={removeBranding}
+              showProBadge={showProBadge}
+              showFounderBadge={showFounderBadge}
+            />
           </PhoneFrame>
         ) : (
           <div ref={desktopContainerRef} className="relative z-10 w-full min-w-0 max-w-full">
@@ -184,7 +198,15 @@ export default function ProfileLivePreview({
                     transformOrigin: 'top left',
                   }}
                 >
-                  <ProfileView profileData={profileData} preview layout="desktop" embedded />
+                  <ProfileView
+                    profileData={profileData}
+                    preview
+                    layout="desktop"
+                    embedded
+                    removeBranding={removeBranding}
+                    showProBadge={showProBadge}
+                    showFounderBadge={showFounderBadge}
+                  />
                 </div>
               </div>
             </DesktopFrame>

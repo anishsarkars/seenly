@@ -15,6 +15,7 @@ export const PLAN_FEATURE_LISTS: Record<PlanTier, string[]> = {
   ],
   pro: [
     'Everything in Free, plus:',
+    'Blue verified tick on profile',
     '3-minute intro video',
     '250 MB uploads',
     'Unlimited projects',

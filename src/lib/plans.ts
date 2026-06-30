@@ -10,6 +10,7 @@ export interface PlanEntitlements {
   maxSocialLinks: number;
   customThumbnail: boolean;
   removeBranding: boolean;
+  showProBadge: boolean;
   showFounderBadge: boolean;
   prioritySupport: boolean;
 }
@@ -24,6 +25,7 @@ export const PLANS: Record<PlanTier, PlanEntitlements> = {
     maxSocialLinks: 5,
     customThumbnail: false,
     removeBranding: false,
+    showProBadge: false,
     showFounderBadge: false,
     prioritySupport: false,
   },
@@ -36,6 +38,7 @@ export const PLANS: Record<PlanTier, PlanEntitlements> = {
     maxSocialLinks: Number.POSITIVE_INFINITY,
     customThumbnail: true,
     removeBranding: true,
+    showProBadge: true,
     showFounderBadge: false,
     prioritySupport: false,
   },
@@ -48,6 +51,7 @@ export const PLANS: Record<PlanTier, PlanEntitlements> = {
     maxSocialLinks: Number.POSITIVE_INFINITY,
     customThumbnail: true,
     removeBranding: true,
+    showProBadge: false,
     showFounderBadge: true,
     prioritySupport: true,
   },

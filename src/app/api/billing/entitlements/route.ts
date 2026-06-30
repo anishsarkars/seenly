@@ -30,6 +30,7 @@ export async function GET() {
       maxSocialLinks: entitlements.maxSocialLinks,
       customThumbnail: entitlements.customThumbnail,
       removeBranding: entitlements.removeBranding,
+      showProBadge: entitlements.showProBadge,
       showFounderBadge: entitlements.showFounderBadge,
     });
   } catch (error) {
@@ -48,6 +49,7 @@ export async function GET() {
       maxSocialLinks: entitlements.maxSocialLinks,
       customThumbnail: entitlements.customThumbnail,
       removeBranding: entitlements.removeBranding,
+      showProBadge: entitlements.showProBadge,
       showFounderBadge: entitlements.showFounderBadge,
     });
   }

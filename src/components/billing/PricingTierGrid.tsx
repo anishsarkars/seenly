@@ -10,7 +10,7 @@ import { type PlanTier } from '@/lib/plans';
 
 const COMPARE_FEATURES: Record<PlanTier, string[]> = {
   free: ['60s video', '50 MB upload', 'Seenly watermark'],
-  pro: ['3 min video', '250 MB upload', 'No branding'],
+  pro: ['3 min video', 'Blue verified tick', 'No branding'],
   founder: ['Pro forever', 'Golden tick', 'One-time payment'],
 };
 

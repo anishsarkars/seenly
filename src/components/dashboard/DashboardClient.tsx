@@ -388,13 +388,14 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
               </button>
 
               {whatsNewOpen && (
-                <div className="max-h-64 overflow-y-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:thin]">
+                <div className="max-h-80 overflow-y-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:thin]">
                   <WhatsNewPanel
                     compact
                     avatar={avatar}
                     onAvatarChange={setAvatar}
                     onApplyAvatar={handleSaveProfile}
                     isSaving={isSaving}
+                    planTier={entitlements.tier}
                   />
                 </div>
               )}
@@ -524,6 +525,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 onAvatarChange={setAvatar}
                 onApplyAvatar={handleSaveProfile}
                 isSaving={isSaving}
+                planTier={entitlements.tier}
               />
             </div>
           )}
@@ -736,6 +738,9 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 alwaysVisible
                 panelMode="bottom"
                 className="min-h-0 flex-1"
+                removeBranding={entitlements.removeBranding}
+                showProBadge={entitlements.showProBadge}
+                showFounderBadge={entitlements.showFounderBadge}
               />
             </div>
           )}
@@ -765,6 +770,9 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 alwaysVisible
                 panelMode="side"
                 className="min-h-0 flex-1"
+                removeBranding={entitlements.removeBranding}
+                showProBadge={entitlements.showProBadge}
+                showFounderBadge={entitlements.showFounderBadge}
               />
               <div
                 role="separator"

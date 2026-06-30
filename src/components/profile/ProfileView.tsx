@@ -9,6 +9,7 @@ import {
 import { isPersistedMediaUrl } from '@/lib/storage';
 import { logAnalyticEvent } from '@/db/actions';
 import GoldenVerifiedTick from '@/components/profile/GoldenVerifiedTick';
+import ProVerifiedTick from '@/components/profile/ProVerifiedTick';
 
 export interface ProfileViewData {
   user: {
@@ -38,6 +39,7 @@ interface ProfileViewProps {
   layout?: 'mobile' | 'desktop';
   embedded?: boolean;
   removeBranding?: boolean;
+  showProBadge?: boolean;
   showFounderBadge?: boolean;
 }
 
@@ -47,6 +49,7 @@ export default function ProfileView({
   layout,
   embedded = false,
   removeBranding = false,
+  showProBadge = false,
   showFounderBadge = false,
 }: ProfileViewProps) {
   const { user, experiences, projects, socials } = profileData;
@@ -184,6 +187,7 @@ export default function ProfileView({
             <div className="flex flex-wrap items-center justify-center gap-1.5 md:justify-start">
               <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
               {showFounderBadge && <GoldenVerifiedTick size="lg" />}
+              {!showFounderBadge && showProBadge && <ProVerifiedTick size="lg" />}
             </div>
             <p className="text-zinc-400 text-sm leading-relaxed">{displayHeadline}</p>
             {(user.location || preview) && (

@@ -69,6 +69,7 @@ export default function ProfileClient({ profileData, isOwner = false }: ProfileC
         <ProfileView
           profileData={profileData}
           removeBranding={entitlements.removeBranding}
+          showProBadge={entitlements.showProBadge}
           showFounderBadge={entitlements.showFounderBadge}
         />
       </div>
