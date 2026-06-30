@@ -13,15 +13,22 @@ export const FREE_VIDEO_LIMITS: VideoUploadLimits = {
 export async function uploadFile(
   file: Blob,
   kind: 'video' | 'thumbnail' | 'resume' | 'avatar',
-  fileName?: string
+  fileName?: string,
+  extraFields?: Record<string, string>
 ): Promise<string> {
   const formData = new FormData();
   formData.append('kind', kind);
   formData.append('file', file, fileName || `${kind}.bin`);
+  if (extraFields) {
+    for (const [key, value] of Object.entries(extraFields)) {
+      formData.append(key, value);
+    }
+  }
 
   const response = await fetch('/api/upload', {
     method: 'POST',
     body: formData,
+    credentials: 'same-origin',
   });
 
   const payload = await response.json().catch(() => ({}));
@@ -138,7 +145,7 @@ export async function uploadProfileVideo(
 }
 
 export async function uploadProfileThumbnail(file: Blob) {
-  return uploadFile(file, 'thumbnail', 'poster.jpg');
+  return uploadFile(file, 'thumbnail', 'poster.jpg', { source: 'auto' });
 }
 
 export async function uploadProfileResume(file: File) {

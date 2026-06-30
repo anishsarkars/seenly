@@ -404,8 +404,12 @@ export default function OnboardingClient() {
           videoLimits
         );
         setUploadProgress(55);
-        const thumbnail = await captureVideoThumbnail(videoPreviewUrl);
-        finalThumbnailUrl = await uploadProfileThumbnail(thumbnail);
+        try {
+          const thumbnail = await captureVideoThumbnail(videoPreviewUrl);
+          finalThumbnailUrl = await uploadProfileThumbnail(thumbnail);
+        } catch (thumbErr) {
+          console.warn('Thumbnail upload skipped:', thumbErr);
+        }
       }
 
       if (!isPersistedMediaUrl(finalVideoUrl)) {

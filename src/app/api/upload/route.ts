@@ -91,7 +91,11 @@ export async function POST(request: Request) {
       );
     }
 
-    if (kind === 'thumbnail' && !entitlements.customThumbnail) {
+    if (
+      kind === 'thumbnail' &&
+      formData.get('source') === 'custom' &&
+      !entitlements.customThumbnail
+    ) {
       return NextResponse.json(
         { error: 'Custom thumbnails require Seenly Pro or Final boss.' },
         { status: 403 }
@@ -147,6 +151,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: data.publicUrl });
   } catch (error) {
     console.error('Upload route error:', error);
-    return NextResponse.json({ error: 'Upload failed. Please try again.' }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'Upload failed. Please try again.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
