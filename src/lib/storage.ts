@@ -1,5 +1,6 @@
 import { PLANS } from '@/lib/plans';
 import { createClient } from '@/utils/supabase/client';
+import { isStorageSizeError, storageSizeErrorMessage } from '@/lib/storage-limits';
 
 export type VideoUploadLimits = {
   maxVideoSec: number;
@@ -49,6 +50,11 @@ export async function uploadFile(
     });
 
   if (error) {
+    const planLimit =
+      typeof payload.maxUploadBytes === 'number' ? payload.maxUploadBytes : PLANS.free.maxUploadBytes;
+    if (isStorageSizeError(error.message || '')) {
+      throw new Error(storageSizeErrorMessage(planLimit));
+    }
     throw new Error(error.message || 'Upload to storage failed.');
   }
 

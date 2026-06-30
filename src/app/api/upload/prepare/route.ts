@@ -10,8 +10,9 @@ import {
   type UploadKind,
 } from '@/lib/upload-config';
 import { getUserEntitlements } from '@/lib/upload-entitlements';
-import { ensureStorageBucketsAdmin } from '@/lib/supabase/storage-server';
+import { syncStorageBucketsAdmin } from '@/lib/supabase/storage-server';
 import type { StorageBucketName } from '@/lib/supabase/storage-server';
+import { isStorageSizeError, storageSizeErrorMessage } from '@/lib/storage-limits';
 
 type PrepareBody = {
   kind?: UploadKind;
@@ -54,7 +55,9 @@ export async function POST(request: Request) {
     if (kind === 'video' && fileSize > entitlements.maxUploadBytes) {
       return NextResponse.json(
         {
-          error: `Video must be ${Math.round(entitlements.maxUploadBytes / (1024 * 1024))}MB or smaller on your plan.`,
+          error: `Video must be ${Math.round(entitlements.maxUploadBytes / (1024 * 1024))}MB or smaller on ${entitlements.label}.`,
+          tier: entitlements.tier,
+          maxUploadBytes: entitlements.maxUploadBytes,
         },
         { status: 400 }
       );
@@ -85,7 +88,7 @@ export async function POST(request: Request) {
     await ensureStorageBuckets().catch((err) => {
       console.warn('SQL storage ensure skipped:', err);
     });
-    await ensureStorageBucketsAdmin(admin);
+    await syncStorageBucketsAdmin(admin);
 
     const bucket = UPLOAD_BUCKETS[kind] as StorageBucketName;
     const path = pathFor(kind, user.id, fileMeta);
@@ -110,10 +113,13 @@ export async function POST(request: Request) {
       token: data.token,
       contentType,
       publicUrl: publicUrlFor(bucket, path, supabaseUrl),
+      tier: entitlements.tier,
+      maxUploadBytes: entitlements.maxUploadBytes,
     });
   } catch (error) {
     console.error('Upload prepare error:', error);
     const message = error instanceof Error ? error.message : 'Upload failed. Please try again.';
-    return NextResponse.json({ error: message }, { status: 500 });
+    const status = isStorageSizeError(message) ? 413 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

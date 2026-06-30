@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { db } from './index';
+import { MAX_BUCKET_FILE_BYTES } from '@/lib/storage-limits';
 
 let storageEnsured = false;
 
@@ -35,8 +36,8 @@ export async function ensureStorageBuckets() {
     try {
       await db.execute(sql`
         INSERT INTO storage.buckets (id, name, public, file_size_limit)
-        VALUES (${bucket}, ${bucket}, true, 262144000)
-        ON CONFLICT (id) DO UPDATE SET public = true, file_size_limit = 262144000
+        VALUES (${bucket}, ${bucket}, true, ${MAX_BUCKET_FILE_BYTES})
+        ON CONFLICT (id) DO UPDATE SET public = true, file_size_limit = ${MAX_BUCKET_FILE_BYTES}
       `);
     } catch (error) {
       console.warn(`Bucket ensure skipped for ${bucket}:`, error);

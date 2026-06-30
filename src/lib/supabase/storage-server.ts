@@ -1,13 +1,9 @@
 import { createAdminClient } from '@/utils/supabase/admin';
+import { MAX_BUCKET_FILE_BYTES } from '@/lib/storage-limits';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export const STORAGE_BUCKET_NAMES = ['videos', 'thumbnails', 'resumes', 'avatars'] as const;
 export type StorageBucketName = (typeof STORAGE_BUCKET_NAMES)[number];
-
-/** 250 MB — matches Pro plan max upload */
-const FILE_SIZE_LIMIT_BYTES = 262144000;
-
-let adminBucketsEnsured = false;
 
 export function getStorageConfigErrors(): string[] {
   const errors: string[] = [];
@@ -23,9 +19,8 @@ export function getStorageConfigErrors(): string[] {
   return errors;
 }
 
-export async function ensureStorageBucketsAdmin(admin: SupabaseClient): Promise<void> {
-  if (adminBucketsEnsured) return;
-
+/** Ensure buckets exist and always sync file size limits to the paid-plan maximum. */
+export async function syncStorageBucketsAdmin(admin: SupabaseClient): Promise<void> {
   const { data: buckets, error: listError } = await admin.storage.listBuckets();
   if (listError) {
     throw new Error(`Could not list storage buckets: ${listError.message}`);
@@ -34,19 +29,30 @@ export async function ensureStorageBucketsAdmin(admin: SupabaseClient): Promise<
   const existing = new Set((buckets ?? []).map((b) => b.id));
 
   for (const name of STORAGE_BUCKET_NAMES) {
-    if (existing.has(name)) continue;
+    if (!existing.has(name)) {
+      const { error } = await admin.storage.createBucket(name, {
+        public: true,
+        fileSizeLimit: MAX_BUCKET_FILE_BYTES,
+      });
+      if (error && !/already exists|duplicate/i.test(error.message)) {
+        console.warn(`createBucket(${name}) warning:`, error.message);
+      }
+    }
 
-    const { error } = await admin.storage.createBucket(name, {
+    const { error: updateError } = await admin.storage.updateBucket(name, {
       public: true,
-      fileSizeLimit: FILE_SIZE_LIMIT_BYTES,
+      fileSizeLimit: MAX_BUCKET_FILE_BYTES,
     });
 
-    if (error && !/already exists|duplicate/i.test(error.message)) {
-      console.warn(`createBucket(${name}) warning:`, error.message);
+    if (updateError) {
+      console.warn(`updateBucket(${name}) warning:`, updateError.message);
     }
   }
+}
 
-  adminBucketsEnsured = true;
+/** @deprecated Use syncStorageBucketsAdmin */
+export async function ensureStorageBucketsAdmin(admin: SupabaseClient): Promise<void> {
+  await syncStorageBucketsAdmin(admin);
 }
 
 export async function uploadWithAdminStorage({
@@ -67,7 +73,7 @@ export async function uploadWithAdminStorage({
     );
   }
 
-  await ensureStorageBucketsAdmin(admin);
+  await syncStorageBucketsAdmin(admin);
 
   const { error } = await admin.storage.from(bucket).upload(path, data, {
     upsert: true,

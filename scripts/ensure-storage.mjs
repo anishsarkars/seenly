@@ -49,18 +49,26 @@ async function ensureViaApi() {
   }
   const ids = new Set((existing ?? []).map((b) => b.id));
   for (const name of buckets) {
-    if (ids.has(name)) {
-      console.log(`API bucket exists: ${name}`);
-      continue;
+    if (!ids.has(name)) {
+      const { error } = await admin.storage.createBucket(name, {
+        public: true,
+        fileSizeLimit: FILE_SIZE_LIMIT,
+      });
+      if (error) {
+        console.error(`createBucket(${name}) failed:`, error.message);
+      } else {
+        console.log(`API created bucket: ${name}`);
+      }
     }
-    const { error } = await admin.storage.createBucket(name, {
+
+    const { error: updateError } = await admin.storage.updateBucket(name, {
       public: true,
       fileSizeLimit: FILE_SIZE_LIMIT,
     });
-    if (error) {
-      console.error(`createBucket(${name}) failed:`, error.message);
+    if (updateError) {
+      console.error(`updateBucket(${name}) failed:`, updateError.message);
     } else {
-      console.log(`API created bucket: ${name}`);
+      console.log(`API synced bucket limit: ${name} → ${FILE_SIZE_LIMIT}`);
     }
   }
 }

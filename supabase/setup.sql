@@ -47,14 +47,14 @@ CREATE TABLE IF NOT EXISTS billing_payments (
 
 CREATE INDEX IF NOT EXISTS billing_payments_user_id_idx ON billing_payments(user_id);
 
--- Storage buckets
-INSERT INTO storage.buckets (id, name, public)
+-- Storage buckets (250 MB — matches Pro / Final boss upload limit)
+INSERT INTO storage.buckets (id, name, public, file_size_limit)
 VALUES
-  ('avatars', 'avatars', true),
-  ('videos', 'videos', true),
-  ('thumbnails', 'thumbnails', true),
-  ('resumes', 'resumes', true)
-ON CONFLICT (id) DO NOTHING;
+  ('avatars', 'avatars', true, 262144000),
+  ('videos', 'videos', true, 262144000),
+  ('thumbnails', 'thumbnails', true, 262144000),
+  ('resumes', 'resumes', true, 262144000)
+ON CONFLICT (id) DO UPDATE SET public = true, file_size_limit = 262144000;
 
 -- Public read for profile media
 CREATE POLICY "Public read avatars" ON storage.objects

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/utils/supabase/admin';
-import { getStorageConfigErrors, ensureStorageBucketsAdmin } from '@/lib/supabase/storage-server';
+import { getStorageConfigErrors, syncStorageBucketsAdmin } from '@/lib/supabase/storage-server';
+import { MAX_BUCKET_FILE_BYTES } from '@/lib/storage-limits';
 
 /** Diagnostic: verify storage env + buckets (admin only). */
 export async function GET() {
@@ -17,21 +18,34 @@ export async function GET() {
   }
 
   try {
-    await ensureStorageBucketsAdmin(admin);
-    const { data: buckets, error } = await admin.storage.listBuckets();
-    if (error) {
-      return NextResponse.json({ ok: false, configErrors, error: error.message }, { status: 500 });
+    await syncStorageBucketsAdmin(admin);
+    const required = ['videos', 'thumbnails', 'resumes', 'avatars'] as const;
+    const bucketDetails = [];
+
+    for (const id of required) {
+      const { data: bucket, error: bucketError } = await admin.storage.getBucket(id);
+      if (bucketError || !bucket) {
+        bucketDetails.push({ id, public: false, fileSizeLimit: null, ok: false });
+        continue;
+      }
+      const limit = bucket.file_size_limit ?? null;
+      bucketDetails.push({
+        id,
+        public: bucket.public,
+        fileSizeLimit: limit,
+        ok: limit == null || limit >= MAX_BUCKET_FILE_BYTES,
+      });
     }
 
-    const required = ['videos', 'thumbnails', 'resumes', 'avatars'];
-    const found = (buckets ?? []).map((b) => b.id);
-    const missing = required.filter((id) => !found.includes(id));
+    const missing = bucketDetails.filter((b) => !b.ok).map((b) => b.id);
+    const limitsOk = bucketDetails.length === required.length && bucketDetails.every((b) => b.ok);
 
     return NextResponse.json({
-      ok: missing.length === 0 && configErrors.length === 0,
+      ok: missing.length === 0 && limitsOk && configErrors.length === 0,
       configErrors,
-      buckets: buckets?.map((b) => ({ id: b.id, public: b.public })),
+      buckets: bucketDetails,
       missing,
+      requiredBucketLimit: MAX_BUCKET_FILE_BYTES,
     });
   } catch (error) {
     return NextResponse.json(
