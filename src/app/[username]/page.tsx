@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 import { getProfileByUsername } from '@/db/actions';
 import ProfileClient from '@/components/profile/ProfileClient';
+import ClaimUsernamePage from '@/components/landing/ClaimUsernamePage';
+import SeenlyLogo from '@/components/SeenlyLogo';
+import SiteFooter from '@/components/SiteFooter';
 import { createClient } from '@/utils/supabase/server';
-import { notFound } from 'next/navigation';
 import { getProfileOgImageUrl, PROFILE_OG_SIZE } from '@/lib/profile-og';
+import { normalizeUsername } from '@/lib/username';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +21,13 @@ export async function generateMetadata({ params }: ProfilePageProps): Promise<Me
   const profileData = await getProfileByUsername(username);
 
   if (!profileData || profileData.user.isPublic === false) {
+    if (!profileData) {
+      const slug = normalizeUsername(username);
+      return {
+        title: `Claim seenly.tech/${slug} • Seenly`,
+        description: `This username is available. Create your video-first profile on Seenly.`,
+      };
+    }
     return { title: 'Profile • Seenly' };
   }
 
@@ -66,11 +76,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const profileData = await getProfileByUsername(username);
 
   if (!profileData) {
-    notFound();
-  }
-
-  if (!profileData) {
-    notFound();
+    return <ClaimUsernamePage username={username} />;
   }
 
   const supabase = await createClient();
@@ -79,11 +85,17 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   if (profileData.user.isPublic === false && !isOwner) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-black px-6 text-center text-white">
-        <h1 className="text-2xl font-bold tracking-tight">This profile is private.</h1>
-        <p className="mt-2 max-w-sm text-sm text-white/50">
-          The owner has chosen not to share this profile publicly.
-        </p>
+      <div className="flex min-h-screen flex-col bg-black font-geist text-white">
+        <header className="px-5 py-5 sm:px-6 md:px-12">
+          <SeenlyLogo size="md" />
+        </header>
+        <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+          <h1 className="text-2xl font-bold tracking-tight">This profile is private.</h1>
+          <p className="mt-2 max-w-sm text-sm text-white/50">
+            The owner has chosen not to share this profile publicly.
+          </p>
+        </main>
+        <SiteFooter variant="guest" />
       </div>
     );
   }

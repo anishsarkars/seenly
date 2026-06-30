@@ -12,6 +12,7 @@ interface UsernameClaimBarProps {
   /** @deprecated use variant="hero" */
   hero?: boolean;
   variant?: 'hero' | 'cta';
+  initialUsername?: string;
 }
 
 export default function UsernameClaimBar({
@@ -19,14 +20,23 @@ export default function UsernameClaimBar({
   title = "Claim your Seenly link before it's taken",
   hero = false,
   variant: variantProp,
+  initialUsername = '',
 }: UsernameClaimBarProps) {
   const variant = variantProp ?? (hero ? 'hero' : 'cta');
   const isHero = variant === 'hero';
 
   const router = useRouter();
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(() =>
+    initialUsername ? initialUsername.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 30) : ''
+  );
   const [status, setStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    if (!initialUsername) return;
+    const clean = initialUsername.toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 30);
+    if (clean) setUsername(clean);
+  }, [initialUsername]);
 
   useEffect(() => {
     const clean = username.toLowerCase().replace(/[^a-z0-9_-]/g, '');
@@ -133,7 +143,7 @@ export default function UsernameClaimBar({
           disabled={status !== 'available'}
           className="shrink-0 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40 sm:rounded-full sm:py-2.5"
         >
-          Claim my link
+          {initialUsername ? 'Create account' : 'Claim my link'}
         </button>
       </div>
 

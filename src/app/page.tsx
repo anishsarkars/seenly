@@ -74,7 +74,7 @@ export default function Home() {
     <div className="min-h-screen bg-black font-geist text-white selection:bg-white selection:text-black">
 
       {/* HERO VIEWPORT SECTION */}
-      <section className="relative flex min-h-[115dvh] w-full flex-col justify-between overflow-hidden">
+      <section className="relative flex min-h-[100dvh] w-full flex-col justify-between overflow-hidden sm:min-h-[115dvh]">
         {/* Video Background */}
         <video
           autoPlay
@@ -93,7 +93,7 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-20 bg-gradient-to-b from-transparent to-black sm:h-24" />
 
         {/* Navbar (z-30) */}
-        <header className="relative z-30 flex items-center justify-between px-5 py-5 sm:px-6 md:px-12 lg:px-16">
+        <header className="relative z-30 flex shrink-0 items-center justify-between px-5 py-4 sm:px-6 sm:py-5 md:px-12 lg:px-16">
           <div className="flex items-center gap-8">
             <SeenlyLogo size="md" />
             <nav className="hidden md:flex items-center gap-6">
@@ -213,10 +213,10 @@ export default function Home() {
         </div>
 
         {/* Hero Content (z-10) — Two column layout */}
-        <main className="relative z-10 flex flex-1 items-center justify-between px-5 pb-10 pt-4 sm:px-6 md:px-12 lg:px-20">
+        <main className="relative z-10 flex flex-1 flex-col justify-start px-5 pb-8 pt-2 max-sm:pt-4 sm:px-6 sm:pb-10 sm:pt-4 md:flex-row md:items-center md:justify-between md:px-12 md:pt-4 lg:px-20">
 
           {/* LEFT: Text */}
-          <div className="flex w-full max-w-xl flex-col justify-center gap-5 lg:w-auto">
+          <div className="flex w-full max-w-xl flex-col justify-center gap-4 max-sm:gap-4 sm:gap-5 lg:w-auto">
             {/* Badge */}
             <div className="animate-[fadeSlideUp_0.8s_ease_0.2s_both]">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/40 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/70 backdrop-blur-sm">
@@ -226,7 +226,7 @@ export default function Home() {
             </div>
 
             {/* Heading */}
-            <h1 className="animate-[fadeSlideUp_0.8s_ease_0.4s_both] text-4xl font-bold leading-[1.06] tracking-tight text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.55)] sm:text-5xl md:text-6xl">
+            <h1 className="animate-[fadeSlideUp_0.8s_ease_0.4s_both] text-[2rem] font-bold leading-[1.08] tracking-tight text-white drop-shadow-[0_2px_16px_rgba(0,0,0,0.55)] sm:text-5xl md:text-6xl">
               Your Resume Tells.<br />
               <span className="text-white/75">Your Intro Shows.</span>
             </h1>
@@ -249,7 +249,7 @@ export default function Home() {
             )}
 
             {/* Action */}
-            <div className="animate-[fadeSlideUp_0.8s_ease_0.7s_both] flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="animate-[fadeSlideUp_0.8s_ease_0.7s_both] flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
               {authState === 'member' ? (
                 <a
                   href="/dashboard"

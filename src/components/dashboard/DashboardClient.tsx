@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { XAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import {
   TrendingUp, Play, Download, Eye, Edit3, Film, Settings,
-  Globe, Plus, ArrowUpRight, Copy, Check, Sparkles, ChevronDown, FileText,
+  Globe, Plus, ArrowUpRight, Copy, Check, Sparkles, FileText,
   PanelLeftClose, PanelLeft, PanelRightClose, PanelRight, X, Smartphone,
 } from 'lucide-react';
 import { saveOnboardingData } from '@/db/actions';
@@ -572,19 +572,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                   )}
                 </span>
                 <span className="flex-1 text-left">What&apos;s New</span>
-                <ChevronDown
-                  className={`h-3.5 w-3.5 shrink-0 transition-transform ${whatsNewOpen ? 'rotate-180' : ''}`}
-                />
               </button>
-
-              {whatsNewOpen && (
-                <div className="max-h-80 overflow-y-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:thin]">
-                  <WhatsNewPanel
-                    compact
-                    planTier={entitlements.tier}
-                  />
-                </div>
-              )}
             </nav>
             <div className="shrink-0 border-t border-white/10 p-3">
               <div className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5">
@@ -702,15 +690,6 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
               )}
             </button>
           </div>
-
-          {whatsNewOpen && (
-            <div className="shrink-0 border-b border-white/10 px-4 py-3 lg:hidden">
-              <WhatsNewPanel
-                compact
-                planTier={entitlements.tier}
-              />
-            </div>
-          )}
 
           {/* Content */}
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
@@ -1096,6 +1075,8 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           )}
         </div>
       </div>
+
+      <WhatsNewPanel open={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   FileText, Share2, MapPin, ExternalLink,
-  Mail, Globe, Play, Pause,
+  Mail, Globe, Play, Pause, Volume2, VolumeX,
 } from 'lucide-react';
 import { isPersistedMediaUrl } from '@/lib/storage';
 import { logAnalyticEvent } from '@/db/actions';
@@ -74,11 +74,17 @@ function IntroVideo({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoReady, setVideoReady] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
   const [progress, setProgress] = useState(0);
 
   const canPlay = !!videoUrl && (preview || isPersistedMediaUrl(videoUrl));
   const shellClass = `group relative w-full overflow-hidden bg-black ${className}`;
   const mediaClass = `block w-full h-auto ${maxHeightClass}`;
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setMuted((prev) => !prev);
+  };
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -148,6 +154,7 @@ function IntroVideo({
         }
         playsInline
         preload="auto"
+        muted={muted}
         onLoadedData={() => setVideoReady(true)}
         onCanPlay={() => setVideoReady(true)}
         onPlay={() => {
@@ -187,6 +194,14 @@ function IntroVideo({
                 aria-label={playing ? 'Pause' : 'Play'}
               >
                 {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />}
+              </button>
+              <button
+                type="button"
+                onClick={toggleMute}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                aria-label={muted ? 'Unmute' : 'Mute'}
+              >
+                {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
               </button>
               <div
                 role="slider"
