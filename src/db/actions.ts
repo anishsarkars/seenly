@@ -11,6 +11,7 @@ import { countFilledSocialLinks, getEntitlements } from '@/lib/plans';
 import { sanitizeProfileMedia } from '@/lib/profile-media';
 import { createClient } from '@/utils/supabase/server';
 import { hasDeveloperAccess } from '@/lib/developer-access';
+import { isEmailVerified } from '@/lib/email-verification';
 import { revalidatePath } from 'next/cache';
 
 // Mock in-memory database fallback for easy developer review/testing
@@ -204,6 +205,19 @@ export async function getUsernameSuggestions(username: string) {
 }
 
 export async function saveOnboardingData(userId: string, data: any) {
+  const supabase = await createClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  if (!authUser || authUser.id !== userId) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  if (!isEmailVerified(authUser)) {
+    return { success: false, error: 'Verify your email before publishing your profile.' };
+  }
+
   const {
     username,
     email,

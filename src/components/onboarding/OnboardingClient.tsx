@@ -27,7 +27,8 @@ import SeenlyLogo from '@/components/SeenlyLogo';
 import Confetti from '@/components/Confetti';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { signInWithGoogle } from '@/lib/auth-client';
+import { signInWithGoogle, getAuthCallbackUrl } from '@/lib/auth-client';
+import { isEmailVerified } from '@/lib/email-verification';
 import { LoadingLabel } from '@/components/ui/ActionStatus';
 
 export default function OnboardingClient() {
@@ -45,12 +46,7 @@ export default function OnboardingClient() {
   const [authSuccessMsg, setAuthSuccessMsg] = useState('');
   const [oauthLoading, setOauthLoading] = useState(false);
   const [passwordAuthLoading, setPasswordAuthLoading] = useState(false);
-  const [betaRequired, setBetaRequired] = useState(false);
-  const [betaUnlocked, setBetaUnlocked] = useState(false);
-  const [betaCode, setBetaCode] = useState('');
-  const [betaError, setBetaError] = useState('');
-  const [betaChecking, setBetaChecking] = useState(false);
-  const [betaConfetti, setBetaConfetti] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   // Form State
@@ -114,57 +110,31 @@ export default function OnboardingClient() {
     if (clean) setUsername(clean);
   }, [searchParams]);
 
-  useEffect(() => {
-    if (searchParams.get('beta') === 'required') {
-      setBetaError('Beta access code required to create a new account.');
-      setAuthMode('signup');
-    }
-  }, [searchParams]);
-
-  useEffect(() => {
-    fetch('/api/auth/beta', { credentials: 'same-origin' })
-      .then((res) => res.json())
-      .then((data) => {
-        setBetaRequired(!!data.required);
-        setBetaUnlocked(!!data.verified);
-      })
-      .catch(() => {
-        setBetaRequired(false);
-        setBetaUnlocked(true);
-      });
-  }, []);
-
-  const verifyBetaCode = async () => {
-    setBetaError('');
-    if (!betaCode.trim()) {
-      setBetaError('Enter the 4-digit beta code.');
+  const handleResendVerification = async () => {
+    const email = sessionUser?.email;
+    if (!email) return;
+    setResendLoading(true);
+    setAuthError('');
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    setResendLoading(false);
+    if (error) {
+      setAuthError(error.message);
       return;
     }
-    setBetaChecking(true);
-    try {
-      const res = await fetch('/api/auth/beta', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ code: betaCode.trim() }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data.error || 'Invalid beta code.');
-      }
-      setBetaUnlocked(true);
-      setBetaError('');
-      setBetaConfetti(true);
-      window.setTimeout(() => setBetaConfetti(false), 2200);
-    } catch (err: any) {
-      setBetaUnlocked(false);
-      setBetaError(err.message || 'Invalid beta code.');
-    } finally {
-      setBetaChecking(false);
-    }
+    setAuthSuccessMsg('Verification email sent — check your inbox.');
   };
 
-  const signupBlocked = betaRequired && !betaUnlocked && authMode === 'signup';
+  const handleRefreshVerification = async () => {
+    setAuthError('');
+    const { data: { user } } = await supabase.auth.getUser();
+    setSessionUser(user);
+    if (user && isEmailVerified(user)) {
+      setAuthSuccessMsg('Email verified! You can continue.');
+      setStep(2);
+    } else {
+      setAuthError('Email not verified yet. Click the link in your inbox, then try again.');
+    }
+  };
 
   // Auth check & state management
   useEffect(() => {
@@ -190,8 +160,9 @@ export default function OnboardingClient() {
             });
           }
         } catch {}
-        // Otherwise advance past the account creation step
-        setStep(2);
+        if (isEmailVerified(user)) {
+          setStep(2);
+        }
       }
       setAuthLoading(false);
     });
@@ -208,12 +179,14 @@ export default function OnboardingClient() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
+  useEffect(() => {
+    if (sessionUser && step > 1 && !isEmailVerified(sessionUser)) {
+      setStep(1);
+    }
+  }, [sessionUser, step]);
+
   const handleGoogleSignIn = async () => {
     setAuthError('');
-    if (signupBlocked) {
-      setAuthError('Enter a valid beta code first.');
-      return;
-    }
     setOauthLoading(true);
     const claimed = searchParams.get('username');
     const nextPath = claimed
@@ -236,19 +209,27 @@ export default function OnboardingClient() {
       return;
     }
 
-    if (authMode === 'signup' && signupBlocked) {
-      setAuthError('Enter a valid beta code first.');
-      return;
-    }
-
     try {
       setPasswordAuthLoading(true);
       if (authMode === 'signup') {
         const { data, error } = await supabase.auth.signUp({
           email: emailInput,
           password: passwordInput,
+          options: {
+            emailRedirectTo: getAuthCallbackUrl('/onboarding'),
+          },
         });
         if (error) throw error;
+
+        if (data.user) {
+          setSessionUser(data.user);
+        }
+
+        if (!data.session || !isEmailVerified(data.user)) {
+          setAuthSuccessMsg(`Check your email (${emailInput}) to verify your account before continuing.`);
+          return;
+        }
+
         setAuthSuccessMsg('Account created! Proceeding to onboarding...');
         setTimeout(() => { setStep(2); }, 800);
       } else {
@@ -455,6 +436,11 @@ export default function OnboardingClient() {
       return;
     }
 
+    if (!isEmailVerified(sessionUser)) {
+      alert('Verify your email before publishing your profile. Check your inbox for the confirmation link.');
+      return;
+    }
+
     if (!usernameValid || !recordedBlob || !videoPreviewUrl) {
       alert('Please complete your username and intro video before publishing.');
       return;
@@ -556,7 +542,6 @@ export default function OnboardingClient() {
   return (
     <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-black font-geist text-white selection:bg-white selection:text-black lg:flex-row">
       <Confetti active={step === 9} />
-      <Confetti active={betaConfetti} intensity="subtle" />
 
       {/* Onboarding Input Column */}
       <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden border-white/10 px-5 py-6 md:px-7 md:py-8 lg:max-w-md lg:border-r xl:max-w-lg">
@@ -635,47 +620,45 @@ export default function OnboardingClient() {
                             Sign Out
                           </button>
                         </div>
-                        <button 
-                          onClick={() => setStep(2)}
-                          className="w-full bg-white text-black py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm animate-pulse"
-                        >
-                          Continue to Username <ArrowRight className="h-4 w-4" />
-                        </button>
+                        {!isEmailVerified(sessionUser) ? (
+                          <div className="space-y-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+                            <p className="text-sm font-medium text-amber-100">Verify your email to continue</p>
+                            <p className="text-xs leading-relaxed text-amber-200/70">
+                              We sent a confirmation link to <span className="text-amber-50">{sessionUser.email}</span>.
+                              Open it, then return here to build your profile.
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={handleResendVerification}
+                                disabled={resendLoading}
+                                className="rounded-lg border border-amber-500/30 px-3 py-2 text-xs font-semibold text-amber-100 transition-colors hover:bg-amber-500/10 disabled:opacity-50"
+                              >
+                                {resendLoading ? 'Sending…' : 'Resend email'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleRefreshVerification}
+                                className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-black transition-colors hover:bg-zinc-200"
+                              >
+                                I&apos;ve verified
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button 
+                            onClick={() => setStep(2)}
+                            className="w-full bg-white text-black py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm animate-pulse"
+                          >
+                            Continue to Username <ArrowRight className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {authMode === 'signup' && betaRequired && !betaUnlocked && (
-                          <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.03] p-4">
-                            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                              Beta access code
-                            </label>
-                            <div className="flex gap-2">
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={4}
-                                placeholder="0000"
-                                value={betaCode}
-                                onChange={(e) => setBetaCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm tracking-[0.3em] text-center focus:border-white outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={verifyBetaCode}
-                                disabled={betaChecking || betaCode.length < 4}
-                                className="shrink-0 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
-                              >
-                                {betaChecking ? '…' : 'Unlock'}
-                              </button>
-                            </div>
-                            {betaError && <p className="text-xs text-red-400">{betaError}</p>}
-                            <p className="text-[11px] text-zinc-500">Seenly is in private beta. Enter your invite code to create an account.</p>
-                          </div>
-                        )}
-
                         <button
                           type="button"
-                          disabled={oauthLoading || signupBlocked}
+                          disabled={oauthLoading}
                           onClick={handleGoogleSignIn}
                           className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-white/10 bg-white px-4 py-3 text-sm font-semibold text-black transition-all hover:bg-zinc-200 disabled:opacity-50"
                         >
@@ -722,7 +705,7 @@ export default function OnboardingClient() {
 
                         <button 
                           type="submit"
-                          disabled={oauthLoading || passwordAuthLoading || signupBlocked}
+                          disabled={oauthLoading || passwordAuthLoading}
                           className="w-full bg-white text-black py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm disabled:opacity-50"
                         >
                           <LoadingLabel
