@@ -73,6 +73,18 @@ async function uploadBytesToStorage(
   throw directError;
 }
 
+async function authHeadersForUpload(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (session?.access_token) {
+    headers.Authorization = `Bearer ${session.access_token}`;
+  }
+  return headers;
+}
+
 export async function uploadFile(
   file: Blob,
   kind: 'video' | 'thumbnail' | 'resume' | 'avatar',
@@ -82,7 +94,7 @@ export async function uploadFile(
 ): Promise<string> {
   const prepResponse = await fetch('/api/upload/prepare', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: await authHeadersForUpload(),
     credentials: 'same-origin',
     body: JSON.stringify({
       kind,

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
 import { createAdminClient } from '@/utils/supabase/admin';
 import { ensureStorageBuckets } from '@/db/ensure-storage';
+import { resolveAuthenticatedUser } from '@/lib/upload-auth';
 import {
   UPLOAD_BUCKETS,
   contentTypeFor,
@@ -32,10 +32,7 @@ type PrepareBody = {
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await resolveAuthenticatedUser(request);
 
     if (!user) {
       return NextResponse.json({ error: 'You must be signed in to upload.' }, { status: 401 });

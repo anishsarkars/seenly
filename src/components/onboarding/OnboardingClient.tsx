@@ -110,7 +110,8 @@ export default function OnboardingClient() {
 
   // Auth check & state management
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const user = session?.user ?? null;
       if (user) {
         setSessionUser(user);
         setSocials(prev => ({ ...prev, email: user.email || '' }));
@@ -133,6 +134,8 @@ export default function OnboardingClient() {
           }
         } catch {}
         setStep(2);
+      } else {
+        setSessionUser(null);
       }
       setAuthLoading(false);
     });
@@ -185,11 +188,8 @@ export default function OnboardingClient() {
         });
         if (error) throw error;
 
-        if (data.user) {
-          setSessionUser(data.user);
-        }
-
-        if (data.session) {
+        if (data.session?.user) {
+          setSessionUser(data.session.user);
           setAuthSuccessMsg('Account created! Proceeding to onboarding...');
           setTimeout(() => { setStep(2); }, 800);
           return;
@@ -203,6 +203,10 @@ export default function OnboardingClient() {
           password: passwordInput,
         });
         if (error) throw error;
+
+        if (data.session?.user) {
+          setSessionUser(data.session.user);
+        }
 
         // Check if user already has a published profile → skip onboarding
         const signedInUser = data.user;
@@ -396,10 +400,18 @@ export default function OnboardingClient() {
   };
 
   const handlePublish = async () => {
-    if (!sessionUser?.id) {
-      alert('Please sign in before publishing your profile.');
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.user) {
+      alert('Please sign in from step 1 before publishing.');
+      setStep(1);
+      setSessionUser(null);
       return;
     }
+
+    setSessionUser(session.user);
 
     if (!usernameValid || !recordedBlob || !videoPreviewUrl) {
       alert('Please complete your username and intro video before publishing.');
@@ -453,7 +465,7 @@ export default function OnboardingClient() {
 
       const onboardingPayload = {
         username,
-        email: socials.email || sessionUser.email || `${username}@seenly.tech`,
+        email: socials.email || session.user.email || `${username}@seenly.tech`,
         fullName,
         headline,
         location,
@@ -469,7 +481,7 @@ export default function OnboardingClient() {
       };
 
       setUploadProgress(90);
-      const res = await saveOnboardingData(sessionUser.id, onboardingPayload);
+      const res = await saveOnboardingData(session.user.id, onboardingPayload);
       if (!res.success) {
         throw new Error(res.error || 'Failed to save profile.');
       }
@@ -581,7 +593,15 @@ export default function OnboardingClient() {
                           </button>
                         </div>
                         <button 
-                          onClick={() => setStep(2)}
+                          onClick={async () => {
+                            const { data: { session } } = await supabase.auth.getSession();
+                            if (!session) {
+                              setAuthError('Please sign in first to continue.');
+                              return;
+                            }
+                            setSessionUser(session.user);
+                            setStep(2);
+                          }}
                           className="w-full bg-white text-black py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm animate-pulse"
                         >
                           Continue to Username <ArrowRight className="h-4 w-4" />
