@@ -50,7 +50,7 @@ export default function EmailVerifyBanner() {
     <div className="flex flex-col gap-2 rounded-lg border border-amber-500/20 bg-amber-500/[0.08] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2 text-xs text-amber-100/90">
         <Mail className="h-3.5 w-3.5 shrink-0" />
-        <span>Verify your email to publish profile changes.</span>
+        <span>Verify your email to save or publish your profile.</span>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {hint && <span className="text-[11px] text-amber-200/65">{hint}</span>}

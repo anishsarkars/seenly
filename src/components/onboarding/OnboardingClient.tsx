@@ -28,7 +28,6 @@ import Confetti from '@/components/Confetti';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { signInWithGoogle, getAuthCallbackUrl } from '@/lib/auth-client';
-import { isEmailVerified } from '@/lib/email-verification';
 import { LoadingLabel } from '@/components/ui/ActionStatus';
 
 export default function OnboardingClient() {
@@ -46,7 +45,6 @@ export default function OnboardingClient() {
   const [authSuccessMsg, setAuthSuccessMsg] = useState('');
   const [oauthLoading, setOauthLoading] = useState(false);
   const [passwordAuthLoading, setPasswordAuthLoading] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   // Form State
@@ -110,32 +108,6 @@ export default function OnboardingClient() {
     if (clean) setUsername(clean);
   }, [searchParams]);
 
-  const handleResendVerification = async () => {
-    const email = sessionUser?.email;
-    if (!email) return;
-    setResendLoading(true);
-    setAuthError('');
-    const { error } = await supabase.auth.resend({ type: 'signup', email });
-    setResendLoading(false);
-    if (error) {
-      setAuthError(error.message);
-      return;
-    }
-    setAuthSuccessMsg('Verification email sent — check your inbox.');
-  };
-
-  const handleRefreshVerification = async () => {
-    setAuthError('');
-    const { data: { user } } = await supabase.auth.getUser();
-    setSessionUser(user);
-    if (user && isEmailVerified(user)) {
-      setAuthSuccessMsg('Email verified! You can continue.');
-      setStep(2);
-    } else {
-      setAuthError('Email not verified yet. Click the link in your inbox, then try again.');
-    }
-  };
-
   // Auth check & state management
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -160,9 +132,7 @@ export default function OnboardingClient() {
             });
           }
         } catch {}
-        if (isEmailVerified(user)) {
-          setStep(2);
-        }
+        setStep(2);
       }
       setAuthLoading(false);
     });
@@ -178,12 +148,6 @@ export default function OnboardingClient() {
 
     return () => subscription.unsubscribe();
   }, [supabase]);
-
-  useEffect(() => {
-    if (sessionUser && step > 1 && !isEmailVerified(sessionUser)) {
-      setStep(1);
-    }
-  }, [sessionUser, step]);
 
   const handleGoogleSignIn = async () => {
     setAuthError('');
@@ -225,19 +189,27 @@ export default function OnboardingClient() {
           setSessionUser(data.user);
         }
 
-        if (!data.session || !isEmailVerified(data.user)) {
-          setAuthSuccessMsg(`Check your email (${emailInput}) to verify your account before continuing.`);
+        if (data.session) {
+          setAuthSuccessMsg('Account created! Proceeding to onboarding...');
+          setTimeout(() => { setStep(2); }, 800);
           return;
         }
 
-        setAuthSuccessMsg('Account created! Proceeding to onboarding...');
-        setTimeout(() => { setStep(2); }, 800);
+        setAuthSuccessMsg(
+          `Account created! We sent a confirmation link to ${emailInput}. Sign in after confirming to continue — you can verify later from your dashboard too.`
+        );
+        setAuthMode('signin');
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: emailInput,
           password: passwordInput,
         });
-        if (error) throw error;
+        if (error) {
+          if (error.message.toLowerCase().includes('email not confirmed')) {
+            throw new Error('Confirm your email first, then sign in. Check your inbox for the link from Supabase.');
+          }
+          throw error;
+        }
 
         // Check if user already has a published profile → skip onboarding
         const signedInUser = data.user;
@@ -436,11 +408,6 @@ export default function OnboardingClient() {
       return;
     }
 
-    if (!isEmailVerified(sessionUser)) {
-      alert('Verify your email before publishing your profile. Check your inbox for the confirmation link.');
-      return;
-    }
-
     if (!usernameValid || !recordedBlob || !videoPreviewUrl) {
       alert('Please complete your username and intro video before publishing.');
       return;
@@ -620,39 +587,12 @@ export default function OnboardingClient() {
                             Sign Out
                           </button>
                         </div>
-                        {!isEmailVerified(sessionUser) ? (
-                          <div className="space-y-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
-                            <p className="text-sm font-medium text-amber-100">Verify your email to continue</p>
-                            <p className="text-xs leading-relaxed text-amber-200/70">
-                              We sent a confirmation link to <span className="text-amber-50">{sessionUser.email}</span>.
-                              Open it, then return here to build your profile.
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                onClick={handleResendVerification}
-                                disabled={resendLoading}
-                                className="rounded-lg border border-amber-500/30 px-3 py-2 text-xs font-semibold text-amber-100 transition-colors hover:bg-amber-500/10 disabled:opacity-50"
-                              >
-                                {resendLoading ? 'Sending…' : 'Resend email'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleRefreshVerification}
-                                className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-black transition-colors hover:bg-zinc-200"
-                              >
-                                I&apos;ve verified
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button 
-                            onClick={() => setStep(2)}
-                            className="w-full bg-white text-black py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm animate-pulse"
-                          >
-                            Continue to Username <ArrowRight className="h-4 w-4" />
-                          </button>
-                        )}
+                        <button 
+                          onClick={() => setStep(2)}
+                          className="w-full bg-white text-black py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-zinc-200 transition-all text-sm animate-pulse"
+                        >
+                          Continue to Username <ArrowRight className="h-4 w-4" />
+                        </button>
                       </div>
                     ) : (
                       <div className="space-y-4">
