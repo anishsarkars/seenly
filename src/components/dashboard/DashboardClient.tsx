@@ -528,6 +528,9 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   return (
     <div className={`${shell} flex h-dvh flex-col overflow-hidden`}>
       <ActionStatus status={actionStatus} onDismiss={() => setActionStatus(null)} />
+      <div className="shrink-0 border-b border-white/10 px-4 py-2 sm:px-6">
+        <EmailVerifyBanner />
+      </div>
       {billingSuccessPlan && (
         <BillingSuccessOverlay
           plan={billingSuccessPlan}
@@ -701,7 +704,6 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
           {/* Content */}
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
             <main className="mx-auto min-w-0 w-full max-w-2xl space-y-8">
-              <EmailVerifyBanner />
 
               {activeTab === 'analytics' && (
                 <>

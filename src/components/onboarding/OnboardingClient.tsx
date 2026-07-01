@@ -195,21 +195,14 @@ export default function OnboardingClient() {
           return;
         }
 
-        setAuthSuccessMsg(
-          `Account created! We sent a confirmation link to ${emailInput}. Sign in after confirming to continue — you can verify later from your dashboard too.`
-        );
+        setAuthSuccessMsg('Account created! Sign in to continue building your profile.');
         setAuthMode('signin');
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: emailInput,
           password: passwordInput,
         });
-        if (error) {
-          if (error.message.toLowerCase().includes('email not confirmed')) {
-            throw new Error('Confirm your email first, then sign in. Check your inbox for the link from Supabase.');
-          }
-          throw error;
-        }
+        if (error) throw error;
 
         // Check if user already has a published profile → skip onboarding
         const signedInUser = data.user;
