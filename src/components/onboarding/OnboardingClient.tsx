@@ -28,6 +28,7 @@ import Confetti from '@/components/Confetti';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
 import { signInWithGoogle, getAuthCallbackUrl } from '@/lib/auth-client';
+import { formatAuthError, isAlreadyRegisteredError, isAuthRateLimitError } from '@/lib/auth-errors';
 import { LoadingLabel } from '@/components/ui/ActionStatus';
 
 export default function OnboardingClient() {
@@ -176,6 +177,18 @@ export default function OnboardingClient() {
       return;
     }
 
+    const proceedAfterSignIn = async (userId: string) => {
+      try {
+        const existing = await getUserProfile(userId);
+        if (existing?.user?.username) {
+          router.replace('/dashboard');
+          return;
+        }
+      } catch {}
+      setAuthSuccessMsg('Logged in! Proceeding to setup...');
+      setTimeout(() => { setStep(2); }, 800);
+    };
+
     try {
       setPasswordAuthLoading(true);
       if (authMode === 'signup') {
@@ -186,11 +199,61 @@ export default function OnboardingClient() {
             emailRedirectTo: getAuthCallbackUrl('/onboarding'),
           },
         });
-        if (error) throw error;
+
+        if (error) {
+          if (isAuthRateLimitError(error)) {
+            setAuthError(formatAuthError(error));
+            setAuthMode('signin');
+            return;
+          }
+
+          if (isAlreadyRegisteredError(error)) {
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+              email: emailInput,
+              password: passwordInput,
+            });
+            if (!signInError && signInData.session?.user) {
+              setSessionUser(signInData.session.user);
+              await proceedAfterSignIn(signInData.session.user.id);
+              return;
+            }
+            setAuthError('This email is already registered. Sign in with your password.');
+            setAuthMode('signin');
+            return;
+          }
+
+          throw error;
+        }
+
+        if (data.user && (!data.user.identities || data.user.identities.length === 0)) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: emailInput,
+            password: passwordInput,
+          });
+          if (!signInError && signInData.session?.user) {
+            setSessionUser(signInData.session.user);
+            await proceedAfterSignIn(signInData.session.user.id);
+            return;
+          }
+          setAuthError('This email is already registered. Sign in with your password.');
+          setAuthMode('signin');
+          return;
+        }
 
         if (data.session?.user) {
           setSessionUser(data.session.user);
           setAuthSuccessMsg('Account created! Proceeding to onboarding...');
+          setTimeout(() => { setStep(2); }, 800);
+          return;
+        }
+
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: emailInput,
+          password: passwordInput,
+        });
+        if (!signInError && signInData.session?.user) {
+          setSessionUser(signInData.session.user);
+          setAuthSuccessMsg('Account ready! Proceeding to onboarding...');
           setTimeout(() => { setStep(2); }, 800);
           return;
         }
@@ -202,30 +265,25 @@ export default function OnboardingClient() {
           email: emailInput,
           password: passwordInput,
         });
-        if (error) throw error;
+        if (error) {
+          if (isAuthRateLimitError(error)) {
+            setAuthError(formatAuthError(error));
+            return;
+          }
+          throw error;
+        }
 
         if (data.session?.user) {
           setSessionUser(data.session.user);
         }
 
-        // Check if user already has a published profile → skip onboarding
         const signedInUser = data.user;
         if (signedInUser) {
-          try {
-            const existing = await getUserProfile(signedInUser.id);
-            if (existing?.user?.username) {
-              // Redirect to public profile page
-              router.replace('/dashboard');
-              return;
-            }
-          } catch {}
+          await proceedAfterSignIn(signedInUser.id);
         }
-
-        setAuthSuccessMsg('Logged in! Proceeding to setup...');
-        setTimeout(() => { setStep(2); }, 800);
       }
     } catch (err: any) {
-      setAuthError(err.message || 'Authentication failed.');
+      setAuthError(formatAuthError(err));
     } finally {
       setPasswordAuthLoading(false);
     }
