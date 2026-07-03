@@ -125,14 +125,6 @@ export default function OnboardingClient() {
             router.replace('/dashboard');
             return;
           }
-          const entRes = await fetch('/api/billing/entitlements', { credentials: 'same-origin' });
-          if (entRes.ok) {
-            const ent = await entRes.json();
-            setVideoLimits({
-              maxVideoSec: ent.maxVideoSec ?? FREE_VIDEO_LIMITS.maxVideoSec,
-              maxUploadBytes: ent.maxUploadBytes ?? FREE_VIDEO_LIMITS.maxUploadBytes,
-            });
-          }
         } catch {}
         setStep(2);
       } else {

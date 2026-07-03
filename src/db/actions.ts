@@ -295,7 +295,7 @@ export async function saveOnboardingData(userId: string, data: any) {
     if (projectCount > entitlements.maxProjects) {
       return {
         success: false,
-        error: `Free plan allows up to ${entitlements.maxProjects} projects. Upgrade to Pro for unlimited projects.`,
+        error: `You can add up to ${entitlements.maxProjects} projects.`,
       };
     }
 
@@ -303,7 +303,7 @@ export async function saveOnboardingData(userId: string, data: any) {
     if (socialCount > entitlements.maxSocialLinks) {
       return {
         success: false,
-        error: `Free plan allows up to ${entitlements.maxSocialLinks} social links. Upgrade to Pro for unlimited links.`,
+        error: `You can add up to ${entitlements.maxSocialLinks} social links.`,
       };
     }
 

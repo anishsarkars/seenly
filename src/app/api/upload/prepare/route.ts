@@ -68,13 +68,6 @@ export async function POST(request: Request) {
       );
     }
 
-    if (kind === 'thumbnail' && body.source === 'custom' && !entitlements.customThumbnail) {
-      return NextResponse.json(
-        { error: 'Custom thumbnails require Seenly Pro or Final boss.' },
-        { status: 403 }
-      );
-    }
-
     if (kind === 'resume' && fileSize > 10 * 1024 * 1024) {
       return NextResponse.json({ error: 'Resume must be 10MB or smaller.' }, { status: 400 });
     }

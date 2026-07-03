@@ -17,10 +17,6 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser();
 
       if (user) {
-        if (safeNext === '/pricing') {
-          return NextResponse.redirect(`${origin}/pricing`);
-        }
-
         const profile = await getUserProfile(user.id);
         if (profile?.user?.username) {
           return NextResponse.redirect(`${origin}/dashboard`);
