@@ -63,7 +63,7 @@ export default function OnboardingClient() {
   const [selectedAvatar, setSelectedAvatar] = useState<string>(DEFAULT_PROFILE_AVATAR);
   
   // Video states
-  const [videoMethod, setVideoMethod] = useState<'record' | 'upload'>('record');
+  const [videoMethod, setVideoMethod] = useState<'record' | 'upload'>('upload');
   const [isRecording, setIsRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
@@ -471,40 +471,44 @@ export default function OnboardingClient() {
 
     setSessionUser(session.user);
 
-    if (!usernameValid || !recordedBlob || !videoPreviewUrl) {
-      alert('Please complete your username and intro video before publishing.');
+    if (!usernameValid) {
+      alert('Please choose a valid username before publishing.');
       return;
     }
+
+    const hasVideo = !!(recordedBlob && videoPreviewUrl);
 
     setIsUploading(true);
     setUploadProgress(10);
 
     try {
-      let finalVideoUrl = videoPreviewUrl;
+      let finalVideoUrl: string | undefined;
       let finalThumbnailUrl: string | undefined;
       let finalResumeUrl: string | undefined;
 
-      if (recordedBlob && videoPreviewUrl.startsWith('blob:')) {
+      if (hasVideo && videoPreviewUrl!.startsWith('blob:')) {
         setUploadProgress(30);
         finalVideoUrl = await uploadProfileVideo(
-          recordedBlob,
-          recordedBlob.type.includes('webm') ? 'intro.webm' : 'intro.mp4',
+          recordedBlob!,
+          recordedBlob!.type.includes('webm') ? 'intro.webm' : 'intro.mp4',
           videoLimits
         );
         setUploadProgress(55);
         try {
-          const thumbnail = await captureVideoThumbnail(videoPreviewUrl);
+          const thumbnail = await captureVideoThumbnail(videoPreviewUrl!);
           finalThumbnailUrl = await uploadProfileThumbnail(thumbnail);
         } catch (thumbErr) {
           console.warn('Thumbnail upload skipped:', thumbErr);
         }
+      } else if (hasVideo && isPersistedMediaUrl(videoPreviewUrl)) {
+        finalVideoUrl = videoPreviewUrl;
       }
 
-      if (!isPersistedMediaUrl(finalVideoUrl)) {
+      if (hasVideo && !isPersistedMediaUrl(finalVideoUrl)) {
         throw new Error('Video upload failed. Check your connection and try again.');
       }
 
-      if (!finalThumbnailUrl) {
+      if (hasVideo && finalVideoUrl && !finalThumbnailUrl) {
         try {
           finalThumbnailUrl = await uploadProfileThumbnail(
             await captureVideoThumbnail(finalVideoUrl)
@@ -590,7 +594,7 @@ export default function OnboardingClient() {
                 <span className="font-medium text-white/70">
                   {step === 1 && "Create Account"}
                   {step === 2 && "Choose Username"}
-                  {step === 3 && "Record Introduction"}
+                  {step === 3 && "Intro Video"}
                   {step === 4 && "Basic Information"}
                   {step === 5 && "Experience Timeline"}
                   {step === 6 && "Key Projects"}
@@ -813,26 +817,62 @@ export default function OnboardingClient() {
                 className="space-y-6"
               >
                 <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tight">Record your Intro.</h1>
-                  <p className="text-zinc-400 text-sm">Explain who you are, what you build, and what you&apos;re looking for in {formatVideoDurationLimit(videoLimits.maxVideoSec)}.</p>
+                  <h1 className="text-3xl font-bold tracking-tight">Add your intro video.</h1>
+                  <p className="text-zinc-400 text-sm">
+                    Highly recommended — a short intro helps recruiters connect with you. You can skip for now and add one later from your dashboard.
+                  </p>
                 </div>
 
                 <div className="flex gap-4 p-1 bg-zinc-900/80 rounded-lg border border-white/10">
-                  <button 
-                    onClick={() => setVideoMethod('record')}
-                    className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all ${videoMethod === 'record' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'}`}
-                  >
-                    Webcam Recorder
-                  </button>
                   <button 
                     onClick={() => setVideoMethod('upload')}
                     className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all ${videoMethod === 'upload' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'}`}
                   >
                     Upload File
                   </button>
+                  <button 
+                    onClick={() => setVideoMethod('record')}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all ${videoMethod === 'record' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:text-white'}`}
+                  >
+                    Webcam Recorder
+                  </button>
                 </div>
 
-                {videoMethod === 'record' ? (
+                {videoMethod === 'upload' ? (
+                  <div className="border border-dashed border-white/10 hover:border-zinc-700 bg-zinc-900/30 rounded-lg p-8 flex flex-col items-center justify-center transition-all cursor-pointer relative">
+                    <input 
+                      type="file" 
+                      accept="video/mp4,video/quicktime,video/webm" 
+                      onChange={handleFileUpload}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    {videoPreviewUrl ? (
+                      <div className="w-full aspect-video rounded-lg overflow-hidden relative">
+                        <video src={videoPreviewUrl} className="w-full h-full object-cover" controls />
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setVideoPreviewUrl(null);
+                            setRecordedBlob(null);
+                          }}
+                          className="absolute top-2 right-2 bg-black/80 border border-white/10 text-xs px-2 py-1 rounded-md"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-center space-y-4">
+                        <div className="h-12 w-12 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center mx-auto">
+                          <Upload className="h-5 w-5 text-zinc-400" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-zinc-300">Drag and drop your video file</p>
+                          <p className="text-xs text-zinc-500">MP4, MOV or WEBM up to {formatUploadLimit(videoLimits.maxUploadBytes)} ({formatVideoDurationLimit(videoLimits.maxVideoSec)})</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
                   <div className="relative aspect-video rounded-lg bg-zinc-900 border border-white/10 overflow-hidden flex flex-col justify-center items-center">
                     {cameraError ? (
                       <div className="text-center p-6 space-y-3.5 max-w-sm z-10">
@@ -904,40 +944,6 @@ export default function OnboardingClient() {
                       </>
                     )}
                   </div>
-                ) : (
-                  <div className="border border-dashed border-white/10 hover:border-zinc-700 bg-zinc-900/30 rounded-lg p-8 flex flex-col items-center justify-center transition-all cursor-pointer relative">
-                    <input 
-                      type="file" 
-                      accept="video/mp4,video/quicktime,video/webm" 
-                      onChange={handleFileUpload}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
-                    {videoPreviewUrl ? (
-                      <div className="w-full aspect-video rounded-lg overflow-hidden relative">
-                        <video src={videoPreviewUrl} className="w-full h-full object-cover" controls />
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setVideoPreviewUrl(null);
-                            setRecordedBlob(null);
-                          }}
-                          className="absolute top-2 right-2 bg-black/80 border border-white/10 text-xs px-2 py-1 rounded-md"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="text-center space-y-4">
-                        <div className="h-12 w-12 rounded-full bg-zinc-900 border border-white/10 flex items-center justify-center mx-auto">
-                          <Upload className="h-5 w-5 text-zinc-400" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium text-zinc-300">Drag and drop your video file</p>
-                          <p className="text-xs text-zinc-500">MP4, MOV or WEBM up to {formatUploadLimit(videoLimits.maxUploadBytes)} ({formatVideoDurationLimit(videoLimits.maxVideoSec)})</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
                 )}
 
                 <div className="flex gap-4">
@@ -948,11 +954,10 @@ export default function OnboardingClient() {
                       <ArrowLeft className="h-4 w-4" /> Back
                     </button>
                     <button 
-                      disabled={!videoPreviewUrl}
                       onClick={() => setStep(4)}
-                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm disabled:opacity-50"
+                      className="flex-1 bg-white text-black hover:bg-zinc-200 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all text-sm"
                     >
-                      Continue <ArrowRight className="h-4 w-4" />
+                      {videoPreviewUrl ? 'Continue' : 'Skip for now'} <ArrowRight className="h-4 w-4" />
                     </button>
                   </div>
                 </motion.div>
