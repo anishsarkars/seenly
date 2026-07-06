@@ -1,4 +1,4 @@
-export const SEENLY_UPDATES_VERSION = '2026-06-30-minimal-video-player';
+export const SEENLY_UPDATES_VERSION = '2026-07-06-free-optional-video';
 
 export type SeenlyUpdate = {
   version: string;
@@ -9,10 +9,10 @@ export type SeenlyUpdate = {
 
 export const LATEST_SEENLY_UPDATE: SeenlyUpdate = {
   version: SEENLY_UPDATES_VERSION,
-  title: 'Minimal video player',
+  title: 'Free for everyone — video optional',
   description:
-    'Public profiles now use a cleaner custom player with play/pause and a slim progress bar instead of default browser controls.',
-  hint: 'Open any profile link to see it — your video keeps its natural aspect ratio.',
+    'Seenly is free by default while we keep things simple. Onboarding no longer requires a video — upload when you are ready, or skip and publish your profile first.',
+  hint: 'The upload tab is now the default on the video step. You can add or replace your intro anytime from the dashboard.',
 };
 
 export function hasUnreadUpdates(lastSeenVersion: string | null) {
