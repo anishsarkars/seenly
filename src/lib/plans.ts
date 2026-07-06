@@ -68,7 +68,17 @@ export interface BillingUserFields {
   isFounder?: boolean | null;
 }
 
-export function getEffectiveTier(_user: BillingUserFields): PlanTier {
+export function getEffectiveTier(user: BillingUserFields): PlanTier {
+  if (user.isFounder || user.plan === 'founder') return 'founder';
+
+  if (user.plan === 'pro') {
+    if (user.planStatus === 'active' || user.planStatus === 'on_hold') return 'pro';
+    if (user.planStatus === 'cancelled' && user.planExpiresAt) {
+      const expires = new Date(user.planExpiresAt);
+      if (expires > new Date()) return 'pro';
+    }
+  }
+
   return 'free';
 }
 

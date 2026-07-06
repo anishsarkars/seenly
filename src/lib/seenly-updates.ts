@@ -1,4 +1,4 @@
-export const SEENLY_UPDATES_VERSION = '2026-07-06-free-optional-video';
+export const SEENLY_UPDATES_VERSION = '2026-07-06-pricing-plans';
 
 export type SeenlyUpdate = {
   version: string;
@@ -9,10 +9,10 @@ export type SeenlyUpdate = {
 
 export const LATEST_SEENLY_UPDATE: SeenlyUpdate = {
   version: SEENLY_UPDATES_VERSION,
-  title: 'Free for everyone — video optional',
+  title: 'Free, Pro & Final boss plans',
   description:
-    'Seenly is free by default while we keep things simple. Onboarding no longer requires a video — upload when you are ready, or skip and publish your profile first.',
-  hint: 'The upload tab is now the default on the video step. You can add or replace your intro anytime from the dashboard.',
+    'Pricing is back on the landing page and at seenly.tech/pricing. Upgrade from dashboard Settings to unlock Pro uploads, unlimited projects, and more.',
+  hint: 'Intro video is still optional during onboarding — add one anytime from the dashboard.',
 };
 
 export function hasUnreadUpdates(lastSeenVersion: string | null) {

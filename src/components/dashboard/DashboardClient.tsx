@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { XAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import {
   TrendingUp, Play, Download, Eye, Edit3, Film, Settings,
@@ -20,6 +20,9 @@ import WhatsNewPanel from '@/components/dashboard/WhatsNewPanel';
 import { useDashboardSidebar } from '@/components/dashboard/useDashboardSidebar';
 import { useDashboardPreview } from '@/components/dashboard/useDashboardPreview';
 import SeenlyLogo from '@/components/SeenlyLogo';
+import BillingPanel from '@/components/billing/BillingPanel';
+import BillingSuccessOverlay from '@/components/billing/BillingSuccessOverlay';
+import PlanBadge from '@/components/billing/PlanBadge';
 import ProfileCustomizePanel from '@/components/dashboard/ProfileCustomizePanel';
 import {
   parseProfileSectionOrder,
@@ -29,6 +32,7 @@ import {
 } from '@/lib/profile-customization';
 import { formatVideoDurationLimit, formatUploadLimit } from '@/lib/video-limits';
 import { getEntitlements } from '@/lib/plans';
+import { isPaymentFailureStatus, isPaymentSuccessStatus } from '@/lib/billing-return';
 import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
 import { hasUnreadUpdates, SEENLY_UPDATES_VERSION } from '@/lib/seenly-updates';
 import { btnPrimary, btnSecondary, input, muted, panel, sectionTitle, shell } from '@/lib/platform-ui';
@@ -69,9 +73,19 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const [hasUnreadWhatsNew, setHasUnreadWhatsNew] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
+  const [billingSuccessPlan, setBillingSuccessPlan] = useState<'pro' | 'founder' | null>(null);
   const sidebar = useDashboardSidebar();
   const preview = useDashboardPreview();
-  const entitlements = useMemo(() => getEntitlements({}), []);
+  const entitlements = useMemo(
+    () =>
+      getEntitlements({
+        plan: profile?.user?.plan,
+        planStatus: profile?.user?.planStatus,
+        planExpiresAt: profile?.user?.planExpiresAt,
+        isFounder: profile?.user?.isFounder,
+      }),
+    [profile?.user?.plan, profile?.user?.planStatus, profile?.user?.planExpiresAt, profile?.user?.isFounder]
+  );
   const canUseDeveloperOptions = useMemo(
     () => hasDeveloperAccess(profile?.user?.email),
     [profile?.user?.email]
@@ -80,6 +94,37 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   useEffect(() => {
     const lastSeen = localStorage.getItem(WHATS_NEW_STORAGE_KEY);
     setHasUnreadWhatsNew(hasUnreadUpdates(lastSeen));
+  }, []);
+
+  // Always load fresh plan limits from the database (SSR profile can be stale after payment).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/billing/entitlements', { credentials: 'same-origin' });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (cancelled || !data.plan) return;
+        setProfile((prev: typeof initialProfile) => {
+          if (!prev?.user) return prev;
+          return {
+            ...prev,
+            user: {
+              ...prev.user,
+              plan: data.plan,
+              planStatus: data.planStatus,
+              planExpiresAt: data.planExpiresAt,
+              isFounder: data.isFounder,
+            },
+          };
+        });
+      } catch {
+        // keep SSR profile
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Warm storage limit sync when user opens the video tab (raises 50 MB cap if token is set).
@@ -101,6 +146,105 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
       document.body.style.overflow = '';
     };
   }, [mobilePreviewOpen]);
+
+  useEffect(() => {
+    const billing = searchParams.get('billing');
+    const plan = searchParams.get('plan');
+    const paymentStatus = searchParams.get('status');
+    const paymentId = searchParams.get('payment_id');
+    const subscriptionId = searchParams.get('subscription_id');
+
+    if (!billing) return;
+
+    setActiveTab('settings');
+    const clearBillingParams = () => router.replace('/dashboard?tab=settings', { scroll: false });
+
+    if (billing === 'cancelled') {
+      setActionStatus({
+        type: 'error',
+        message: 'Payment cancelled. No charges were made.',
+      });
+      clearBillingParams();
+      return;
+    }
+
+    if (billing === 'failed' || isPaymentFailureStatus(paymentStatus)) {
+      setActionStatus({
+        type: 'error',
+        message: 'Payment did not go through. You can try again anytime.',
+      });
+      clearBillingParams();
+      return;
+    }
+
+    const isPaidPlan = plan === 'pro' || plan === 'founder';
+    const isSuccessFlow =
+      isPaidPlan &&
+      (billing === 'success' ||
+        (billing === 'return' &&
+          (!paymentStatus || isPaymentSuccessStatus(paymentStatus))));
+
+    if (!isSuccessFlow) {
+      if (billing === 'return') {
+        setActionStatus({
+          type: 'error',
+          message: 'Payment was not completed.',
+        });
+        clearBillingParams();
+      }
+      return;
+    }
+
+    setBillingSuccessPlan(plan);
+    setActionStatus({ type: 'loading', message: 'Confirming your payment…' });
+
+    (async () => {
+      try {
+        const syncBody = { plan, paymentId, subscriptionId, status: paymentStatus };
+        const res = await fetch('/api/billing/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify(syncBody),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.profile) {
+          setProfile(data.profile);
+          setActionStatus({ type: 'success', message: 'Payment confirmed — your plan is active.' });
+        } else if (res.status === 202) {
+          await new Promise((r) => setTimeout(r, 2500));
+          const retry = await fetch('/api/billing/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify(syncBody),
+          });
+          const retryData = await retry.json().catch(() => ({}));
+          if (retryData.profile) {
+            setProfile(retryData.profile);
+            setActionStatus({ type: 'success', message: 'Payment confirmed — your plan is active.' });
+          } else {
+            setActionStatus({
+              type: 'success',
+              message: 'Payment received. Your plan will activate in a moment.',
+            });
+          }
+        } else {
+          setActionStatus({
+            type: 'success',
+            message: 'Payment received. Your plan will activate in a moment.',
+          });
+        }
+      } catch {
+        setActionStatus({
+          type: 'success',
+          message: 'Payment received. Your plan will activate in a moment.',
+        });
+      }
+    })();
+
+    clearBillingParams();
+  }, [searchParams, router]);
 
   const toggleWhatsNew = () => {
     setWhatsNewOpen((prev) => !prev);
@@ -374,12 +518,30 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     );
   };
 
+  const billingUser = {
+    plan: profile?.user?.plan,
+    planStatus: profile?.user?.planStatus,
+    planExpiresAt: profile?.user?.planExpiresAt,
+    isFounder: profile?.user?.isFounder,
+  };
+
   return (
     <div className={`${shell} flex h-dvh flex-col overflow-hidden`}>
       <ActionStatus status={actionStatus} onDismiss={() => setActionStatus(null)} />
       <div className="shrink-0 border-b border-white/10 px-4 py-2 sm:px-6">
         <EmailVerifyBanner />
       </div>
+      {billingSuccessPlan && (
+        <BillingSuccessOverlay
+          plan={billingSuccessPlan}
+          onDismiss={() => setBillingSuccessPlan(null)}
+          onSignInAgain={async () => {
+            setBillingSuccessPlan(null);
+            await supabase.auth.signOut();
+            router.push('/login?next=/dashboard');
+          }}
+        />
+      )}
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
         {/* Nav sidebar — resizable & closable */}
         <aside
@@ -467,6 +629,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
               )}
               <SeenlyLogo size="sm" className="shrink-0 lg:hidden" />
               <h1 className={`${sectionTitle} truncate text-base sm:text-lg`}>{TAB_META[activeTab].label}</h1>
+              <PlanBadge user={billingUser} />
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button
@@ -711,7 +874,10 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                     </button>
                     {projects.length >= entitlements.maxProjects && entitlements.maxProjects !== Number.POSITIVE_INFINITY && (
                       <p className="text-xs text-white/40">
-                        Limit: {entitlements.maxProjects} projects.
+                        Free plan limit: {entitlements.maxProjects} projects.{' '}
+                        <button type="button" onClick={() => setActiveTab('settings')} className="text-white/60 underline hover:text-white/80">
+                          Upgrade
+                        </button>
                       </p>
                     )}
                   </div>
@@ -805,6 +971,10 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
 
               {activeTab === 'settings' && (
                 <div className="space-y-6">
+                  <Suspense fallback={<div className={`${panel} p-6 text-sm text-white/45`}>Loading billing…</div>}>
+                    <BillingPanel user={profile?.user ?? {}} />
+                  </Suspense>
+
                   {canUseDeveloperOptions && profile?.user?.username && (
                     <DeveloperEmbedPanel
                       username={profile.user.username}
