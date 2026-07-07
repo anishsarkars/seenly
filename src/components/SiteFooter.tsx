@@ -1,5 +1,4 @@
 import SeenlyLogo from '@/components/SeenlyLogo';
-import ScrollLaunchBadge from '@/components/ScrollLaunchBadge';
 import Link from 'next/link';
 
 export type SiteFooterVariant =
@@ -88,9 +87,6 @@ export default function SiteFooter({
             </span>
           </a>
         </div>
-        <div className="mt-3 flex justify-center">
-          <ScrollLaunchBadge />
-        </div>
       </footer>
     );
   }
@@ -130,10 +126,6 @@ export default function SiteFooter({
             Anish
           </span>
         </a>
-      </div>
-
-      <div className="mx-auto mt-5 flex max-w-5xl justify-center border-t border-white/[0.06] pt-5">
-        <ScrollLaunchBadge />
       </div>
     </footer>
   );

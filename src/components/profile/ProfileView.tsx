@@ -11,7 +11,6 @@ import { logAnalyticEvent } from '@/db/actions';
 import GoldenVerifiedTick from '@/components/profile/GoldenVerifiedTick';
 import ProVerifiedTick from '@/components/profile/ProVerifiedTick';
 import SeenlyLogo from '@/components/SeenlyLogo';
-import ScrollLaunchBadge from '@/components/ScrollLaunchBadge';
 import {
   DEFAULT_PROFILE_SECTION_ORDER,
   parseProfileSectionOrder,
@@ -232,7 +231,7 @@ function ProfilePublicFooter({ username }: { username?: string }) {
   const handle = username || 'yourusername';
 
   return (
-    <footer className="flex flex-col items-center gap-6 pb-8">
+    <footer className="flex justify-center pb-8">
       <Link
         href="/onboarding"
         className="group inline-flex w-full max-w-md flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-4 text-center transition-all hover:border-white/25 hover:bg-white/[0.09] sm:px-6"
@@ -245,7 +244,6 @@ function ProfilePublicFooter({ username }: { username?: string }) {
           seenly.tech/{handle}
         </p>
       </Link>
-      <ScrollLaunchBadge />
     </footer>
   );
 }
