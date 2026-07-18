@@ -127,10 +127,10 @@ export default function SiteFooter({
           </span>
         </a>
       </div>
+
+      <a href="https://daniellaunches.com" target="_blank">
+  <img src="https://daniellaunches.com/badge-light.svg" alt="Featured on DanielLaunches" width="220" height="48" />
+</a>
     </footer>
   );
 }
-
-<a href="https://daniellaunches.com" target="_blank">
-  <img src="https://daniellaunches.com/badge-light.svg" alt="Featured on DanielLaunches" width="220" height="48" />
-</a>
