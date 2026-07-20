@@ -25,33 +25,39 @@ function linksForVariant(variant: SiteFooterVariant, username?: string | null): 
       return [
         { href: '/dashboard', label: 'Dashboard' },
         ...(username ? [{ href: `/${username}`, label: 'View profile' }] : []),
+        { href: '/explore', label: 'Explore' },
         { href: '/#how-it-works', label: 'How it works' },
       ];
     case 'onboarding':
       return [
         { href: '/onboarding', label: 'Continue setup' },
+        { href: '/explore', label: 'Explore' },
         { href: '/login', label: 'Sign in' },
         { href: '/#how-it-works', label: 'How it works' },
       ];
     case 'login':
       return [
         { href: '/onboarding', label: 'Get started' },
+        { href: '/explore', label: 'Explore' },
         { href: '/#how-it-works', label: 'How it works' },
       ];
     case 'onboarding-flow':
       return [
         { href: '/login', label: 'Sign in' },
+        { href: '/explore', label: 'Explore' },
         { href: '/#how-it-works', label: 'How it works' },
       ];
     case 'profile':
       return [
         { href: '/onboarding', label: 'Create yours' },
+        { href: '/explore', label: 'Explore' },
         { href: '/login', label: 'Sign in' },
         { href: '/#how-it-works', label: 'How it works' },
       ];
     case 'guest':
     default:
       return [
+        { href: '/explore', label: 'Explore' },
         { href: '/#how-it-works', label: 'How it works' },
         { href: '/onboarding', label: 'Get started' },
         { href: '/login', label: 'Sign in' },

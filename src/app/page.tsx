@@ -8,7 +8,6 @@ import HeroPhonePreview from '@/components/landing/HeroPhonePreview';
 import LandingPricing from '@/components/landing/LandingPricing';
 import FeaturedProfilesCarousel from '@/components/landing/FeaturedProfilesCarousel';
 import SiteFooter from '@/components/SiteFooter';
-import ThemeToggle from '@/components/theme/ThemeToggle';
 import { createClient } from '@/utils/supabase/client';
 import { getUserProfile } from '@/db/actions';
 
@@ -73,7 +72,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background font-geist text-foreground selection:bg-foreground selection:text-background">
+    <div className="min-h-screen bg-black font-geist text-white selection:bg-white selection:text-black">
 
       {/* HERO VIEWPORT SECTION — always dark over video */}
       <section className="relative flex min-h-[100dvh] w-full flex-col justify-between overflow-hidden bg-black text-white sm:min-h-[115dvh]">
@@ -102,7 +101,7 @@ export default function Home() {
               <a href="#how-it-works" className="text-sm text-white/70 hover:text-white transition-colors">
                 How it Works
               </a>
-              <a href="#featured" className="text-sm text-white/70 hover:text-white transition-colors">
+              <a href="/explore" className="text-sm text-white/70 hover:text-white transition-colors">
                 Profiles
               </a>
               <a href="#pricing" className="text-sm text-white/70 hover:text-white transition-colors">
@@ -112,7 +111,6 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <ThemeToggle compact className="!border-white/15 !bg-white/10 !text-white/80 hover:!text-white" />
             {authState === 'member' ? (
               <a
                 href="/dashboard"
@@ -170,6 +168,13 @@ export default function Home() {
                 className="border-b border-white/[0.06] py-5 text-2xl font-medium tracking-tight text-white/90 transition-colors hover:text-white"
               >
                 How it Works
+              </a>
+              <a
+                href="/explore"
+                onClick={() => setMobileMenuOpen(false)}
+                className="border-b border-white/[0.06] py-5 text-2xl font-medium tracking-tight text-white/90 transition-colors hover:text-white"
+              >
+                Profiles
               </a>
               <a
                 href="#pricing"
@@ -305,41 +310,36 @@ export default function Home() {
         `}</style>
       </section>
 
-      {/* Subtle animated divider */}
-      <div className="relative h-px w-full overflow-hidden bg-black">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-        <div className="absolute inset-y-0 left-1/2 h-full w-2/3 -translate-x-1/2 animate-[sectionGlow_6s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/15 to-transparent blur-[0.5px]" />
-      </div>
-
-      {/* HOW IT WORKS SECTION */}
-      <section id="how-it-works" className="relative bg-background px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-36 lg:px-16">
-        <div className="mx-auto flex max-w-4xl flex-col items-center gap-16 text-center sm:gap-20 md:gap-24">
+      {/* HOW IT WORKS — seamless black into featured */}
+      <section id="how-it-works" className="relative bg-black px-5 py-20 text-white sm:px-6 sm:py-28 md:px-12 md:py-36 lg:px-16">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-black/80" />
+        <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-16 text-center sm:gap-20 md:gap-24">
           <div className="space-y-4 sm:space-y-5">
-            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/60">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
               How it works
             </span>
-            <h2 className="text-2xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-4xl md:text-5xl">
+            <h2 className="text-2xl font-bold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl">
               Three steps to your profile.<br />
-              <span className="text-muted-foreground">One link to share everywhere.</span>
+              <span className="text-white/50">One link to share everywhere.</span>
             </h2>
           </div>
 
           <div className="grid w-full grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-8">
             {steps.map((step) => (
               <div key={step.label} className="flex flex-col items-center gap-4 sm:gap-5">
-                <div className="text-muted-foreground">{step.icon}</div>
+                <div className="text-white/45">{step.icon}</div>
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold tracking-tight text-foreground">{step.label}</p>
-                  <p className="mx-auto max-w-xs px-2 text-sm leading-relaxed text-muted-foreground sm:max-w-[12rem] sm:px-0">{step.description}</p>
+                  <p className="text-sm font-semibold tracking-tight text-white">{step.label}</p>
+                  <p className="mx-auto max-w-xs px-2 text-sm leading-relaxed text-white/50 sm:max-w-[12rem] sm:px-0">{step.description}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="w-full max-w-md rounded-full border border-border bg-card px-5 py-3 text-center text-sm leading-relaxed text-muted-foreground sm:w-auto sm:px-6">
+          <div className="w-full max-w-md rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-center text-sm leading-relaxed text-white/50 sm:w-auto sm:px-6">
             From one intro to your{' '}
-            <span className="font-semibold text-foreground">seenly.tech</span>
+            <span className="font-semibold text-white">seenly.tech</span>
             {' '}link
           </div>
         </div>
@@ -347,18 +347,12 @@ export default function Home() {
 
       <FeaturedProfilesCarousel />
 
-      {/* Subtle animated divider */}
-      <div className="relative h-px w-full overflow-hidden bg-black">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
-        <div className="absolute inset-y-0 left-1/2 h-full w-2/3 -translate-x-1/2 animate-[sectionGlow_6s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/15 to-transparent blur-[0.5px]" />
-      </div>
-
       <LandingPricing />
 
       {/* Claim username — bottom CTA above footer */}
       {authState === 'guest' && (
-        <section className="relative overflow-hidden border-t border-white/[0.06] bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-32 lg:px-16">
-          {/* Subtle gradient glow */}
+        <section className="relative overflow-hidden bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-32 lg:px-16">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black to-transparent" />
           <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
             <div className="absolute left-1/2 top-1/2 h-[min(70vw,420px)] w-[min(70vw,420px)] -translate-x-1/2 -translate-y-1/2">
               <div

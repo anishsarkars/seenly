@@ -34,6 +34,7 @@ import { formatVideoDurationLimit, formatUploadLimit } from '@/lib/video-limits'
 import { getEntitlements, getTrialDaysRemaining, isTrialing, getEffectiveTier } from '@/lib/plans';
 import { PLAN_PRICES } from '@/lib/plan-marketing';
 import ThemeToggle from '@/components/theme/ThemeToggle';
+import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import { isPaymentFailureStatus, isPaymentSuccessStatus } from '@/lib/billing-return';
 import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
 import { hasUnreadUpdates, SEENLY_UPDATES_VERSION } from '@/lib/seenly-updates';
@@ -532,6 +533,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
   const showUpgradeBanner = effectiveTier === 'free' || trialing;
 
   return (
+    <ThemeProvider>
     <div className={`${shell} flex h-dvh flex-col overflow-hidden`}>
       <ActionStatus status={actionStatus} onDismiss={() => setActionStatus(null)} />
       <div className="shrink-0 border-b border-white/10 px-4 py-2 sm:px-6">
@@ -1140,5 +1142,6 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
 
       <WhatsNewPanel open={whatsNewOpen} onClose={() => setWhatsNewOpen(false)} />
     </div>
+    </ThemeProvider>
   );
 }

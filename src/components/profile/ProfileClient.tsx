@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { LayoutDashboard, Pencil } from 'lucide-react';
 import { logAnalyticEvent } from '@/db/actions';
 import { getEntitlements } from '@/lib/plans';
+import { ThemeProvider } from '@/components/theme/ThemeProvider';
 import ProfileView, { type ProfileViewData } from './ProfileView';
 
 interface ProfileClientProps {
@@ -42,7 +43,7 @@ export default function ProfileClient({ profileData, isOwner = false }: ProfileC
   }, [user.id]);
 
   return (
-    <>
+    <ThemeProvider>
       {isOwner && (
         <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-black/85 px-2 py-2 shadow-2xl backdrop-blur-md">
           <span className="rounded-full bg-emerald-400/15 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
@@ -73,6 +74,6 @@ export default function ProfileClient({ profileData, isOwner = false }: ProfileC
           showFounderBadge={entitlements.showFounderBadge}
         />
       </div>
-    </>
+    </ThemeProvider>
   );
 }

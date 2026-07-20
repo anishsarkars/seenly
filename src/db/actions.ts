@@ -2,7 +2,7 @@
 
 import { db } from './index';
 import { users, experiences, projects, socials, analytics, profileViews } from './schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, or, ilike, desc, isNotNull, sql, ne } from 'drizzle-orm';
 import { suggestUsernames, validateUsername } from '@/lib/username';
 import { ensureProfileSchema } from './ensure-schema';
 import { ensureStorageBuckets } from './ensure-storage';
@@ -671,5 +671,131 @@ export async function setProfileEmbedEnabled(enabled: boolean) {
   } catch (error) {
     console.error('Failed to set embed enabled:', error);
     return { success: false, error: 'Could not update embed setting.' };
+  }
+}
+
+export type PublicProfileCard = {
+  id: string;
+  username: string;
+  fullName: string | null;
+  headline: string | null;
+  avatar: string | null;
+  videoUrl: string | null;
+  thumbnailUrl: string | null;
+  location: string | null;
+};
+
+function toPublicProfileCard(user: {
+  id: string;
+  username: string | null;
+  fullName: string | null;
+  headline: string | null;
+  avatar: string | null;
+  videoUrl: string | null;
+  thumbnailUrl: string | null;
+  location: string | null;
+}): PublicProfileCard | null {
+  if (!user.username) return null;
+  return {
+    id: user.id,
+    username: user.username,
+    fullName: user.fullName,
+    headline: user.headline,
+    avatar: user.avatar || DEFAULT_PROFILE_AVATAR,
+    videoUrl: user.videoUrl,
+    thumbnailUrl: user.thumbnailUrl,
+    location: user.location,
+  };
+}
+
+export async function listPublicProfiles(opts?: {
+  query?: string;
+  limit?: number;
+  offset?: number;
+  preferVideo?: boolean;
+}): Promise<{ profiles: PublicProfileCard[]; total: number }> {
+  const limit = Math.min(Math.max(opts?.limit ?? 24, 1), 60);
+  const offset = Math.max(opts?.offset ?? 0, 0);
+  const query = opts?.query?.trim() ?? '';
+  const preferVideo = opts?.preferVideo ?? false;
+
+  if (!isDbAvailable()) {
+    let rows = Object.values(mockStore.users).filter(
+      (u: any) => u.isPublic !== false && u.username
+    ) as any[];
+    if (query) {
+      const q = query.toLowerCase();
+      rows = rows.filter(
+        (u) =>
+          u.username?.toLowerCase().includes(q) ||
+          u.fullName?.toLowerCase().includes(q) ||
+          u.headline?.toLowerCase().includes(q) ||
+          u.location?.toLowerCase().includes(q)
+      );
+    }
+    if (preferVideo) {
+      rows = [...rows].sort((a, b) => Number(!!b.videoUrl) - Number(!!a.videoUrl));
+    }
+    const total = rows.length;
+    const profiles = rows
+      .slice(offset, offset + limit)
+      .map(toPublicProfileCard)
+      .filter(Boolean) as PublicProfileCard[];
+    return { profiles, total };
+  }
+
+  try {
+    await ensureProfileSchema();
+
+    const conditions = [eq(users.isPublic, true), isNotNull(users.username), ne(users.username, '')];
+
+    if (query) {
+      const pattern = `%${query}%`;
+      conditions.push(
+        or(
+          ilike(users.username, pattern),
+          ilike(users.fullName, pattern),
+          ilike(users.headline, pattern),
+          ilike(users.location, pattern)
+        )!
+      );
+    }
+
+    const where = and(...conditions);
+
+    const [countRow] = await db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(users)
+      .where(where);
+
+    const orderBy = preferVideo
+      ? [
+          sql`case when ${users.videoUrl} is not null and ${users.videoUrl} <> '' then 0 else 1 end`,
+          desc(users.updatedAt),
+        ]
+      : [desc(users.updatedAt)];
+
+    const rows = await db
+      .select({
+        id: users.id,
+        username: users.username,
+        fullName: users.fullName,
+        headline: users.headline,
+        avatar: users.avatar,
+        videoUrl: users.videoUrl,
+        thumbnailUrl: users.thumbnailUrl,
+        location: users.location,
+      })
+      .from(users)
+      .where(where)
+      .orderBy(...orderBy)
+      .limit(limit)
+      .offset(offset);
+
+    const profiles = rows.map(toPublicProfileCard).filter(Boolean) as PublicProfileCard[];
+    return { profiles, total: countRow?.total ?? profiles.length };
+  } catch (error) {
+    console.error('Failed to list public profiles:', error);
+    return { profiles: [], total: 0 };
   }
 }

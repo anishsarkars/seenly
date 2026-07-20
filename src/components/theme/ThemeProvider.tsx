@@ -22,6 +22,7 @@ function applyThemeClass(theme: SiteTheme) {
   root.style.colorScheme = theme;
 }
 
+/** Light/dark applies only while this provider is mounted (dashboard + profile). */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<SiteTheme>('dark');
   const [ready, setReady] = useState(false);
@@ -42,6 +43,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       applyThemeClass('dark');
     }
     setReady(true);
+
+    return () => {
+      applyThemeClass('dark');
+    };
   }, []);
 
   const setTheme = useCallback((next: SiteTheme) => {
