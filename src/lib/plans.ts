@@ -1,5 +1,7 @@
 export type PlanTier = 'free' | 'pro' | 'founder';
-export type PlanStatus = 'active' | 'on_hold' | 'cancelled' | null;
+export type PlanStatus = 'active' | 'on_hold' | 'cancelled' | 'trialing' | 'expired' | null;
+
+export const TRIAL_DAYS = 14;
 
 export interface PlanEntitlements {
   tier: PlanTier;
@@ -16,10 +18,11 @@ export interface PlanEntitlements {
   customProfileLayout: boolean;
 }
 
+/** `free` = trial ended / unpaid — editing allowed, public profiles blocked. */
 export const PLANS: Record<PlanTier, PlanEntitlements> = {
   free: {
     tier: 'free',
-    label: 'Free',
+    label: 'Trial ended',
     maxVideoSec: 60,
     maxUploadBytes: 50 * 1024 * 1024,
     maxProjects: 3,
@@ -68,22 +71,60 @@ export interface BillingUserFields {
   isFounder?: boolean | null;
 }
 
+function expiresInFuture(expiresAt: Date | string | null | undefined): boolean {
+  if (!expiresAt) return false;
+  return new Date(expiresAt) > new Date();
+}
+
+export function isTrialing(user: BillingUserFields): boolean {
+  return user.planStatus === 'trialing' && expiresInFuture(user.planExpiresAt);
+}
+
+export function isTrialExpiredStatus(user: BillingUserFields): boolean {
+  if (user.isFounder || user.plan === 'founder') return false;
+  if (user.planStatus === 'expired') return true;
+  if (user.planStatus === 'trialing' && user.planExpiresAt && !expiresInFuture(user.planExpiresAt)) {
+    return true;
+  }
+  return getEffectiveTier(user) === 'free';
+}
+
 export function getEffectiveTier(user: BillingUserFields): PlanTier {
   if (user.isFounder || user.plan === 'founder') return 'founder';
 
   if (user.plan === 'pro') {
     if (user.planStatus === 'active' || user.planStatus === 'on_hold') return 'pro';
-    if (user.planStatus === 'cancelled' && user.planExpiresAt) {
-      const expires = new Date(user.planExpiresAt);
-      if (expires > new Date()) return 'pro';
-    }
+    if (user.planStatus === 'cancelled' && expiresInFuture(user.planExpiresAt)) return 'pro';
+    if (user.planStatus === 'trialing' && expiresInFuture(user.planExpiresAt)) return 'pro';
   }
 
   return 'free';
 }
 
+/** Public profiles require an active paid plan or an unexpired trial. */
+export function canPublishPublic(user: BillingUserFields): boolean {
+  return getEffectiveTier(user) !== 'free';
+}
+
 export function getEntitlements(user: BillingUserFields): PlanEntitlements {
-  return PLANS[getEffectiveTier(user)];
+  const tier = getEffectiveTier(user);
+  const base = PLANS[tier];
+  if (tier === 'pro' && isTrialing(user)) {
+    return { ...base, label: 'Pro trial', showProBadge: false };
+  }
+  return base;
+}
+
+export function getTrialDaysRemaining(user: BillingUserFields): number | null {
+  if (!isTrialing(user) || !user.planExpiresAt) return null;
+  const ms = new Date(user.planExpiresAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+}
+
+export function trialEndsAtFromNow(days = TRIAL_DAYS): Date {
+  const ends = new Date();
+  ends.setDate(ends.getDate() + days);
+  return ends;
 }
 
 export function formatUploadLimit(bytes: number) {

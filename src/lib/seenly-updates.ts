@@ -1,4 +1,4 @@
-export const SEENLY_UPDATES_VERSION = '2026-07-06-pricing-plans';
+export const SEENLY_UPDATES_VERSION = '2026-07-20-pro-trial';
 
 export type SeenlyUpdate = {
   version: string;
@@ -9,10 +9,10 @@ export type SeenlyUpdate = {
 
 export const LATEST_SEENLY_UPDATE: SeenlyUpdate = {
   version: SEENLY_UPDATES_VERSION,
-  title: 'Free, Pro & Final boss plans',
+  title: '14-day Pro trial',
   description:
-    'Pricing is back on the landing page and at seenly.tech/pricing. Upgrade from dashboard Settings to unlock Pro uploads, unlimited projects, and more.',
-  hint: 'Intro video is still optional during onboarding — add one anytime from the dashboard.',
+    'There is no permanent free plan anymore. New profiles get full Pro for 14 days. After that, subscribe to keep your profile public.',
+  hint: 'Subscribe anytime from Dashboard → Settings before your trial ends.',
 };
 
 export function hasUnreadUpdates(lastSeenVersion: string | null) {

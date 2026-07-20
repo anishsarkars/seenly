@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { getUserBillingState } from '@/lib/billing/webhook-handler';
-import { getEntitlements } from '@/lib/plans';
+import {
+  canPublishPublic,
+  getEntitlements,
+  getTrialDaysRemaining,
+  isTrialing,
+} from '@/lib/plans';
 
 export async function GET() {
   try {
@@ -15,7 +20,8 @@ export async function GET() {
     }
 
     const billing = await getUserBillingState(user.id);
-    const entitlements = getEntitlements(billing ?? {});
+    const fields = billing ?? {};
+    const entitlements = getEntitlements(fields);
 
     return NextResponse.json({
       tier: entitlements.tier,
@@ -24,6 +30,9 @@ export async function GET() {
       planStatus: billing?.planStatus ?? null,
       planExpiresAt: billing?.planExpiresAt ?? null,
       isFounder: billing?.isFounder ?? false,
+      isTrialing: isTrialing(fields),
+      trialDaysRemaining: getTrialDaysRemaining(fields),
+      canPublishPublic: canPublishPublic(fields),
       maxVideoSec: entitlements.maxVideoSec,
       maxUploadBytes: entitlements.maxUploadBytes,
       maxProjects: entitlements.maxProjects,
@@ -40,9 +49,12 @@ export async function GET() {
       tier: entitlements.tier,
       label: entitlements.label,
       plan: 'free',
-      planStatus: null,
+      planStatus: 'expired',
       planExpiresAt: null,
       isFounder: false,
+      isTrialing: false,
+      trialDaysRemaining: null,
+      canPublishPublic: false,
       maxVideoSec: entitlements.maxVideoSec,
       maxUploadBytes: entitlements.maxUploadBytes,
       maxProjects: entitlements.maxProjects,

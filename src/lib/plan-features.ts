@@ -1,20 +1,10 @@
 import type { PlanTier } from '@/lib/plans';
-import { PLANS } from '@/lib/plans';
+import { PLANS, TRIAL_DAYS } from '@/lib/plans';
 
 /** User-facing feature bullets per plan (matches pricing page). */
-export const PLAN_FEATURE_LISTS: Record<PlanTier, string[]> = {
-  free: [
-    '1 public profile',
-    '60-second intro video',
-    'Max 50 MB upload',
-    'Resume upload',
-    'Up to 3 projects',
-    'Up to 5 social links',
-    'Seenly watermark',
-    'Basic analytics',
-  ],
+export const PLAN_FEATURE_LISTS: Record<Exclude<PlanTier, 'free'>, string[]> = {
   pro: [
-    'Everything in Free, plus:',
+    `${TRIAL_DAYS}-day free Pro trial`,
     'Blue verified tick on profile',
     '3-minute intro video',
     '100 MB uploads',
@@ -34,7 +24,7 @@ export const PLAN_FEATURE_LISTS: Record<PlanTier, string[]> = {
   ],
 };
 
-export function getPlanFeatureList(tier: PlanTier): string[] {
+export function getPlanFeatureList(tier: Exclude<PlanTier, 'free'>): string[] {
   return PLAN_FEATURE_LISTS[tier];
 }
 

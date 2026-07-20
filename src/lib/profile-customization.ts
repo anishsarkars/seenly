@@ -26,11 +26,11 @@ export const PROFILE_THEME_META: Record<
 > = {
   minimal: {
     label: 'Minimal',
-    description: 'Clean black layout with video up front.',
+    description: 'Bento layout with lime accents and video up front.',
   },
   cinema: {
     label: 'Cinema',
-    description: 'Full-bleed video with warm accents and depth.',
+    description: 'Same bento layout with warm amber accents.',
   },
 };
 

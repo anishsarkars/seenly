@@ -3,7 +3,7 @@ import { createClient } from '@/utils/supabase/server';
 import { getUserProfile } from '@/db/actions';
 import { getDodoClient } from '@/lib/billing/dodo-client';
 import { applyProSubscription, downgradeToFree } from '@/lib/billing/webhook-handler';
-import { getEffectiveTier } from '@/lib/plans';
+import { getEffectiveTier, isTrialing } from '@/lib/plans';
 import { SUPPORT_EMAIL } from '@/lib/plan-marketing';
 
 export async function POST(request: Request) {
@@ -18,12 +18,13 @@ export async function POST(request: Request) {
     }
 
     const profile = await getUserProfile(user.id);
-    const tier = getEffectiveTier({
+    const billingFields = {
       plan: profile?.user?.plan,
       planStatus: profile?.user?.planStatus,
       planExpiresAt: profile?.user?.planExpiresAt,
       isFounder: profile?.user?.isFounder,
-    });
+    };
+    const tier = getEffectiveTier(billingFields);
 
     if (tier === 'founder') {
       return NextResponse.json(
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (tier !== 'pro') {
+    if (isTrialing(billingFields) || tier !== 'pro') {
       return NextResponse.json({ error: 'No active subscription to cancel.' }, { status: 400 });
     }
 
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
       await downgradeToFree(user.id);
       return NextResponse.json({
         success: true,
-        message: 'You have been downgraded to Free. Pro features are no longer active.',
+        message: 'Pro ended. Your profile is private until you subscribe again.',
       });
     }
 

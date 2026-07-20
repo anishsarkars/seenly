@@ -4,7 +4,13 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import PricingTierGrid from '@/components/billing/PricingTierGrid';
-import { getEffectiveTier, getEntitlements, type BillingUserFields } from '@/lib/plans';
+import {
+  getEffectiveTier,
+  getEntitlements,
+  getTrialDaysRemaining,
+  isTrialing,
+  type BillingUserFields,
+} from '@/lib/plans';
 import { FINAL_BOSS_LABEL, PLAN_PRICES, SUPPORT_EMAIL } from '@/lib/plan-marketing';
 
 interface BillingUser extends BillingUserFields {
@@ -37,6 +43,9 @@ export default function BillingPanel({ user }: BillingPanelProps) {
 
   const tier = getEffectiveTier(user);
   const entitlements = getEntitlements(user);
+  const trialing = isTrialing(user);
+  const trialDays = getTrialDaysRemaining(user);
+  const isPaidPro = tier === 'pro' && !trialing;
 
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +94,7 @@ export default function BillingPanel({ user }: BillingPanelProps) {
   const runBillingAction = async (immediate: boolean) => {
     const action = immediate ? 'downgrade' : 'cancel';
     const confirmMsg = immediate
-      ? 'Downgrade to Free now? Pro features will stop immediately.'
+      ? 'End Pro now? Your profile will become private until you subscribe again.'
       : 'Cancel renewal? You keep Pro until the end of your current billing period.';
     if (!window.confirm(confirmMsg)) return;
 
@@ -111,14 +120,10 @@ export default function BillingPanel({ user }: BillingPanelProps) {
     }
   };
 
-  const expiresLabel =
-    user.planExpiresAt && tier === 'pro'
-      ? new Date(user.planExpiresAt).toLocaleDateString()
-      : null;
+  const expiresLabel = user.planExpiresAt ? new Date(user.planExpiresAt).toLocaleDateString() : null;
 
   return (
     <div className="space-y-6">
-      {/* Current plan */}
       <div className={`${cardClass} px-5 py-5 sm:px-6`}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="text-left">
@@ -127,8 +132,13 @@ export default function BillingPanel({ user }: BillingPanelProps) {
             </span>
             <p className="mt-2 text-base font-semibold tracking-tight text-white">{entitlements.label}</p>
             <p className="mt-1 text-sm leading-relaxed text-white/50">
-              {tier === 'free' && 'Upgrade for longer videos, bigger uploads, and no watermark.'}
-              {tier === 'pro' &&
+              {tier === 'free' &&
+                'Trial ended. Subscribe to Pro to make your profile public again.'}
+              {trialing &&
+                `Free Pro trial · ${trialDays ?? 0} day${trialDays === 1 ? '' : 's'} left${
+                  expiresLabel ? ` · ends ${expiresLabel}` : ''
+                }`}
+              {isPaidPro &&
                 (user.planStatus === 'cancelled' && expiresLabel
                   ? `Cancels on ${expiresLabel} · access until then`
                   : 'Active · renews monthly')}
@@ -136,7 +146,7 @@ export default function BillingPanel({ user }: BillingPanelProps) {
             </p>
           </div>
 
-          {tier === 'free' && (
+          {(tier === 'free' || trialing) && (
             <button
               type="button"
               disabled={loadingPlan === 'pro'}
@@ -148,12 +158,12 @@ export default function BillingPanel({ user }: BillingPanelProps) {
                   <Loader2 className="h-4 w-4 animate-spin" /> Starting…
                 </span>
               ) : (
-                `Upgrade to Pro · ${PLAN_PRICES.pro.amount}${PLAN_PRICES.pro.period}`
+                `Subscribe to Pro · ${PLAN_PRICES.pro.amount}${PLAN_PRICES.pro.period}`
               )}
             </button>
           )}
 
-          {tier === 'pro' && (
+          {isPaidPro && (
             <button
               type="button"
               disabled={loadingPlan === 'founder'}
@@ -172,14 +182,13 @@ export default function BillingPanel({ user }: BillingPanelProps) {
         )}
       </div>
 
-      {/* Manage subscription */}
       <div className={`${cardClass} divide-y divide-white/[0.06]`}>
           <div className="px-5 py-4 sm:px-6">
             <p className="text-sm font-semibold tracking-tight text-white">Manage billing</p>
-            <p className="mt-1 text-xs text-white/45">Subscription, downgrade, and payment history.</p>
+            <p className="mt-1 text-xs text-white/45">Subscription and payment history.</p>
           </div>
 
-          {tier === 'pro' && (
+          {isPaidPro && (
             <>
               <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6">
                 <div>
@@ -198,8 +207,10 @@ export default function BillingPanel({ user }: BillingPanelProps) {
 
               <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-6">
                 <div>
-                  <p className="text-sm font-medium text-white">Downgrade to Free</p>
-                  <p className="mt-0.5 text-xs text-white/45">End Pro immediately and return to Free limits.</p>
+                  <p className="text-sm font-medium text-white">End Pro now</p>
+                  <p className="mt-0.5 text-xs text-white/45">
+                    Profile becomes private until you subscribe again.
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -207,7 +218,7 @@ export default function BillingPanel({ user }: BillingPanelProps) {
                   onClick={() => runBillingAction(true)}
                   className="rounded-lg border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-medium text-white/75 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
                 >
-                  {billingAction === 'downgrade' ? 'Downgrading…' : 'Downgrade'}
+                  {billingAction === 'downgrade' ? 'Ending…' : 'End now'}
                 </button>
               </div>
             </>
@@ -255,7 +266,6 @@ export default function BillingPanel({ user }: BillingPanelProps) {
           </div>
         </div>
 
-      {/* Compare plans — compact */}
       <div className={`${cardClass} px-4 py-4 sm:px-5 sm:py-5`}>
         <p className="mb-4 text-sm font-medium text-white">Compare plans</p>
         <PricingTierGrid
@@ -263,6 +273,7 @@ export default function BillingPanel({ user }: BillingPanelProps) {
           layout="compare"
           showHeader={false}
           currentTier={tier}
+          isTrialing={trialing}
           isSignedIn
         />
       </div>

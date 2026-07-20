@@ -47,6 +47,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
   --font-geist: var(--font-geist-sans), sans-serif;
+  --font-display: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --color-profile-accent: #c8f542;
+  --color-profile-card: #161616;
 }
 
 body {

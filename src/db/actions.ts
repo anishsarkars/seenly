@@ -7,7 +7,8 @@ import { suggestUsernames, validateUsername } from '@/lib/username';
 import { ensureProfileSchema } from './ensure-schema';
 import { ensureStorageBuckets } from './ensure-storage';
 import { DEFAULT_PROFILE_AVATAR } from '@/lib/profile-avatars';
-import { countFilledSocialLinks, getEntitlements } from '@/lib/plans';
+import { canPublishPublic, countFilledSocialLinks, getEntitlements, trialEndsAtFromNow } from '@/lib/plans';
+import { ensureUserTrial } from '@/lib/billing/webhook-handler';
 import { sanitizeProfileMedia } from '@/lib/profile-media';
 import { createClient } from '@/utils/supabase/server';
 import { hasDeveloperAccess } from '@/lib/developer-access';
@@ -43,10 +44,10 @@ mockStore.users[SEED_MOCK_USER_ID] = {
   thumbnailUrl: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=800&h=450',
   resumeUrl: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
   isPublic: true,
-  plan: 'free',
-  planStatus: null,
+  plan: 'pro',
+  planStatus: 'active',
   planExpiresAt: null,
-  isFounder: false,
+  isFounder: true,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -97,7 +98,12 @@ export async function getProfileByUsername(username: string) {
   try {
     await ensureProfileSchema();
 
-    const [user] = await db.select().from(users).where(eq(users.username, normalized)).limit(1);
+    const [initial] = await db.select({ id: users.id }).from(users).where(eq(users.username, normalized)).limit(1);
+    if (!initial) return null;
+
+    await ensureUserTrial(initial.id);
+
+    const [user] = await db.select().from(users).where(eq(users.id, initial.id)).limit(1);
     if (!user) return null;
 
     const userExperiences = await db.select().from(experiences).where(eq(experiences.userId, user.id));
@@ -138,6 +144,7 @@ export async function getUserProfile(userId: string) {
 
   try {
     await ensureProfileSchema();
+    await ensureUserTrial(safeId);
 
     const [user] = await db.select().from(users).where(eq(users.id, safeId)).limit(1);
     if (!user) return null;
@@ -278,6 +285,8 @@ export async function saveOnboardingData(userId: string, data: any) {
     await ensureProfileSchema();
     await ensureStorageBuckets();
 
+    await ensureUserTrial(userId);
+
     const [billingRow] = await db
       .select({
         plan: users.plan,
@@ -289,13 +298,28 @@ export async function saveOnboardingData(userId: string, data: any) {
       .where(eq(users.id, userId))
       .limit(1);
 
-    const entitlements = getEntitlements(billingRow ?? {});
+    const trialEndsAt = trialEndsAtFromNow();
+    const entitlements = getEntitlements(
+      billingRow ?? {
+        plan: 'pro',
+        planStatus: 'trialing',
+        planExpiresAt: trialEndsAt,
+      }
+    );
+    const wantsPublic = isPublic !== false;
+
+    if (wantsPublic && billingRow && !canPublishPublic(billingRow)) {
+      return {
+        success: false,
+        error: 'Your free trial has ended. Subscribe to Pro to make your profile public again.',
+      };
+    }
 
     const projectCount = (projList || []).filter((p: { title?: string }) => p.title?.trim()).length;
     if (projectCount > entitlements.maxProjects) {
       return {
         success: false,
-        error: `Free plan allows up to ${entitlements.maxProjects} projects. Upgrade to Pro for unlimited projects.`,
+        error: `Your plan allows up to ${entitlements.maxProjects} projects. Subscribe to Pro for unlimited projects.`,
       };
     }
 
@@ -303,7 +327,7 @@ export async function saveOnboardingData(userId: string, data: any) {
     if (socialCount > entitlements.maxSocialLinks) {
       return {
         success: false,
-        error: `Free plan allows up to ${entitlements.maxSocialLinks} social links. Upgrade to Pro for unlimited links.`,
+        error: `Your plan allows up to ${entitlements.maxSocialLinks} social links. Subscribe to Pro for unlimited links.`,
       };
     }
 
@@ -319,7 +343,10 @@ export async function saveOnboardingData(userId: string, data: any) {
       videoUrl,
       thumbnailUrl,
       resumeUrl,
-      isPublic,
+      isPublic: wantsPublic,
+      plan: 'pro',
+      planStatus: 'trialing',
+      planExpiresAt: trialEndsAt,
       updatedAt: new Date(),
     }).onConflictDoUpdate({
       target: users.id,
@@ -333,7 +360,7 @@ export async function saveOnboardingData(userId: string, data: any) {
         videoUrl,
         thumbnailUrl,
         resumeUrl,
-        isPublic,
+        isPublic: wantsPublic,
         updatedAt: new Date(),
       }
     });

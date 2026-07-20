@@ -31,7 +31,8 @@ import {
   type ProfileTheme,
 } from '@/lib/profile-customization';
 import { formatVideoDurationLimit, formatUploadLimit } from '@/lib/video-limits';
-import { getEntitlements } from '@/lib/plans';
+import { canPublishPublic, getEntitlements, getTrialDaysRemaining, isTrialing } from '@/lib/plans';
+import { PLAN_PRICES } from '@/lib/plan-marketing';
 import { isPaymentFailureStatus, isPaymentSuccessStatus } from '@/lib/billing-return';
 import { resolveProfileAvatarSelection } from '@/lib/profile-avatars';
 import { hasUnreadUpdates, SEENLY_UPDATES_VERSION } from '@/lib/seenly-updates';
@@ -469,6 +470,20 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
 
   const handleTogglePrivacy = async () => {
     const nextValue = !profile?.user?.isPublic;
+    const accessFields = {
+      plan: profile?.user?.plan,
+      planStatus: profile?.user?.planStatus,
+      planExpiresAt: profile?.user?.planExpiresAt,
+      isFounder: profile?.user?.isFounder,
+    };
+    if (nextValue && !canPublishPublic(accessFields)) {
+      setActionStatus({
+        type: 'error',
+        message: 'Your free trial has ended. Subscribe to Pro to make your profile public.',
+      });
+      setActiveTab('settings');
+      return;
+    }
     setIsTogglingPrivacy(true);
     setActionStatus({
       type: 'loading',
@@ -524,6 +539,9 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     planExpiresAt: profile?.user?.planExpiresAt,
     isFounder: profile?.user?.isFounder,
   };
+  const trialing = isTrialing(billingUser);
+  const trialDaysLeft = getTrialDaysRemaining(billingUser);
+  const publishingAllowed = canPublishPublic(billingUser);
 
   return (
     <div className={`${shell} flex h-dvh flex-col overflow-hidden`}>
@@ -531,6 +549,26 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
       <div className="shrink-0 border-b border-white/10 px-4 py-2 sm:px-6">
         <EmailVerifyBanner />
       </div>
+      {(trialing || !publishingAllowed) && (
+        <div className="shrink-0 border-b border-white/10 bg-white/[0.03] px-4 py-2.5 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-white/70">
+              {trialing
+                ? `Pro trial · ${trialDaysLeft ?? 0} day${trialDaysLeft === 1 ? '' : 's'} left`
+                : 'Trial ended — subscribe to keep your profile public'}
+            </p>
+            <button
+              type="button"
+              onClick={() => setActiveTab('settings')}
+              className="text-xs font-medium text-white/80 underline decoration-white/30 underline-offset-2 hover:text-white"
+            >
+              {trialing
+                ? `Subscribe · ${PLAN_PRICES.pro.amount}${PLAN_PRICES.pro.period}`
+                : 'View plans'}
+            </button>
+          </div>
+        </div>
+      )}
       {billingSuccessPlan && (
         <BillingSuccessOverlay
           plan={billingSuccessPlan}
@@ -874,9 +912,9 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                     </button>
                     {projects.length >= entitlements.maxProjects && entitlements.maxProjects !== Number.POSITIVE_INFINITY && (
                       <p className="text-xs text-white/40">
-                        Free plan limit: {entitlements.maxProjects} projects.{' '}
+                        Plan limit: {entitlements.maxProjects} projects.{' '}
                         <button type="button" onClick={() => setActiveTab('settings')} className="text-white/60 underline hover:text-white/80">
-                          Upgrade
+                          Subscribe
                         </button>
                       </p>
                     )}
@@ -992,13 +1030,32 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
 
                   <div className={`${panel} divide-y divide-white/10`}>
                   {[
-                    { title: 'Visibility', desc: profile?.user?.isPublic === false ? 'Profile is private' : 'Profile is public', action: (
-                      <button type="button" onClick={handleTogglePrivacy} disabled={isTogglingPrivacy} className={btnSecondary}>
+                    { title: 'Visibility', desc: !publishingAllowed
+                      ? 'Trial ended — subscribe to go public'
+                      : profile?.user?.isPublic === false
+                        ? 'Profile is private'
+                        : 'Profile is public', action: (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!publishingAllowed && profile?.user?.isPublic === false) {
+                            setActiveTab('settings');
+                            return;
+                          }
+                          void handleTogglePrivacy();
+                        }}
+                        disabled={isTogglingPrivacy}
+                        className={btnSecondary}
+                      >
                         <LoadingLabel
                           loading={isTogglingPrivacy}
                           loadingText="Updating…"
                         >
-                          {profile?.user?.isPublic === false ? 'Make public' : 'Make private'}
+                          {!publishingAllowed && profile?.user?.isPublic === false
+                            ? 'Subscribe to go public'
+                            : profile?.user?.isPublic === false
+                              ? 'Make public'
+                              : 'Make private'}
                         </LoadingLabel>
                       </button>
                     )},

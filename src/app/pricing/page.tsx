@@ -4,7 +4,7 @@ import SeenlyLogo from '@/components/SeenlyLogo';
 import PricingTierGrid, { PricingPageFooter } from '@/components/billing/PricingTierGrid';
 import SiteFooter from '@/components/SiteFooter';
 import { getUserProfile } from '@/db/actions';
-import { getEffectiveTier } from '@/lib/plans';
+import { getEffectiveTier, isTrialing } from '@/lib/plans';
 
 export default async function PricingPage() {
   const supabase = await createClient();
@@ -13,14 +13,17 @@ export default async function PricingPage() {
   } = await supabase.auth.getUser();
 
   let currentTier: 'free' | 'pro' | 'founder' = 'free';
+  let onTrial = false;
   if (user) {
     const profile = await getUserProfile(user.id);
-    currentTier = getEffectiveTier({
+    const fields = {
       plan: profile?.user?.plan,
       planStatus: profile?.user?.planStatus,
       planExpiresAt: profile?.user?.planExpiresAt,
       isFounder: profile?.user?.isFounder,
-    });
+    };
+    currentTier = getEffectiveTier(fields);
+    onTrial = isTrialing(fields);
   }
 
   return (
@@ -55,7 +58,7 @@ export default async function PricingPage() {
 
       <main className="flex-1">
         <section className="relative bg-black px-5 py-16 sm:px-6 sm:py-24 md:px-12 md:py-28 lg:px-16">
-          <PricingTierGrid variant="checkout" currentTier={currentTier} isSignedIn={!!user} />
+          <PricingTierGrid variant="checkout" currentTier={currentTier} isTrialing={onTrial} isSignedIn={!!user} />
         </section>
 
         <div className="px-5 pb-16 sm:px-6 md:px-12 lg:px-16">

@@ -6,7 +6,7 @@ import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getDodoClient, getDodoProductIds, getAppBaseUrl } from '@/lib/billing/dodo-client';
 import { ensureBillingSchema } from '@/lib/billing/webhook-handler';
-import { getEffectiveTier } from '@/lib/plans';
+import { getEffectiveTier, isTrialing } from '@/lib/plans';
 
 function formatCheckoutError(error: unknown): { message: string; status: number } {
   const raw = error instanceof Error ? error.message : String(error);
@@ -56,18 +56,25 @@ export async function POST(request: Request) {
     }
 
     const profile = await getUserProfile(user.id);
-    const currentTier = getEffectiveTier({
+    const billingFields = {
       plan: profile?.user?.plan,
       planStatus: profile?.user?.planStatus,
       planExpiresAt: profile?.user?.planExpiresAt,
       isFounder: profile?.user?.isFounder,
-    });
+    };
+    const currentTier = getEffectiveTier(billingFields);
+    const onTrial = isTrialing(billingFields);
 
     if (plan === 'founder' && currentTier === 'founder') {
       return NextResponse.json({ error: 'You already have Seenly Final boss! access.' }, { status: 400 });
     }
 
-    if (plan === 'pro' && (currentTier === 'pro' || currentTier === 'founder')) {
+    // Trialists can convert to paid Pro; only block if already on a paid Pro/Founder plan.
+    if (
+      plan === 'pro' &&
+      !onTrial &&
+      (currentTier === 'pro' || currentTier === 'founder')
+    ) {
       return NextResponse.json({ error: 'You already have an active paid plan.' }, { status: 400 });
     }
 

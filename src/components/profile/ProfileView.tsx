@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  FileText, Share2, MapPin, ExternalLink,
+  Share2, MapPin, ExternalLink,
   Mail, Globe, Play, Pause, Volume2, VolumeX,
 } from 'lucide-react';
 import { isPersistedMediaUrl } from '@/lib/storage';
@@ -12,8 +12,6 @@ import GoldenVerifiedTick from '@/components/profile/GoldenVerifiedTick';
 import ProVerifiedTick from '@/components/profile/ProVerifiedTick';
 import SeenlyLogo from '@/components/SeenlyLogo';
 import {
-  DEFAULT_PROFILE_SECTION_ORDER,
-  parseProfileSectionOrder,
   parseProfileTheme,
   type ProfileSectionId,
   type ProfileTheme,
@@ -127,7 +125,7 @@ function IntroVideo({
   if (!canPlay) {
     return (
       <div
-        className={`flex min-h-[10rem] w-full items-center justify-center px-6 text-center text-sm text-zinc-500 ${shellClass}`}
+        className={`flex min-h-[12rem] w-full items-center justify-center px-6 text-center text-sm text-zinc-500 ${shellClass}`}
       >
         No intro video yet.
       </div>
@@ -227,20 +225,44 @@ function IntroVideo({
   );
 }
 
+function SocialIconLink({
+  href,
+  label,
+  className = '',
+  children,
+}: {
+  href: string;
+  label: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target={href.startsWith('mailto:') ? undefined : '_blank'}
+      rel={href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
+      aria-label={label}
+      className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors hover:bg-profile-accent hover:text-black hover:border-profile-accent ${className}`}
+    >
+      {children}
+    </a>
+  );
+}
+
 function ProfilePublicFooter({ username }: { username?: string }) {
   const handle = username || 'yourusername';
 
   return (
-    <footer className="flex justify-center pb-8">
+    <footer className="flex justify-center pb-2 pt-4">
       <Link
         href="/onboarding"
-        className="group inline-flex w-full max-w-md flex-col items-center gap-2 rounded-2xl border border-white/15 bg-white/[0.06] px-5 py-4 text-center transition-all hover:border-white/25 hover:bg-white/[0.09] sm:px-6"
+        className="group inline-flex w-full max-w-md flex-col items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3.5 text-center transition-all hover:border-profile-accent/30 hover:bg-white/[0.06]"
       >
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Seenly</p>
-        <p className="text-sm font-medium leading-snug text-white/85 group-hover:text-white">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">Seenly</p>
+        <p className="text-sm font-medium leading-snug text-white/80 group-hover:text-white">
           Claim yours — make your profile
         </p>
-        <p className="font-mono text-xs text-white/55 group-hover:text-white/75">
+        <p className="font-mono text-xs text-white/45 group-hover:text-white/65">
           seenly.tech/{handle}
         </p>
       </Link>
@@ -257,7 +279,7 @@ export default function ProfileView({
   showProBadge = false,
   showFounderBadge = false,
   profileTheme: profileThemeProp,
-  profileSectionOrder: profileSectionOrderProp,
+  profileSectionOrder: _profileSectionOrderProp,
 }: ProfileViewProps) {
   const { user, experiences, projects, socials } = profileData;
   const [hasLoggedPlay, setHasLoggedPlay] = useState(false);
@@ -316,316 +338,349 @@ export default function ProfileView({
   };
 
   const displayName = user.fullName || user.username || 'Your Name';
+  const firstName = displayName.trim().split(/\s+/)[0] || displayName;
   const displayHeadline = user.headline || 'Your professional headline';
   const displayLocation = user.location || 'Location';
-
-  const socialLinks = [
-    socials?.linkedin && { href: socials.linkedin, label: 'LinkedIn', icon: 'linkedin' as const },
-    socials?.github && { href: socials.github, label: 'GitHub', icon: 'github' as const },
-    socials?.twitter && { href: socials.twitter, label: 'Twitter', icon: 'twitter' as const },
-    socials?.website && { href: socials.website, label: 'Website', icon: 'globe' as const },
-    socials?.portfolio && { href: socials.portfolio, label: 'Portfolio', icon: 'globe' as const },
-    socials?.email && { href: `mailto:${socials.email}`, label: 'Email', icon: 'mail' as const },
-  ].filter(Boolean) as Array<{ href: string; label: string; icon: 'linkedin' | 'github' | 'twitter' | 'globe' | 'mail' }>;
+  const displayBio = user.bio || displayHeadline;
 
   const profileTheme =
     profileThemeProp ??
     (showFounderBadge ? parseProfileTheme(user.profileTheme) : 'minimal');
-  const sectionOrder =
-    profileSectionOrderProp ??
-    (showFounderBadge
-      ? parseProfileSectionOrder(user.profileSectionOrder)
-      : DEFAULT_PROFILE_SECTION_ORDER);
 
   const isCinema = profileTheme === 'cinema';
-  const sectionHeadingClass = isCinema
-    ? 'mb-4 text-[11px] font-semibold uppercase tracking-widest text-amber-200/50'
-    : 'mb-4 text-[11px] font-semibold uppercase tracking-widest text-zinc-600';
-  const pageBg = isCinema ? 'bg-zinc-950' : 'bg-black';
+  const accentClass = isCinema ? 'bg-amber-400 text-black' : 'bg-profile-accent text-black';
+  const accentText = isCinema ? 'text-amber-300' : 'text-profile-accent';
+  const socialIconClass = isCinema
+    ? 'border-amber-400/80 text-amber-300 hover:bg-amber-400 hover:text-black hover:border-amber-400'
+    : 'border-profile-accent/80 text-profile-accent';
+  const cardBg = 'bg-[#161616]';
 
-  const renderSidebarSocials = () =>
-    socialLinks.length > 0 ? (
-      <div className="flex flex-wrap gap-3.5 border-t border-zinc-900 pt-4 w-full justify-center md:justify-start">
-        {socials?.linkedin && (
-          <a href={socials.linkedin} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors">
-            <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
-          </a>
-        )}
-        {socials?.github && (
-          <a href={socials.github} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors">
-            <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" /></svg>
-          </a>
-        )}
-        {socials?.twitter && (
-          <a href={socials.twitter} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors">
-            <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" /></svg>
-          </a>
-        )}
-        {socials?.website && (
-          <a href={socials.website} target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors">
-            <Globe className="h-4 w-4" />
-          </a>
-        )}
-        {socials?.email && (
-          <a href={`mailto:${socials.email}`} className="text-zinc-500 hover:text-white transition-colors">
-            <Mail className="h-4 w-4" />
-          </a>
-        )}
-      </div>
-    ) : null;
+  const featuredProject = projects[0];
 
-  const mainSectionOrder = sectionOrder.filter((id) => id !== 'identity');
+  const renderSocialIcons = () => (
+    <div className="flex flex-wrap items-center gap-2.5">
+      {socials?.twitter && (
+        <SocialIconLink href={socials.twitter} label="Twitter" className={socialIconClass}>
+          <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.792l7.719-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+        </SocialIconLink>
+      )}
+      {socials?.email && (
+        <SocialIconLink href={`mailto:${socials.email}`} label="Email" className={socialIconClass}>
+          <Mail className="h-4 w-4" />
+        </SocialIconLink>
+      )}
+      {socials?.linkedin && (
+        <SocialIconLink href={socials.linkedin} label="LinkedIn" className={socialIconClass}>
+          <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
+        </SocialIconLink>
+      )}
+      {socials?.github && (
+        <SocialIconLink href={socials.github} label="GitHub" className={socialIconClass}>
+          <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" /></svg>
+        </SocialIconLink>
+      )}
+      {(socials?.website || socials?.portfolio) && (
+        <SocialIconLink href={(socials.website || socials.portfolio)!} label="Website" className={socialIconClass}>
+          <Globe className="h-4 w-4" />
+        </SocialIconLink>
+      )}
+    </div>
+  );
 
-  const renderMainSection = (id: ProfileSectionId) => {
-    switch (id) {
-      case 'bio':
-        return user.bio ? (
-          <div key="bio" className="space-y-3">
-            <h3 className={sectionHeadingClass}>About Me</h3>
-            <p className={`text-sm leading-relaxed font-medium italic ${isCinema ? 'text-zinc-300' : 'text-zinc-300'}`}>
-              &ldquo;{user.bio}&rdquo;
-            </p>
-          </div>
-        ) : null;
-      case 'experience':
-        return experiences.length > 0 ? (
-          <div key="experience" className="space-y-4">
-            <h3 className={sectionHeadingClass}>Experience</h3>
-            <div className={`relative space-y-6 pl-6 ${isCinema ? 'border-l border-amber-500/20' : 'border-l border-zinc-900'}`}>
-              {experiences.map((exp, idx) => (
-                <div key={idx} className="relative space-y-1">
-                  <div className={`absolute -left-[30px] top-1.5 h-2 w-2 rounded-full border border-black ${isCinema ? 'bg-amber-400' : 'bg-white'}`} />
-                  <div className="flex flex-col md:flex-row md:justify-between md:items-start">
-                    <div>
-                      <h4 className="font-semibold text-sm text-white">{exp.role}</h4>
-                      <p className="text-xs text-zinc-400 font-medium">{exp.company}</p>
-                    </div>
-                    {exp.duration && (
-                      <span className="text-[10px] text-zinc-500 font-medium bg-zinc-950 px-2 py-0.5 border border-zinc-900 rounded-md mt-1 md:mt-0">
-                        {exp.duration}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null;
-      case 'projects':
-        return projects.length > 0 ? (
-          <div key="projects" className="space-y-4">
-            <h3 className={sectionHeadingClass}>Key Projects</h3>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-              {projects.map((proj, idx) => (
-                <div
-                  key={idx}
-                  className={`p-5 rounded-2xl border transition-all space-y-3 flex flex-col justify-between ${
-                    isCinema
-                      ? 'border-amber-500/10 bg-amber-500/[0.03] hover:border-amber-500/20'
-                      : 'border-zinc-900 bg-zinc-950 hover:border-zinc-800'
-                  }`}
-                >
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm text-white">{proj.title}</h4>
-                    {proj.description && (
-                      <p className="text-xs text-zinc-400 leading-relaxed">{proj.description}</p>
-                    )}
-                  </div>
-                  <div className="flex gap-3 pt-2">
-                    {proj.website && (
-                      <a href={proj.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] font-semibold text-zinc-400 hover:text-white transition-colors">
-                        Live Site <ExternalLink className="h-2.5 w-2.5" />
-                      </a>
-                    )}
-                    {proj.github && (
-                      <a href={proj.github} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] font-semibold text-zinc-400 hover:text-white transition-colors">
-                        Codebase <ExternalLink className="h-2.5 w-2.5" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null;
-      case 'socials':
-        return socialLinks.length > 0 ? (
-          <div key="socials" className="space-y-4 pt-2">
-            <h3 className={sectionHeadingClass}>Contact & Socials</h3>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-              {socials?.email && (
-                <a href={`mailto:${socials.email}`} className="p-4 rounded-xl border border-zinc-900 bg-zinc-950 hover:border-zinc-800 transition-all flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-zinc-400"><Mail className="h-4 w-4" /></div>
-                  <div>
-                    <p className="text-[10px] text-zinc-500 font-semibold uppercase">Email</p>
-                    <p className="text-xs font-medium text-white">{socials.email}</p>
-                  </div>
-                </a>
-              )}
-              {socials?.linkedin && (
-                <a href={socials.linkedin} target="_blank" rel="noopener noreferrer" className="p-4 rounded-xl border border-zinc-900 bg-zinc-950 hover:border-zinc-800 transition-all flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-zinc-900 flex items-center justify-center text-zinc-400">
-                    <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-zinc-500 font-semibold uppercase">LinkedIn</p>
-                    <p className="text-xs font-medium text-white">Connect on LinkedIn</p>
-                  </div>
-                </a>
-              )}
-            </div>
-          </div>
-        ) : null;
-      default:
-        return null;
-    }
-  };
-
+  /** Bento public profile — video first, same data as before */
   if (isPublicProfile) {
     return (
-      <div className={`min-h-screen ${pageBg} text-white selection:bg-white selection:text-black py-10 md:py-16`}>
-        <div className="mx-auto max-w-4xl px-4 sm:px-6">
-          <header className="mb-8 flex items-center md:mb-10">
+      <div className="relative min-h-screen overflow-hidden bg-black font-geist text-white selection:bg-profile-accent selection:text-black">
+        {/* Atmosphere */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-24 -top-24 h-[28rem] w-[28rem] rounded-full bg-[radial-gradient(circle,rgba(200,245,66,0.12),transparent_65%)] blur-2xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-32 -left-20 h-[24rem] w-[24rem] rounded-full bg-[radial-gradient(circle,rgba(180,120,40,0.14),transparent_70%)] blur-2xl"
+        />
+
+        <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:py-12">
+          <div className="mb-8 flex items-center justify-between gap-4 sm:mb-10">
             <SeenlyLogo
               size="md"
               showBeta={false}
-              className="rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 shadow-lg shadow-black/20 backdrop-blur-md transition-all hover:border-white/15 hover:bg-white/[0.07]"
+              className="rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 backdrop-blur-md"
             />
-          </header>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-xs font-medium text-white/70 transition-colors hover:border-white/20 hover:text-white"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              {copied ? 'Copied' : 'Share'}
+            </button>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start">
-            {/* Sidebar */}
-            <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left space-y-6 md:sticky md:top-24">
-              <div className="relative group">
-                <div className={`absolute -inset-0.5 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-1000 ${isCinema ? 'bg-gradient-to-r from-amber-700 to-amber-500' : 'bg-gradient-to-r from-zinc-800 to-zinc-700'}`} />
-                <div className="relative h-28 w-28 rounded-full bg-zinc-900 border border-zinc-850 overflow-hidden flex items-center justify-center">
-                  {user.avatar ? (
-                    <img src={user.avatar} alt={displayName} className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-3xl font-extrabold">{user.username?.slice(0, 2).toUpperCase() || '??'}</span>
+          {/* Name header with hairlines */}
+          <div className="mb-8 flex items-center gap-4 sm:mb-10 sm:gap-6">
+            <div className="h-px flex-1 bg-white/20" />
+            <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 text-center">
+              <h1
+                className="font-display text-3xl tracking-tight text-white sm:text-4xl md:text-5xl"
+                style={{ fontFamily: 'var(--font-instrument-serif), ui-serif, Georgia, serif' }}
+              >
+                {displayName}
+              </h1>
+              {showFounderBadge && <GoldenVerifiedTick size="lg" />}
+              {!showFounderBadge && showProBadge && <ProVerifiedTick size="lg" />}
+            </div>
+            <div className="h-px flex-1 bg-white/20" />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
+            {/* Mobile: video first */}
+            <div className="order-1 lg:order-2 lg:col-span-7 xl:col-span-8">
+              <div className={`${cardBg} overflow-hidden rounded-[1.5rem] p-3 sm:p-4`}>
+                <div className="mb-3 flex items-center justify-between gap-3 px-1">
+                  <h2 className="text-sm font-semibold text-white sm:text-base">Intro video</h2>
+                  {featuredProject?.website && (
+                    <a
+                      href={featuredProject.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-1 text-xs font-medium ${accentText} hover:underline`}
+                    >
+                      View project <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+                <div className="overflow-hidden rounded-[1.15rem] bg-black">
+                  <IntroVideo
+                    videoUrl={user.videoUrl}
+                    thumbnailUrl={user.thumbnailUrl}
+                    preview={preview}
+                    userId={user.id}
+                    onPlay={handleVideoPlay}
+                    maxHeightClass="max-h-[min(68dvh,520px)]"
+                  />
+                </div>
+
+                {projects.length > 0 && (
+                  <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                    {projects.slice(0, 4).map((proj, idx) => (
+                      <div
+                        key={idx}
+                        className={`rounded-2xl p-3.5 sm:p-4 ${
+                          idx % 2 === 1
+                            ? isCinema
+                              ? 'bg-amber-400 text-black'
+                              : 'bg-profile-accent text-black'
+                            : 'bg-white text-black'
+                        }`}
+                      >
+                        <p className="text-sm font-semibold leading-snug">{proj.title}</p>
+                        {proj.description && (
+                          <p className="mt-1.5 line-clamp-2 text-xs opacity-70">{proj.description}</p>
+                        )}
+                        <div className="mt-2.5 flex flex-wrap gap-2">
+                          {proj.website && (
+                            <a
+                              href={proj.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-0.5 text-[10px] font-semibold underline-offset-2 hover:underline"
+                            >
+                              Live <ExternalLink className="h-2.5 w-2.5" />
+                            </a>
+                          )}
+                          {proj.github && (
+                            <a
+                              href={proj.github}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-0.5 text-[10px] font-semibold underline-offset-2 hover:underline"
+                            >
+                              Code <ExternalLink className="h-2.5 w-2.5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom action bar */}
+              <div className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] ${cardBg} px-4 py-3.5 sm:px-5`}>
+                {renderSocialIcons()}
+                <div className="flex flex-wrap items-center gap-2">
+                  {user.resumeUrl && user.resumeUrl !== '#' && (
+                    <button
+                      type="button"
+                      onClick={handleDownloadResume}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-[1.02]"
+                    >
+                      Resume <ExternalLink className="h-3.5 w-3.5" />
+                    </button>
                   )}
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center justify-center gap-1.5 md:justify-start">
-                  <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
-                  {showFounderBadge && <GoldenVerifiedTick size="lg" />}
-                  {!showFounderBadge && showProBadge && <ProVerifiedTick size="lg" />}
+            {/* Left column */}
+            <div className="order-2 flex flex-col gap-4 lg:order-1 lg:col-span-5 xl:col-span-4">
+              <div className={`${cardBg} overflow-hidden rounded-[1.5rem]`}>
+                <div className="relative aspect-[4/5] max-h-[320px] w-full overflow-hidden bg-zinc-900 sm:max-h-[380px]">
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={displayName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-5xl font-bold text-white/30">
+                      {user.username?.slice(0, 2).toUpperCase() || '??'}
+                    </div>
+                  )}
                 </div>
-                <p className="text-zinc-400 text-sm leading-relaxed">{displayHeadline}</p>
+                <div className={`m-3 rounded-[1.15rem] px-4 py-4 sm:m-3.5 ${accentClass}`}>
+                  <p className="text-base font-bold tracking-tight sm:text-lg">
+                    Hello, I&apos;m {firstName}
+                  </p>
+                  <p className="mt-1.5 text-sm leading-relaxed opacity-80">
+                    &ldquo;{displayBio}&rdquo;
+                  </p>
+                </div>
+              </div>
+
+              <div className={`${cardBg} space-y-5 rounded-[1.5rem] px-5 py-5`}>
                 {user.location && (
-                  <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
-                    <MapPin className="h-3 w-3" /> {displayLocation}
-                  </span>
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wider text-white/35">Location</p>
+                    <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-white/80">
+                      <MapPin className="h-3.5 w-3.5 text-white/40" />
+                      {displayLocation}
+                    </p>
+                  </div>
+                )}
+
+                {experiences.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-white">Experience</p>
+                    <ul className="mt-3 space-y-3">
+                      {experiences.map((exp, idx) => (
+                        <li key={idx} className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-white/90">{exp.company}</p>
+                            <p className="text-xs text-white/45">{exp.role}</p>
+                          </div>
+                          {exp.duration && (
+                            <span className="shrink-0 text-right text-[11px] text-white/40">
+                              {exp.duration}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {projects.length > 0 && (
+                  <div>
+                    <p className="text-sm font-semibold text-white">Focus</p>
+                    <p className="mt-2 text-sm leading-relaxed text-white/50">
+                      {projects
+                        .slice(0, 4)
+                        .map((p) => p.title)
+                        .join(' · ')}
+                    </p>
+                  </div>
+                )}
+
+                {user.headline && (
+                  <div>
+                    <p className="text-sm font-semibold text-white">About</p>
+                    <p className="mt-2 text-sm leading-relaxed text-white/50">{displayHeadline}</p>
+                  </div>
+                )}
+
+                {!experiences.length && !projects.length && !user.headline && (
+                  <p className="text-sm text-white/40">Profile details coming soon.</p>
                 )}
               </div>
-
-              <div className="flex flex-wrap gap-2 w-full justify-center md:justify-start">
-                <button
-                  type="button"
-                  onClick={handleShare}
-                  className="flex items-center gap-2 border border-zinc-800 hover:bg-zinc-900 px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all"
-                >
-                  <Share2 className="h-3.5 w-3.5" /> {copied ? 'Copied Link' : 'Share Profile'}
-                </button>
-                {user.resumeUrl && user.resumeUrl !== '#' && (
-                  <button
-                    type="button"
-                    onClick={handleDownloadResume}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition-all ${
-                      isCinema ? 'bg-amber-400 text-black hover:bg-amber-300' : 'bg-white text-black hover:bg-zinc-200'
-                    }`}
-                  >
-                    <FileText className="h-3.5 w-3.5" /> Download CV
-                  </button>
-                )}
-              </div>
-
-              {renderSidebarSocials()}
-            </div>
-
-            {/* Main — video hero + content */}
-            <div className="md:col-span-8 space-y-10">
-              <div
-                className={`relative overflow-hidden rounded-2xl bg-black shadow-2xl shadow-black/40 ${
-                  isCinema ? 'ring-1 ring-amber-500/15' : 'ring-1 ring-white/10'
-                }`}
-              >
-                <IntroVideo
-                  videoUrl={user.videoUrl}
-                  thumbnailUrl={user.thumbnailUrl}
-                  preview={preview}
-                  userId={user.id}
-                  onPlay={handleVideoPlay}
-                  maxHeightClass="max-h-[min(70dvh,560px)]"
-                />
-              </div>
-
-              {mainSectionOrder.map((id) => renderMainSection(id))}
             </div>
           </div>
 
-          <div className="mt-16 border-t border-white/10 pt-12 md:mt-20 md:pt-14">
-            <ProfilePublicFooter username={user.username} />
-          </div>
+          {!removeBranding && (
+            <div className="mt-12 border-t border-white/10 pt-10 md:mt-16">
+              <ProfilePublicFooter username={user.username} />
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
-  // Embedded / dashboard preview layout
+  // Embedded / dashboard preview — same bento language, compact
   const gridClass = isDesktopLayout
-    ? 'grid grid-cols-12 gap-8 items-start'
+    ? 'grid grid-cols-12 gap-4 items-start'
     : isMobileLayout
-      ? 'grid grid-cols-1 gap-6 items-start'
-      : 'grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12 items-start';
+      ? 'grid grid-cols-1 gap-4 items-start'
+      : 'grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 items-start';
 
   const sidebarClass = isDesktopLayout
-    ? 'col-span-4 flex flex-col items-start text-left space-y-6 sticky top-6'
+    ? 'col-span-4 flex flex-col gap-3'
     : isMobileLayout
-      ? 'col-span-1 flex flex-col items-center text-center space-y-5'
-      : 'md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left space-y-6 md:sticky md:top-24';
+      ? 'col-span-1 flex flex-col gap-3 order-2'
+      : 'md:col-span-4 flex flex-col gap-3 order-2 md:order-1';
 
   const mainClass = isDesktopLayout
-    ? 'col-span-8 space-y-8'
+    ? 'col-span-8 space-y-3'
     : isMobileLayout
-      ? 'col-span-1 space-y-8'
-      : 'md:col-span-8 space-y-10';
+      ? 'col-span-1 space-y-3 order-1'
+      : 'md:col-span-8 space-y-3 order-1 md:order-2';
 
   return (
     <div
       className={
         embedded
-          ? 'bg-black text-white selection:bg-white selection:text-black'
-          : 'min-h-screen bg-black text-white selection:bg-white selection:text-black py-16 md:py-24'
+          ? 'bg-black font-geist text-white selection:bg-profile-accent selection:text-black'
+          : 'min-h-screen bg-black font-geist text-white selection:bg-profile-accent selection:text-black py-10 md:py-16'
       }
     >
       <div
-        className={`mx-auto px-4 sm:px-6 grid ${gridClass} ${
-          embedded ? 'max-w-none py-6' : 'max-w-4xl'
+        className={`mx-auto px-3 sm:px-4 ${gridClass} ${
+          embedded ? 'max-w-none py-4' : 'max-w-5xl'
         }`}
       >
         <div className={sidebarClass}>
-          <div className="relative h-24 w-24 overflow-hidden rounded-full bg-zinc-900 ring-1 ring-white/10">
-            {user.avatar ? (
-              <img src={user.avatar} alt={displayName} className="h-full w-full object-cover" />
-            ) : (
-              <span className="flex h-full items-center justify-center text-2xl font-bold">
-                {user.username?.slice(0, 2).toUpperCase() || '??'}
-              </span>
-            )}
+          <div className={`${cardBg} overflow-hidden rounded-2xl`}>
+            <div className="aspect-[4/5] max-h-48 overflow-hidden bg-zinc-900">
+              {user.avatar ? (
+                <img src={user.avatar} alt={displayName} className="h-full w-full object-cover" />
+              ) : (
+                <span className="flex h-full items-center justify-center text-2xl font-bold text-white/30">
+                  {user.username?.slice(0, 2).toUpperCase() || '??'}
+                </span>
+              )}
+            </div>
+            <div className={`m-2.5 rounded-xl px-3 py-3 ${accentClass}`}>
+              <p className="text-sm font-bold">Hello, I&apos;m {firstName}</p>
+              <p className="mt-1 line-clamp-3 text-xs opacity-80">&ldquo;{displayBio}&rdquo;</p>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center justify-center gap-1.5 md:justify-start">
-              <h1 className="text-xl font-bold tracking-tight">{displayName}</h1>
-              {showFounderBadge && <GoldenVerifiedTick size="lg" />}
-              {!showFounderBadge && showProBadge && <ProVerifiedTick size="lg" />}
+          <div className={`${cardBg} space-y-3 rounded-2xl px-4 py-4`}>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <h1
+                className="text-lg font-semibold tracking-tight"
+                style={{ fontFamily: 'var(--font-instrument-serif), ui-serif, Georgia, serif' }}
+              >
+                {displayName}
+              </h1>
+              {showFounderBadge && <GoldenVerifiedTick size="md" />}
+              {!showFounderBadge && showProBadge && <ProVerifiedTick size="md" />}
             </div>
-            <p className="text-sm text-zinc-400">{displayHeadline}</p>
+            <p className="text-xs text-white/50">{displayHeadline}</p>
             {(user.location || preview) && (
-              <span className="inline-flex items-center gap-1 text-xs text-zinc-500">
+              <span className="inline-flex items-center gap-1 text-[11px] text-white/40">
                 <MapPin className="h-3 w-3" /> {displayLocation}
               </span>
             )}
@@ -633,31 +688,31 @@ export default function ProfileView({
         </div>
 
         <div className={mainClass}>
-          <div className="overflow-hidden rounded-xl ring-1 ring-white/10">
-            <IntroVideo
-              videoUrl={user.videoUrl}
-              thumbnailUrl={user.thumbnailUrl}
-              preview={preview}
-              userId={user.id}
-              onPlay={handleVideoPlay}
-              maxHeightClass={embedded ? 'max-h-[50vh]' : 'max-h-[60vh]'}
-            />
+          <div className={`${cardBg} overflow-hidden rounded-2xl p-3`}>
+            <p className="mb-2 px-1 text-xs font-semibold text-white/80">Intro video</p>
+            <div className="overflow-hidden rounded-xl ring-1 ring-white/5">
+              <IntroVideo
+                videoUrl={user.videoUrl}
+                thumbnailUrl={user.thumbnailUrl}
+                preview={preview}
+                userId={user.id}
+                onPlay={handleVideoPlay}
+                maxHeightClass={embedded ? 'max-h-[42vh]' : 'max-h-[50vh]'}
+              />
+            </div>
           </div>
 
-          {(user.bio || preview) && (
-            <p className="text-sm leading-relaxed text-zinc-400">
-              {user.bio || 'Write a brief description about your expertise and drive.'}
-            </p>
-          )}
-
           {experiences.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-600">Experience</h3>
-              <ul className="space-y-3 border-l border-zinc-900 pl-4">
+            <div className={`${cardBg} space-y-2 rounded-2xl px-4 py-3`}>
+              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-white/35">Experience</h3>
+              <ul className="space-y-2">
                 {experiences.map((exp, idx) => (
                   <li key={idx}>
                     <p className="text-sm font-medium">{exp.role}</p>
-                    <p className="text-xs text-zinc-500">{exp.company}{exp.duration ? ` · ${exp.duration}` : ''}</p>
+                    <p className="text-xs text-white/40">
+                      {exp.company}
+                      {exp.duration ? ` · ${exp.duration}` : ''}
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -665,24 +720,28 @@ export default function ProfileView({
           )}
 
           {projects.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-600">Projects</h3>
-              <div className="space-y-2">
-                {projects.map((proj, idx) => (
-                  <div key={idx} className="rounded-xl border border-zinc-900 bg-zinc-950/50 p-4">
-                    <p className="text-sm font-medium">{proj.title}</p>
-                    {proj.description && <p className="mt-1 text-xs text-zinc-500">{proj.description}</p>}
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {projects.slice(0, 4).map((proj, idx) => (
+                <div
+                  key={idx}
+                  className={`rounded-2xl p-3 ${
+                    idx % 2 === 1 ? accentClass : 'bg-white text-black'
+                  }`}
+                >
+                  <p className="text-sm font-semibold">{proj.title}</p>
+                  {proj.description && (
+                    <p className="mt-1 line-clamp-2 text-[11px] opacity-70">{proj.description}</p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>
       </div>
 
       {!embedded && !removeBranding && (
-        <footer className="px-6 pb-12 pt-10">
-          <div className="mx-auto max-w-4xl flex justify-center">
+        <footer className="px-6 pb-10 pt-8">
+          <div className="mx-auto flex max-w-5xl justify-center">
             <Link href="/onboarding" className="text-xs text-zinc-600 hover:text-zinc-400">
               Built with <span className="text-zinc-400">seenly.tech</span>
             </Link>

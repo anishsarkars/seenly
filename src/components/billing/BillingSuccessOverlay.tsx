@@ -69,7 +69,9 @@ function fireConfetti(canvas: HTMLCanvasElement) {
 export default function BillingSuccessOverlay({ plan, onDismiss, onSignInAgain }: BillingSuccessOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const entitlements = PLANS[plan];
-  const benefits = getPlanFeatureList(plan).filter((item) => !item.endsWith(':'));
+  const benefits = getPlanFeatureList(plan).filter(
+    (item) => !item.endsWith(':') && !item.toLowerCase().includes('trial')
+  );
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';

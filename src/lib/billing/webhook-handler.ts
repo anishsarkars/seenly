@@ -5,7 +5,7 @@ import { sql } from 'drizzle-orm';
 import { getDodoProductIds } from '@/lib/billing/dodo-client';
 import { parseDodoEventData, parseDate } from '@/lib/billing/parse-webhook-data';
 import { PLAN_PRICES } from '@/lib/plan-marketing';
-import { getEffectiveTier } from '@/lib/plans';
+import { getEffectiveTier, isTrialing, trialEndsAtFromNow, TRIAL_DAYS } from '@/lib/plans';
 
 function isDbAvailable() {
   return !!process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('your-supabase');
@@ -191,6 +191,7 @@ export async function applyProSubscription(
     .where(eq(users.id, userId));
 }
 
+/** End paid access — profile becomes private until they subscribe again. */
 export async function downgradeToFree(userId: string) {
   if (!isDbAvailable()) return;
   await ensureBillingSchema();
@@ -206,13 +207,127 @@ export async function downgradeToFree(userId: string) {
     .update(users)
     .set({
       plan: 'free',
-      planStatus: null,
+      planStatus: 'expired',
       planExpiresAt: null,
       dodoSubscriptionId: null,
       pendingCheckoutPlan: null,
+      isPublic: false,
       updatedAt: new Date(),
     })
     .where(eq(users.id, userId));
+}
+
+/** Grant a fresh 14-day Pro trial (new signups + legacy free users once). */
+export async function startTrial(userId: string, days = TRIAL_DAYS) {
+  if (!isDbAvailable()) return;
+  await ensureBillingSchema();
+
+  const [existing] = await db
+    .select({
+      isFounder: users.isFounder,
+      plan: users.plan,
+      planStatus: users.planStatus,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!existing) return;
+  if (existing.isFounder || existing.plan === 'founder') return;
+  if (existing.plan === 'pro' && existing.planStatus === 'active') return;
+  if (existing.planStatus === 'trialing') return;
+  if (existing.planStatus === 'expired') return;
+
+  await db
+    .update(users)
+    .set({
+      plan: 'pro',
+      planStatus: 'trialing',
+      planExpiresAt: trialEndsAtFromNow(days),
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, userId));
+}
+
+/**
+ * Lazily start trials for legacy free users and expire finished trials.
+ * Call on profile/billing reads so access stays in sync without a cron.
+ */
+export async function ensureUserTrial(userId: string) {
+  if (!isDbAvailable()) return null;
+  await ensureBillingSchema();
+
+  const [row] = await db
+    .select({
+      plan: users.plan,
+      planStatus: users.planStatus,
+      planExpiresAt: users.planExpiresAt,
+      isFounder: users.isFounder,
+      dodoCustomerId: users.dodoCustomerId,
+      dodoSubscriptionId: users.dodoSubscriptionId,
+      pendingCheckoutPlan: users.pendingCheckoutPlan,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!row) return null;
+
+  if (row.isFounder || row.plan === 'founder') {
+    return { ...row, tier: getEffectiveTier(row) };
+  }
+
+  if (row.plan === 'pro' && (row.planStatus === 'active' || row.planStatus === 'on_hold')) {
+    return { ...row, tier: getEffectiveTier(row) };
+  }
+
+  if (row.plan === 'pro' && row.planStatus === 'cancelled' && row.planExpiresAt && new Date(row.planExpiresAt) > new Date()) {
+    return { ...row, tier: getEffectiveTier(row) };
+  }
+
+  // Trial still valid
+  if (isTrialing(row)) {
+    return { ...row, tier: getEffectiveTier(row) };
+  }
+
+  // Trial window passed → expire
+  if (row.planStatus === 'trialing') {
+    await downgradeToFree(userId);
+    const [updated] = await db
+      .select({
+        plan: users.plan,
+        planStatus: users.planStatus,
+        planExpiresAt: users.planExpiresAt,
+        isFounder: users.isFounder,
+        dodoCustomerId: users.dodoCustomerId,
+        dodoSubscriptionId: users.dodoSubscriptionId,
+        pendingCheckoutPlan: users.pendingCheckoutPlan,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return updated ? { ...updated, tier: getEffectiveTier(updated) } : null;
+  }
+
+  // Legacy permanent free → one-time 14-day Pro trial
+  if (row.plan === 'free' && row.planStatus !== 'expired') {
+    await startTrial(userId);
+    const [updated] = await db
+      .select({
+        plan: users.plan,
+        planStatus: users.planStatus,
+        planExpiresAt: users.planExpiresAt,
+        isFounder: users.isFounder,
+        dodoCustomerId: users.dodoCustomerId,
+        dodoSubscriptionId: users.dodoSubscriptionId,
+        pendingCheckoutPlan: users.pendingCheckoutPlan,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    return updated ? { ...updated, tier: getEffectiveTier(updated) } : null;
+  }
+
+  return { ...row, tier: getEffectiveTier(row) };
 }
 
 function resolvePaidPlan({
@@ -372,21 +487,5 @@ export async function handleDodoWebhookEvent(event: {
 }
 
 export async function getUserBillingState(userId: string) {
-  if (!isDbAvailable()) return null;
-  await ensureBillingSchema();
-  const [row] = await db
-    .select({
-      plan: users.plan,
-      planStatus: users.planStatus,
-      planExpiresAt: users.planExpiresAt,
-      isFounder: users.isFounder,
-      dodoCustomerId: users.dodoCustomerId,
-      dodoSubscriptionId: users.dodoSubscriptionId,
-      pendingCheckoutPlan: users.pendingCheckoutPlan,
-    })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-  if (!row) return null;
-  return { ...row, tier: getEffectiveTier(row) };
+  return ensureUserTrial(userId);
 }
