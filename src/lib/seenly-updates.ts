@@ -1,4 +1,4 @@
-export const SEENLY_UPDATES_VERSION = '2026-07-20-pro-trial';
+export const SEENLY_UPDATES_VERSION = '2026-07-20-free-theme';
 
 export type SeenlyUpdate = {
   version: string;
@@ -9,10 +9,10 @@ export type SeenlyUpdate = {
 
 export const LATEST_SEENLY_UPDATE: SeenlyUpdate = {
   version: SEENLY_UPDATES_VERSION,
-  title: '14-day Pro trial',
+  title: 'Free plan + light/dark',
   description:
-    'There is no permanent free plan anymore. New profiles get full Pro for 14 days. After that, subscribe to keep your profile public.',
-  hint: 'Subscribe anytime from Dashboard → Settings before your trial ends.',
+    'Free is back with tight limits (30s video, 1 project, watermark). Upgrade anytime from the dashboard. Site-wide light and dark mode is available from the header.',
+  hint: 'Profiles use a video-first card layout that works on mobile.',
 };
 
 export function hasUnreadUpdates(lastSeenVersion: string | null) {

@@ -18,15 +18,15 @@ export interface PlanEntitlements {
   customProfileLayout: boolean;
 }
 
-/** `free` = trial ended / unpaid — editing allowed, public profiles blocked. */
+/** Permanent Free — intentionally limited. Upgrade for longer video, uploads, and no watermark. */
 export const PLANS: Record<PlanTier, PlanEntitlements> = {
   free: {
     tier: 'free',
-    label: 'Trial ended',
-    maxVideoSec: 60,
-    maxUploadBytes: 50 * 1024 * 1024,
-    maxProjects: 3,
-    maxSocialLinks: 5,
+    label: 'Free',
+    maxVideoSec: 30,
+    maxUploadBytes: 25 * 1024 * 1024,
+    maxProjects: 1,
+    maxSocialLinks: 2,
     customThumbnail: false,
     removeBranding: false,
     showProBadge: false,
@@ -80,15 +80,6 @@ export function isTrialing(user: BillingUserFields): boolean {
   return user.planStatus === 'trialing' && expiresInFuture(user.planExpiresAt);
 }
 
-export function isTrialExpiredStatus(user: BillingUserFields): boolean {
-  if (user.isFounder || user.plan === 'founder') return false;
-  if (user.planStatus === 'expired') return true;
-  if (user.planStatus === 'trialing' && user.planExpiresAt && !expiresInFuture(user.planExpiresAt)) {
-    return true;
-  }
-  return getEffectiveTier(user) === 'free';
-}
-
 export function getEffectiveTier(user: BillingUserFields): PlanTier {
   if (user.isFounder || user.plan === 'founder') return 'founder';
 
@@ -101,9 +92,9 @@ export function getEffectiveTier(user: BillingUserFields): PlanTier {
   return 'free';
 }
 
-/** Public profiles require an active paid plan or an unexpired trial. */
-export function canPublishPublic(user: BillingUserFields): boolean {
-  return getEffectiveTier(user) !== 'free';
+/** Free + paid + trial can all publish; limits differ by tier. */
+export function canPublishPublic(_user: BillingUserFields): boolean {
+  return true;
 }
 
 export function getEntitlements(user: BillingUserFields): PlanEntitlements {
@@ -132,7 +123,8 @@ export function formatUploadLimit(bytes: number) {
 }
 
 export function formatVideoLimit(seconds: number) {
-  if (seconds <= 60) return '60 seconds';
+  if (seconds < 60) return `${seconds} seconds`;
+  if (seconds === 60) return '60 seconds';
   const minutes = Math.floor(seconds / 60);
   return `${minutes} minutes`;
 }

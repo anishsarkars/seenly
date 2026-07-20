@@ -94,7 +94,7 @@ export default function BillingPanel({ user }: BillingPanelProps) {
   const runBillingAction = async (immediate: boolean) => {
     const action = immediate ? 'downgrade' : 'cancel';
     const confirmMsg = immediate
-      ? 'End Pro now? Your profile will become private until you subscribe again.'
+      ? 'End Pro now? You’ll return to Free limits (30s video, 1 project, watermark).'
       : 'Cancel renewal? You keep Pro until the end of your current billing period.';
     if (!window.confirm(confirmMsg)) return;
 
@@ -133,7 +133,7 @@ export default function BillingPanel({ user }: BillingPanelProps) {
             <p className="mt-2 text-base font-semibold tracking-tight text-white">{entitlements.label}</p>
             <p className="mt-1 text-sm leading-relaxed text-white/50">
               {tier === 'free' &&
-                'Trial ended. Subscribe to Pro to make your profile public again.'}
+                'Limited Free plan — upgrade for longer videos, unlimited projects, and no watermark.'}
               {trialing &&
                 `Free Pro trial · ${trialDays ?? 0} day${trialDays === 1 ? '' : 's'} left${
                   expiresLabel ? ` · ends ${expiresLabel}` : ''
@@ -158,7 +158,7 @@ export default function BillingPanel({ user }: BillingPanelProps) {
                   <Loader2 className="h-4 w-4 animate-spin" /> Starting…
                 </span>
               ) : (
-                `Subscribe to Pro · ${PLAN_PRICES.pro.amount}${PLAN_PRICES.pro.period}`
+                `Upgrade to Pro · ${PLAN_PRICES.pro.amount}${PLAN_PRICES.pro.period}`
               )}
             </button>
           )}
@@ -209,7 +209,7 @@ export default function BillingPanel({ user }: BillingPanelProps) {
                 <div>
                   <p className="text-sm font-medium text-white">End Pro now</p>
                   <p className="mt-0.5 text-xs text-white/45">
-                    Profile becomes private until you subscribe again.
+                    Return to Free limits immediately.
                   </p>
                 </div>
                 <button

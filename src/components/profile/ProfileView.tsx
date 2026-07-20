@@ -4,16 +4,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   Share2, ExternalLink, Mail, Globe,
-  Play, Pause, Volume2, VolumeX, Moon, Sun,
+  Play, Pause, Volume2, VolumeX,
 } from 'lucide-react';
 import { isPersistedMediaUrl } from '@/lib/storage';
 import { logAnalyticEvent } from '@/db/actions';
 import GoldenVerifiedTick from '@/components/profile/GoldenVerifiedTick';
 import ProVerifiedTick from '@/components/profile/ProVerifiedTick';
 import SeenlyLogo from '@/components/SeenlyLogo';
+import ThemeToggle from '@/components/theme/ThemeToggle';
+import { useTheme } from '@/components/theme/ThemeProvider';
 import {
-  isDarkProfileTheme,
-  parseProfileTheme,
   type ProfileSectionId,
   type ProfileTheme,
 } from '@/lib/profile-customization';
@@ -60,7 +60,6 @@ function IntroVideo({
   preview,
   onPlay,
   className = '',
-  fill = false,
 }: {
   videoUrl?: string;
   thumbnailUrl?: string;
@@ -68,8 +67,6 @@ function IntroVideo({
   userId?: string;
   onPlay?: () => void;
   className?: string;
-  /** Cover-fill hero (object-cover) vs intrinsic height */
-  fill?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoReady, setVideoReady] = useState(false);
@@ -78,10 +75,9 @@ function IntroVideo({
   const [progress, setProgress] = useState(0);
 
   const canPlay = !!videoUrl && (preview || isPersistedMediaUrl(videoUrl));
-  const shellClass = `group relative w-full overflow-hidden bg-zinc-900 ${fill ? 'h-full min-h-[240px]' : ''} ${className}`;
-  const mediaClass = fill
-    ? 'absolute inset-0 h-full w-full object-cover'
-    : 'block h-auto w-full max-h-[70dvh]';
+  /** Natural aspect ratio — never crop on mobile or desktop */
+  const shellClass = `group relative w-full overflow-hidden bg-black ${className}`;
+  const mediaClass = 'block h-auto w-full max-h-[min(72dvh,640px)] object-contain';
 
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -125,7 +121,7 @@ function IntroVideo({
 
   if (!canPlay) {
     return (
-      <div className={`flex items-center justify-center px-6 text-center text-sm text-zinc-500 ${shellClass}`}>
+      <div className={`flex min-h-[12rem] items-center justify-center px-6 text-center text-sm text-zinc-500 ${shellClass}`}>
         No intro video yet.
       </div>
     );
@@ -139,15 +135,9 @@ function IntroVideo({
       <video
         ref={videoRef}
         src={videoUrl}
-        className={
-          videoReady
-            ? mediaClass
-            : fill
-              ? `${mediaClass} opacity-0`
-              : `absolute inset-0 h-full w-full object-contain opacity-0`
-        }
+        className={videoReady ? mediaClass : `${mediaClass} absolute inset-0 opacity-0`}
         playsInline
-        preload="auto"
+        preload="metadata"
         muted={muted}
         onLoadedData={() => setVideoReady(true)}
         onCanPlay={() => setVideoReady(true)}
@@ -217,6 +207,30 @@ function IntroVideo({
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function ProfileWatermark({ dark }: { dark: boolean }) {
+  return (
+    <div className="flex justify-center px-4 pb-2 pt-6">
+      <Link
+        href="/onboarding"
+        className={`group inline-flex flex-col items-center gap-1 text-center transition-opacity hover:opacity-100 ${
+          dark ? 'opacity-55' : 'opacity-60'
+        }`}
+      >
+        <p
+          className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${
+            dark ? 'text-white/50' : 'text-zinc-400'
+          }`}
+        >
+          Seenly
+        </p>
+        <p className={`text-sm font-medium ${dark ? 'text-white/75 group-hover:text-white' : 'text-zinc-600 group-hover:text-zinc-900'}`}>
+          Create your Seenly page
+        </p>
+      </Link>
     </div>
   );
 }
@@ -313,35 +327,17 @@ export default function ProfileView({
   removeBranding = false,
   showProBadge = false,
   showFounderBadge = false,
-  profileTheme: profileThemeProp,
+  profileTheme: _profileThemeProp,
   profileSectionOrder: _profileSectionOrderProp,
 }: ProfileViewProps) {
   const { user, experiences, projects, socials } = profileData;
   const [hasLoggedPlay, setHasLoggedPlay] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const storedTheme =
-    profileThemeProp ??
-    (showFounderBadge ? parseProfileTheme(user.profileTheme) : null);
-
-  const [dark, setDark] = useState(() =>
-    storedTheme ? isDarkProfileTheme(storedTheme) : true
-  );
-
-  useEffect(() => {
-    if (storedTheme) {
-      setDark(isDarkProfileTheme(storedTheme));
-      return;
-    }
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    setDark(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setDark(e.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, [storedTheme]);
+  const { theme } = useTheme();
+  const dark = theme === 'dark';
 
   const isPublicProfile = !embedded && !preview;
-  const isDesktopLayout = layout === 'desktop';
   const isMobileLayout = layout === 'mobile';
   const s = getSurface(dark);
 
@@ -350,18 +346,6 @@ export default function ProfileView({
     const img = new Image();
     img.src = user.thumbnailUrl;
   }, [preview, user.thumbnailUrl]);
-
-  useEffect(() => {
-    if (preview || !user.videoUrl || user.videoUrl.startsWith('blob:')) return;
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'video';
-    link.href = user.videoUrl;
-    document.head.appendChild(link);
-    return () => {
-      document.head.removeChild(link);
-    };
-  }, [preview, user.videoUrl]);
 
   const handleDownloadResume = () => {
     if (preview || !user.resumeUrl || user.resumeUrl === '#') return;
@@ -429,37 +413,36 @@ export default function ProfileView({
   const projectTags = projects.slice(0, 3).map((p) => p.title);
 
   const profileCard = (
-    <article className={`relative w-full overflow-hidden rounded-[1.75rem] sm:rounded-[2rem] ${s.card}`}>
-      {/* Video hero */}
-      <div className="relative h-[min(52vw,340px)] sm:h-[min(48vw,420px)] md:h-[440px]">
+    <article className={`relative w-full overflow-visible rounded-[1.5rem] sm:rounded-[2rem] ${s.card}`}>
+      {/* Video hero — natural ratio, fully visible on mobile */}
+      <div className="relative w-full overflow-hidden rounded-t-[1.5rem] bg-black sm:rounded-t-[2rem]">
         <IntroVideo
           videoUrl={user.videoUrl}
           thumbnailUrl={user.thumbnailUrl}
           preview={preview}
           userId={user.id}
           onPlay={handleVideoPlay}
-          fill
         />
         <div
           aria-hidden
-          className={`pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-28 bg-gradient-to-t ${s.fadeFrom} to-transparent`}
+          className={`pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-16 bg-gradient-to-t ${s.fadeFrom} to-transparent sm:h-20`}
         />
         <button
           type="button"
           onClick={handleShare}
-          className={`absolute right-4 top-4 z-[4] flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md transition-colors sm:right-5 sm:top-5 ${s.glass}`}
+          className={`absolute right-3 top-3 z-[4] flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md transition-colors sm:right-5 sm:top-5 ${s.glass}`}
           aria-label={copied ? 'Link copied' : 'Share profile'}
         >
           <Share2 className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Body */}
-      <div className="relative px-5 pb-5 pt-0 sm:px-7 sm:pb-7">
+      {/* Body — padding-top leaves room for overlapping avatar */}
+      <div className="relative px-4 pb-5 pt-2 sm:px-7 sm:pb-7 sm:pt-3">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
-          <div className="flex min-w-0 items-end gap-3.5 sm:gap-4">
+          <div className="flex min-w-0 items-end gap-3 sm:gap-4">
             <div
-              className={`relative -mt-12 h-16 w-16 shrink-0 overflow-hidden rounded-full bg-zinc-800 ring-[3px] sm:-mt-14 sm:h-[4.5rem] sm:w-[4.5rem] ${s.avatarRing}`}
+              className={`relative -mt-10 h-14 w-14 shrink-0 overflow-hidden rounded-full bg-zinc-800 ring-[3px] sm:-mt-12 sm:h-16 sm:w-16 ${s.avatarRing}`}
             >
               {user.avatar ? (
                 <img src={user.avatar} alt={displayName} className="h-full w-full object-cover" />
@@ -469,24 +452,24 @@ export default function ProfileView({
                 </span>
               )}
             </div>
-            <div className="min-w-0 pb-0.5">
+            <div className="min-w-0 flex-1 pb-0.5">
               <div className="flex flex-wrap items-center gap-1.5">
-                <h1 className={`truncate text-xl font-semibold tracking-tight sm:text-2xl ${s.text}`}>
+                <h1 className={`text-lg font-semibold tracking-tight sm:text-2xl ${s.text} break-words`}>
                   {displayName}
                 </h1>
                 {showFounderBadge && <GoldenVerifiedTick size="md" />}
                 {!showFounderBadge && showProBadge && <ProVerifiedTick size="md" />}
               </div>
-              <p className={`mt-0.5 truncate text-sm ${s.muted}`}>{displayHeadline}</p>
+              <p className={`mt-0.5 text-sm ${s.muted} break-words`}>{displayHeadline}</p>
             </div>
           </div>
 
           {projectTags.length > 0 && (
-            <div className={`inline-flex max-w-full shrink-0 items-center gap-2 self-start rounded-full px-3 py-1.5 sm:self-end ${s.pill}`}>
-              <span className={`text-[10px] font-semibold uppercase tracking-wider ${s.faint}`}>
+            <div className={`inline-flex max-w-full items-center gap-2 self-start rounded-full px-3 py-1.5 sm:max-w-[40%] sm:self-end ${s.pill}`}>
+              <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider ${s.faint}`}>
                 Work
               </span>
-              <span className={`h-3 w-px ${s.divider}`} />
+              <span className={`h-3 w-px shrink-0 ${s.divider}`} />
               <span className={`truncate text-xs font-medium ${s.muted}`}>
                 {projectTags.join(' · ')}
               </span>
@@ -495,18 +478,18 @@ export default function ProfileView({
         </div>
 
         {user.bio && (
-          <p className={`mt-4 text-sm leading-relaxed ${s.muted}`}>{user.bio}</p>
+          <p className={`mt-4 text-sm leading-relaxed ${s.muted} break-words`}>{user.bio}</p>
         )}
 
         {/* Stats + CTA */}
-        <div className="mt-5 flex flex-col gap-4 border-t border-transparent pt-1 sm:mt-6 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+        <div className="mt-5 flex flex-col gap-4 sm:mt-6 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
           {stats.length > 0 && (
-            <div className="flex flex-wrap items-stretch gap-0">
+            <div className="flex flex-wrap items-stretch gap-y-3">
               {stats.map((stat, idx) => (
                 <React.Fragment key={stat.label}>
-                  {idx > 0 && <div className={`mx-4 w-px self-stretch sm:mx-5 ${s.divider}`} />}
-                  <div className="min-w-0 py-1">
-                    <p className={`text-base font-semibold tracking-tight sm:text-lg ${s.text}`}>
+                  {idx > 0 && <div className={`mx-3 w-px self-stretch sm:mx-5 ${s.divider}`} />}
+                  <div className="min-w-0 max-w-[9rem] py-1 sm:max-w-none">
+                    <p className={`truncate text-base font-semibold tracking-tight sm:text-lg ${s.text}`}>
                       {stat.value}
                     </p>
                     <p className={`text-[11px] capitalize ${s.faint}`}>{stat.label}</p>
@@ -563,7 +546,7 @@ export default function ProfileView({
               <button
                 type="button"
                 onClick={handleDownloadResume}
-                className={`hidden h-10 items-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors sm:inline-flex ${dark ? 'border-white/10 text-white/70 hover:bg-white/5' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}
+                className={`inline-flex h-10 items-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors ${dark ? 'border-white/10 text-white/70 hover:bg-white/5' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}
               >
                 Resume <ExternalLink className="h-3 w-3" />
               </button>
@@ -573,7 +556,7 @@ export default function ProfileView({
                 href={contactHref}
                 target={contactHref.startsWith('mailto:') ? undefined : '_blank'}
                 rel={contactHref.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
-                className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${s.cta}`}
+                className={`inline-flex min-h-10 items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${s.cta}`}
               >
                 {contactLabel}
               </a>
@@ -581,17 +564,16 @@ export default function ProfileView({
           </div>
         </div>
 
-        {/* Experience / projects detail */}
-        {(experiences.length > 0 || projects.length > 1) && (
+        {(experiences.length > 0 || projects.length > 0) && (
           <div className={`mt-6 grid gap-5 border-t pt-5 sm:grid-cols-2 ${dark ? 'border-white/[0.08]' : 'border-zinc-100'}`}>
             {experiences.length > 0 && (
-              <div>
+              <div className="min-w-0">
                 <p className={`text-[11px] font-semibold uppercase tracking-wider ${s.faint}`}>Experience</p>
                 <ul className="mt-3 space-y-3">
                   {experiences.slice(0, 4).map((exp, idx) => (
-                    <li key={idx}>
-                      <p className={`text-sm font-medium ${s.text}`}>{exp.role}</p>
-                      <p className={`text-xs ${s.muted}`}>
+                    <li key={idx} className="min-w-0">
+                      <p className={`text-sm font-medium ${s.text} break-words`}>{exp.role}</p>
+                      <p className={`text-xs ${s.muted} break-words`}>
                         {exp.company}
                         {exp.duration ? ` · ${exp.duration}` : ''}
                       </p>
@@ -601,13 +583,13 @@ export default function ProfileView({
               </div>
             )}
             {projects.length > 0 && (
-              <div>
+              <div className="min-w-0">
                 <p className={`text-[11px] font-semibold uppercase tracking-wider ${s.faint}`}>Projects</p>
                 <ul className="mt-3 space-y-3">
                   {projects.slice(0, 4).map((proj, idx) => (
-                    <li key={idx}>
+                    <li key={idx} className="min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <p className={`text-sm font-medium ${s.text}`}>{proj.title}</p>
+                        <p className={`text-sm font-medium ${s.text} break-words`}>{proj.title}</p>
                         {proj.website && (
                           <a
                             href={proj.website}
@@ -636,29 +618,23 @@ export default function ProfileView({
 
   if (isPublicProfile) {
     return (
-      <div className={`min-h-screen font-geist transition-colors ${s.page} ${s.selection}`}>
-        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10 md:py-14">
-          <div className="mb-6 flex items-center justify-between gap-3 sm:mb-8">
+      <div className={`min-h-dvh font-geist transition-colors ${s.page} ${s.selection}`}>
+        <div className="mx-auto w-full max-w-3xl px-3 py-5 sm:px-6 sm:py-10 md:py-14">
+          <div className="mb-5 flex items-center justify-between gap-3 sm:mb-8">
             <SeenlyLogo
               size="md"
               showBeta={false}
-              className={`rounded-full border px-4 py-2.5 backdrop-blur-md ${s.logoWrap}`}
+              className={`rounded-full border px-3 py-2 backdrop-blur-md sm:px-4 sm:py-2.5 ${s.logoWrap}`}
             />
-            <button
-              type="button"
-              onClick={() => setDark((v) => !v)}
-              className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-medium transition-colors ${dark ? 'border-white/10 bg-white/[0.04] text-white/70 hover:text-white' : 'border-black/8 bg-white/70 text-zinc-600 hover:text-zinc-900 shadow-sm'}`}
-              aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {dark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-              {dark ? 'Light' : 'Dark'}
-            </button>
+            <ThemeToggle />
           </div>
 
           {profileCard}
 
+          {!removeBranding && <ProfileWatermark dark={dark} />}
+
           {!removeBranding && (
-            <div className="mt-10">
+            <div className="mt-4 sm:mt-6">
               <ProfilePublicFooter username={user.username} dark={dark} />
             </div>
           )}
@@ -670,28 +646,22 @@ export default function ProfileView({
   // Preview / embed
   const wrapClass = embedded
     ? `font-geist ${s.page} ${s.selection}`
-    : `min-h-screen font-geist py-8 md:py-12 ${s.page} ${s.selection}`;
+    : `min-h-dvh font-geist py-6 md:py-12 ${s.page} ${s.selection}`;
 
   return (
     <div className={wrapClass}>
       <div className={`mx-auto px-3 sm:px-4 ${embedded ? 'max-w-none py-2' : 'max-w-3xl'}`}>
         {!embedded && (
           <div className="mb-4 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setDark((v) => !v)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium ${dark ? 'border-white/10 text-white/60' : 'border-zinc-200 text-zinc-500'}`}
-            >
-              {dark ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
-              {dark ? 'Light' : 'Dark'}
-            </button>
+            <ThemeToggle compact />
           </div>
         )}
-        <div className={isMobileLayout ? 'max-w-md mx-auto' : isDesktopLayout ? '' : ''}>
+        <div className={isMobileLayout ? 'mx-auto max-w-md' : ''}>
           {profileCard}
         </div>
+        {!removeBranding && <ProfileWatermark dark={dark} />}
         {!embedded && !removeBranding && (
-          <div className="mt-8 flex justify-center">
+          <div className="mt-6 flex justify-center">
             <Link href="/onboarding" className={`text-xs ${s.faint} hover:opacity-80`}>
               Built with seenly.tech
             </Link>

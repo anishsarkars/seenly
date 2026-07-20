@@ -7,7 +7,7 @@ import { suggestUsernames, validateUsername } from '@/lib/username';
 import { ensureProfileSchema } from './ensure-schema';
 import { ensureStorageBuckets } from './ensure-storage';
 import { DEFAULT_PROFILE_AVATAR } from '@/lib/profile-avatars';
-import { canPublishPublic, countFilledSocialLinks, getEntitlements, trialEndsAtFromNow } from '@/lib/plans';
+import { countFilledSocialLinks, getEntitlements } from '@/lib/plans';
 import { ensureUserTrial } from '@/lib/billing/webhook-handler';
 import { sanitizeProfileMedia } from '@/lib/profile-media';
 import { createClient } from '@/utils/supabase/server';
@@ -298,28 +298,14 @@ export async function saveOnboardingData(userId: string, data: any) {
       .where(eq(users.id, userId))
       .limit(1);
 
-    const trialEndsAt = trialEndsAtFromNow();
-    const entitlements = getEntitlements(
-      billingRow ?? {
-        plan: 'pro',
-        planStatus: 'trialing',
-        planExpiresAt: trialEndsAt,
-      }
-    );
+    const entitlements = getEntitlements(billingRow ?? { plan: 'free' });
     const wantsPublic = isPublic !== false;
-
-    if (wantsPublic && billingRow && !canPublishPublic(billingRow)) {
-      return {
-        success: false,
-        error: 'Your free trial has ended. Subscribe to Pro to make your profile public again.',
-      };
-    }
 
     const projectCount = (projList || []).filter((p: { title?: string }) => p.title?.trim()).length;
     if (projectCount > entitlements.maxProjects) {
       return {
         success: false,
-        error: `Your plan allows up to ${entitlements.maxProjects} projects. Subscribe to Pro for unlimited projects.`,
+        error: `Free plan allows up to ${entitlements.maxProjects} project${entitlements.maxProjects === 1 ? '' : 's'}. Upgrade to Pro for unlimited projects.`,
       };
     }
 
@@ -327,7 +313,7 @@ export async function saveOnboardingData(userId: string, data: any) {
     if (socialCount > entitlements.maxSocialLinks) {
       return {
         success: false,
-        error: `Your plan allows up to ${entitlements.maxSocialLinks} social links. Subscribe to Pro for unlimited links.`,
+        error: `Free plan allows up to ${entitlements.maxSocialLinks} social links. Upgrade to Pro for unlimited links.`,
       };
     }
 
@@ -344,9 +330,9 @@ export async function saveOnboardingData(userId: string, data: any) {
       thumbnailUrl,
       resumeUrl,
       isPublic: wantsPublic,
-      plan: 'pro',
-      planStatus: 'trialing',
-      planExpiresAt: trialEndsAt,
+      plan: 'free',
+      planStatus: null,
+      planExpiresAt: null,
       updatedAt: new Date(),
     }).onConflictDoUpdate({
       target: users.id,

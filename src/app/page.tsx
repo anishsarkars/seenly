@@ -6,7 +6,9 @@ import SeenlyLogo from '@/components/SeenlyLogo';
 import UsernameClaimBar from '@/components/landing/UsernameClaimBar';
 import HeroPhonePreview from '@/components/landing/HeroPhonePreview';
 import LandingPricing from '@/components/landing/LandingPricing';
+import FeaturedProfilesCarousel from '@/components/landing/FeaturedProfilesCarousel';
 import SiteFooter from '@/components/SiteFooter';
+import ThemeToggle from '@/components/theme/ThemeToggle';
 import { createClient } from '@/utils/supabase/client';
 import { getUserProfile } from '@/db/actions';
 
@@ -71,10 +73,10 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black font-geist text-white selection:bg-white selection:text-black">
+    <div className="min-h-screen bg-background font-geist text-foreground selection:bg-foreground selection:text-background">
 
-      {/* HERO VIEWPORT SECTION */}
-      <section className="relative flex min-h-[100dvh] w-full flex-col justify-between overflow-hidden sm:min-h-[115dvh]">
+      {/* HERO VIEWPORT SECTION — always dark over video */}
+      <section className="relative flex min-h-[100dvh] w-full flex-col justify-between overflow-hidden bg-black text-white sm:min-h-[115dvh]">
         {/* Video Background */}
         <video
           autoPlay
@@ -100,13 +102,17 @@ export default function Home() {
               <a href="#how-it-works" className="text-sm text-white/70 hover:text-white transition-colors">
                 How it Works
               </a>
+              <a href="#featured" className="text-sm text-white/70 hover:text-white transition-colors">
+                Profiles
+              </a>
               <a href="#pricing" className="text-sm text-white/70 hover:text-white transition-colors">
                 Pricing
               </a>
             </nav>
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle compact className="!border-white/15 !bg-white/10 !text-white/80 hover:!text-white" />
             {authState === 'member' ? (
               <a
                 href="/dashboard"
@@ -306,38 +312,40 @@ export default function Home() {
       </div>
 
       {/* HOW IT WORKS SECTION */}
-      <section id="how-it-works" className="relative bg-black px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-36 lg:px-16">
+      <section id="how-it-works" className="relative bg-background px-5 py-20 sm:px-6 sm:py-28 md:px-12 md:py-36 lg:px-16">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-16 text-center sm:gap-20 md:gap-24">
           <div className="space-y-4 sm:space-y-5">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium uppercase tracking-widest text-white/60">
+            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
               How it works
             </span>
-            <h2 className="text-2xl font-bold leading-[1.1] tracking-tight text-white sm:text-4xl md:text-5xl">
+            <h2 className="text-2xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-4xl md:text-5xl">
               Three steps to your profile.<br />
-              <span className="text-white/60">One link to share everywhere.</span>
+              <span className="text-muted-foreground">One link to share everywhere.</span>
             </h2>
           </div>
 
           <div className="grid w-full grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-8">
             {steps.map((step) => (
               <div key={step.label} className="flex flex-col items-center gap-4 sm:gap-5">
-                <div className="text-white/50">{step.icon}</div>
+                <div className="text-muted-foreground">{step.icon}</div>
                 <div className="space-y-2">
-                  <p className="text-sm font-semibold tracking-tight text-white">{step.label}</p>
-                  <p className="mx-auto max-w-xs px-2 text-sm leading-relaxed text-white/50 sm:max-w-[12rem] sm:px-0">{step.description}</p>
+                  <p className="text-sm font-semibold tracking-tight text-foreground">{step.label}</p>
+                  <p className="mx-auto max-w-xs px-2 text-sm leading-relaxed text-muted-foreground sm:max-w-[12rem] sm:px-0">{step.description}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="w-full max-w-md rounded-full border border-white/10 bg-white/5 px-5 py-3 text-center text-sm leading-relaxed text-white/50 backdrop-blur-sm sm:w-auto sm:px-6">
+          <div className="w-full max-w-md rounded-full border border-border bg-card px-5 py-3 text-center text-sm leading-relaxed text-muted-foreground sm:w-auto sm:px-6">
             From one intro to your{' '}
-            <span className="font-semibold text-white/80">seenly.tech</span>
+            <span className="font-semibold text-foreground">seenly.tech</span>
             {' '}link
           </div>
         </div>
       </section>
+
+      <FeaturedProfilesCarousel />
 
       {/* Subtle animated divider */}
       <div className="relative h-px w-full overflow-hidden bg-black">

@@ -57,7 +57,7 @@ export async function POST(request: Request) {
       await downgradeToFree(user.id);
       return NextResponse.json({
         success: true,
-        message: 'Pro ended. Your profile is private until you subscribe again.',
+        message: 'Pro ended. You’re back on the Free plan with limited features.',
       });
     }
 

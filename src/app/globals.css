@@ -1,6 +1,32 @@
 @import "tailwindcss";
 
-:root {
+:root,
+html.light {
+  --background: #f4f4f5;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --secondary: #e4e4e7;
+  --secondary-foreground: #18181b;
+  --muted: #e4e4e7;
+  --muted-foreground: #71717a;
+  --accent: #e4e4e7;
+  --accent-foreground: #18181b;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fef2f2;
+  --border: #d4d4d8;
+  --input: #d4d4d8;
+  --ring: #a1a1aa;
+  --radius: 0.75rem;
+  --surface: #ffffff;
+  --surface-muted: #f4f4f5;
+}
+
+html.dark {
   --background: #030303;
   --foreground: #f4f4f5;
   --card: #09090b;
@@ -20,7 +46,8 @@
   --border: #27272a;
   --input: #27272a;
   --ring: #d4d4d8;
-  --radius: 0.75rem;
+  --surface: #0a0a0a;
+  --surface-muted: #141414;
 }
 
 @theme inline {
@@ -60,6 +87,14 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+html.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
 
 @keyframes fadeSlideUp {
   from {

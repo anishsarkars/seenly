@@ -5,14 +5,12 @@ export const SUPPORT_EMAIL = 'hello@anishsarkar.site';
 
 export const PLAN_MARKETING_BENEFITS: Record<Exclude<PlanTier, 'free'>, string[]> = {
   pro: [
-    '14-day free Pro trial',
     '3-minute intro video',
     '100 MB uploads',
     'Blue verified tick on profile',
     'Unlimited projects & links',
     'Custom video thumbnail',
     'Remove Seenly branding',
-    'Priority support',
   ],
   founder: [
     'Everything in Pro, forever',

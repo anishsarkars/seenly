@@ -6,13 +6,12 @@ import { Check, Loader2 } from 'lucide-react';
 import { getPlanFeatureList } from '@/lib/plan-features';
 import { PLAN_PRICES, FINAL_BOSS_LABEL, SUPPORT_EMAIL } from '@/lib/plan-marketing';
 import { btnPrimary, btnSecondary } from '@/lib/platform-ui';
-import { TRIAL_DAYS, type PlanTier } from '@/lib/plans';
+import { type PlanTier } from '@/lib/plans';
 
-type PaidTier = Exclude<PlanTier, 'free'>;
-
-const COMPARE_FEATURES: Record<PaidTier, string[]> = {
-  pro: ['3 min video', 'Blue verified tick', 'No branding'],
-  founder: ['Pro forever', 'Golden tick', 'One-time payment'],
+const COMPARE_FEATURES: Record<PlanTier, string[]> = {
+  free: ['30s video', '1 project', 'Watermark'],
+  pro: ['3 min video', 'Blue tick', 'No branding'],
+  founder: ['Pro forever', 'Golden tick', 'One-time'],
 };
 
 interface PricingTierGridProps {
@@ -70,7 +69,7 @@ export default function PricingTierGrid({
   };
 
   const tiers: Array<{
-    id: PaidTier;
+    id: PlanTier;
     label: string;
     tagline: string;
     price: string;
@@ -81,14 +80,21 @@ export default function PricingTierGrid({
     landingLabel: string;
   }> = [
     {
+      id: 'free',
+      label: 'Free',
+      tagline: 'Start with a limited video profile.',
+      price: '₹0',
+      landingHref: '/onboarding',
+      landingLabel: 'Get started',
+    },
+    {
       id: 'pro',
       label: 'Seenly Pro',
-      tagline: `${TRIAL_DAYS}-day free trial, then ${PLAN_PRICES.pro.amount}${PLAN_PRICES.pro.period}.`,
+      tagline: 'Longer videos, unlimited projects, no watermark.',
       price: PLAN_PRICES.pro.amount,
       period: PLAN_PRICES.pro.period,
-      note: `${TRIAL_DAYS}-day trial`,
-      landingHref: '/onboarding',
-      landingLabel: 'Start free trial',
+      landingHref: '/pricing',
+      landingLabel: 'Upgrade to Pro',
     },
     {
       id: 'founder',
@@ -103,7 +109,7 @@ export default function PricingTierGrid({
     },
   ];
 
-  const renderCta = (tierId: PaidTier, landingHref: string, landingLabel: string) => {
+  const renderCta = (tierId: PlanTier, landingHref: string, landingLabel: string) => {
     const ctaClass = isCompare
       ? `${btnPrimary} w-full !py-2 text-xs`
       : `${btnPrimary} w-full`;
@@ -118,6 +124,13 @@ export default function PricingTierGrid({
       return <Link href={landingHref} className={ghostClass}>{landingLabel}</Link>;
     }
 
+    if (tierId === 'free') {
+      if (currentTier === 'free' && !isTrialing) {
+        return <p className="text-center text-xs text-white/40">Current plan</p>;
+      }
+      return <p className="text-center text-xs text-white/35">Included</p>;
+    }
+
     if (tierId === 'pro') {
       if ((currentTier === 'pro' && !isTrialing) || currentTier === 'founder') {
         return <p className="text-center text-xs text-white/40">Active</p>;
@@ -128,8 +141,6 @@ export default function PricingTierGrid({
             <span className="inline-flex items-center justify-center gap-2">
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Starting…
             </span>
-          ) : currentTier === 'free' || isTrialing ? (
-            'Subscribe to Pro'
           ) : (
             'Upgrade to Pro'
           )}
@@ -160,7 +171,10 @@ export default function PricingTierGrid({
     const visibleFeatures = compact && !isCompare
       ? features.slice(0, tier.id === 'pro' ? 5 : 4)
       : features;
-    const isCurrent = variant === 'checkout' && currentTier === tier.id;
+    const isCurrent =
+      variant === 'checkout' &&
+      ((tier.id === 'free' && currentTier === 'free' && !isTrialing) ||
+        (tier.id === currentTier && !(tier.id === 'pro' && isTrialing)));
 
     if (isCompare) {
       return (
@@ -251,10 +265,10 @@ export default function PricingTierGrid({
         <div className="max-w-xl space-y-3 text-center">
           <p className="text-xs font-medium uppercase tracking-widest text-white/40">Pricing</p>
           <h2 className="text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl">
-            Try Pro free for {TRIAL_DAYS} days
+            Start free. Upgrade when you grow.
           </h2>
           <p className="text-sm text-white/45">
-            Full Pro access during your trial. After that, subscribe to keep your profile public.
+            Free is limited on purpose. Pro unlocks longer video, unlimited projects, and no watermark.
           </p>
         </div>
       )}
@@ -262,10 +276,10 @@ export default function PricingTierGrid({
       <div
         className={`grid w-full gap-4 ${
           isCompare
-            ? 'grid-cols-1 sm:grid-cols-2'
+            ? 'grid-cols-1 sm:grid-cols-3'
             : compact
-              ? 'grid-cols-1 lg:grid-cols-2 max-w-3xl'
-              : 'grid-cols-1 md:grid-cols-2 md:gap-5 max-w-3xl'
+              ? 'grid-cols-1 lg:grid-cols-3'
+              : 'grid-cols-1 md:grid-cols-3 md:gap-5'
         }`}
       >
         {tiers.map((tier) => cardShell(tier))}
