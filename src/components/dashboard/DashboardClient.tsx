@@ -536,13 +536,8 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
     <ThemeProvider>
     <div className={`${shell} flex h-dvh flex-col overflow-hidden`}>
       <ActionStatus status={actionStatus} onDismiss={() => setActionStatus(null)} />
-      <div className="shrink-0 border-b border-white/10 px-4 py-2 sm:px-6">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <EmailVerifyBanner />
-          </div>
-          <ThemeToggle compact className="shrink-0" />
-        </div>
+      <div className="shrink-0 empty:hidden border-b border-white/10 px-4 py-2 sm:px-6 empty:border-0 empty:p-0">
+        <EmailVerifyBanner />
       </div>
       {showUpgradeBanner && (
         <div className="shrink-0 border-b border-white/10 bg-white/[0.03] px-4 py-2.5 sm:px-6">
@@ -623,13 +618,16 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
                 <p className="mt-1 truncate text-xs text-white/70" title={profile?.user?.email}>
                   {profile?.user?.email}
                 </p>
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="mt-2 text-xs text-white/45 transition-colors hover:text-white"
-                >
-                  Sign out
-                </button>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="text-xs text-white/45 transition-colors hover:text-white"
+                  >
+                    Sign out
+                  </button>
+                  <ThemeToggle compact className="shrink-0" />
+                </div>
               </div>
             </div>
           </div>
@@ -665,6 +663,7 @@ export default function DashboardClient({ initialProfile, initialAnalytics }: Da
               <PlanBadge user={billingUser} />
             </div>
             <div className="flex shrink-0 items-center gap-2">
+              <ThemeToggle compact className="shrink-0 lg:hidden" />
               <button
                 type="button"
                 onClick={() => setMobilePreviewOpen(true)}
