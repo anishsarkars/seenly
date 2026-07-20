@@ -460,7 +460,8 @@ export async function saveProfileCustomization(
 
     const updates: Record<string, string> = {};
     if (typeof data.profileTheme === 'string') {
-      updates.profileTheme = data.profileTheme === 'cinema' ? 'cinema' : 'minimal';
+      updates.profileTheme =
+        data.profileTheme === 'cinema' || data.profileTheme === 'dark' ? 'cinema' : 'minimal';
     }
     if (typeof data.profileSectionOrder === 'string') {
       updates.profileSectionOrder = data.profileSectionOrder;

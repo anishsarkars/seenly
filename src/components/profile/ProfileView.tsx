@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  Share2, MapPin, ExternalLink,
-  Mail, Globe, Play, Pause, Volume2, VolumeX,
+  Share2, ExternalLink, Mail, Globe,
+  Play, Pause, Volume2, VolumeX, Moon, Sun,
 } from 'lucide-react';
 import { isPersistedMediaUrl } from '@/lib/storage';
 import { logAnalyticEvent } from '@/db/actions';
@@ -12,6 +12,7 @@ import GoldenVerifiedTick from '@/components/profile/GoldenVerifiedTick';
 import ProVerifiedTick from '@/components/profile/ProVerifiedTick';
 import SeenlyLogo from '@/components/SeenlyLogo';
 import {
+  isDarkProfileTheme,
   parseProfileTheme,
   type ProfileSectionId,
   type ProfileTheme,
@@ -59,7 +60,7 @@ function IntroVideo({
   preview,
   onPlay,
   className = '',
-  maxHeightClass = 'max-h-[75dvh]',
+  fill = false,
 }: {
   videoUrl?: string;
   thumbnailUrl?: string;
@@ -67,7 +68,8 @@ function IntroVideo({
   userId?: string;
   onPlay?: () => void;
   className?: string;
-  maxHeightClass?: string;
+  /** Cover-fill hero (object-cover) vs intrinsic height */
+  fill?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoReady, setVideoReady] = useState(false);
@@ -76,8 +78,10 @@ function IntroVideo({
   const [progress, setProgress] = useState(0);
 
   const canPlay = !!videoUrl && (preview || isPersistedMediaUrl(videoUrl));
-  const shellClass = `group relative w-full overflow-hidden bg-black ${className}`;
-  const mediaClass = `block w-full h-auto ${maxHeightClass}`;
+  const shellClass = `group relative w-full overflow-hidden bg-zinc-900 ${fill ? 'h-full min-h-[240px]' : ''} ${className}`;
+  const mediaClass = fill
+    ? 'absolute inset-0 h-full w-full object-cover'
+    : 'block h-auto w-full max-h-[70dvh]';
 
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,11 +91,8 @@ function IntroVideo({
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) {
-      void video.play();
-    } else {
-      video.pause();
-    }
+    if (video.paused) void video.play();
+    else video.pause();
   };
 
   const handleTimeUpdate = () => {
@@ -112,7 +113,7 @@ function IntroVideo({
   if (!canPlay && preview && thumbnailUrl) {
     return (
       <div className={shellClass}>
-        <img src={thumbnailUrl} alt="" className={`${mediaClass} object-contain`} />
+        <img src={thumbnailUrl} alt="" className={mediaClass} />
         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 shadow-lg">
             <Play className="ml-0.5 h-5 w-5 fill-black text-black" />
@@ -124,9 +125,7 @@ function IntroVideo({
 
   if (!canPlay) {
     return (
-      <div
-        className={`flex min-h-[12rem] w-full items-center justify-center px-6 text-center text-sm text-zinc-500 ${shellClass}`}
-      >
+      <div className={`flex items-center justify-center px-6 text-center text-sm text-zinc-500 ${shellClass}`}>
         No intro video yet.
       </div>
     );
@@ -135,20 +134,17 @@ function IntroVideo({
   return (
     <div className={shellClass}>
       {thumbnailUrl && !videoReady && (
-        <img
-          src={thumbnailUrl}
-          alt=""
-          className={`${mediaClass} object-contain`}
-          fetchPriority="high"
-        />
+        <img src={thumbnailUrl} alt="" className={mediaClass} fetchPriority="high" />
       )}
       <video
         ref={videoRef}
         src={videoUrl}
         className={
           videoReady
-            ? `${mediaClass}`
-            : `absolute inset-0 h-full w-full ${maxHeightClass} object-contain opacity-0`
+            ? mediaClass
+            : fill
+              ? `${mediaClass} opacity-0`
+              : `absolute inset-0 h-full w-full object-contain opacity-0`
         }
         playsInline
         preload="auto"
@@ -171,16 +167,16 @@ function IntroVideo({
             <button
               type="button"
               onClick={togglePlay}
-              className="absolute inset-0 flex items-center justify-center bg-black/25 transition-opacity group-hover:bg-black/35"
+              className="absolute inset-0 z-[1] flex items-center justify-center bg-black/20 transition-opacity group-hover:bg-black/30"
               aria-label="Play video"
             >
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-xl backdrop-blur-sm transition-transform hover:scale-105">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-xl transition-transform hover:scale-105">
                 <Play className="ml-1 h-6 w-6 fill-black text-black" />
               </span>
             </button>
           )}
 
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-3 pt-10 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pb-3 pt-12 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
             <div className="pointer-events-auto flex items-center gap-3">
               <button
                 type="button"
@@ -188,7 +184,7 @@ function IntroVideo({
                   e.stopPropagation();
                   togglePlay();
                 }}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm hover:bg-white/25"
                 aria-label={playing ? 'Pause' : 'Play'}
               >
                 {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />}
@@ -196,7 +192,7 @@ function IntroVideo({
               <button
                 type="button"
                 onClick={toggleMute}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm hover:bg-white/25"
                 aria-label={muted ? 'Unmute' : 'Mute'}
               >
                 {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
@@ -206,14 +202,14 @@ function IntroVideo({
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={Math.round(progress * 100)}
-                className="relative h-1 flex-1 cursor-pointer rounded-full bg-white/20"
+                className="relative h-1 flex-1 cursor-pointer rounded-full bg-white/25"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleSeek(e);
                 }}
               >
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-white/90"
+                  className="absolute inset-y-0 left-0 rounded-full bg-white"
                   style={{ width: `${progress * 100}%` }}
                 />
               </div>
@@ -225,49 +221,88 @@ function IntroVideo({
   );
 }
 
-function SocialIconLink({
-  href,
-  label,
-  className = '',
-  children,
+function ProfilePublicFooter({
+  username,
+  dark,
 }: {
-  href: string;
-  label: string;
-  className?: string;
-  children: React.ReactNode;
+  username?: string;
+  dark: boolean;
 }) {
-  return (
-    <a
-      href={href}
-      target={href.startsWith('mailto:') ? undefined : '_blank'}
-      rel={href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
-      aria-label={label}
-      className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors hover:bg-profile-accent hover:text-black hover:border-profile-accent ${className}`}
-    >
-      {children}
-    </a>
-  );
-}
-
-function ProfilePublicFooter({ username }: { username?: string }) {
   const handle = username || 'yourusername';
 
   return (
-    <footer className="flex justify-center pb-2 pt-4">
+    <footer className="flex justify-center pt-2">
       <Link
         href="/onboarding"
-        className="group inline-flex w-full max-w-md flex-col items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3.5 text-center transition-all hover:border-profile-accent/30 hover:bg-white/[0.06]"
+        className={`group inline-flex w-full max-w-sm flex-col items-center gap-1 rounded-2xl border px-5 py-3.5 text-center transition-all ${
+          dark
+            ? 'border-white/10 bg-white/[0.04] hover:border-white/20'
+            : 'border-black/8 bg-white/60 hover:border-black/15 shadow-sm'
+        }`}
       >
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/35">Seenly</p>
-        <p className="text-sm font-medium leading-snug text-white/80 group-hover:text-white">
+        <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${dark ? 'text-white/35' : 'text-zinc-400'}`}>
+          Seenly
+        </p>
+        <p className={`text-sm font-medium ${dark ? 'text-white/80 group-hover:text-white' : 'text-zinc-700 group-hover:text-zinc-900'}`}>
           Claim yours — make your profile
         </p>
-        <p className="font-mono text-xs text-white/45 group-hover:text-white/65">
+        <p className={`font-mono text-xs ${dark ? 'text-white/40' : 'text-zinc-400'}`}>
           seenly.tech/{handle}
         </p>
       </Link>
     </footer>
   );
+}
+
+type Surface = {
+  page: string;
+  card: string;
+  text: string;
+  muted: string;
+  faint: string;
+  divider: string;
+  cta: string;
+  pill: string;
+  glass: string;
+  logoWrap: string;
+  fadeFrom: string;
+  avatarRing: string;
+  selection: string;
+};
+
+function getSurface(dark: boolean): Surface {
+  if (dark) {
+    return {
+      page: 'bg-[#0a0a0a] text-white',
+      card: 'bg-[#141414] border border-white/[0.08] shadow-[0_24px_80px_-20px_rgba(0,0,0,0.7)]',
+      text: 'text-white',
+      muted: 'text-zinc-400',
+      faint: 'text-zinc-500',
+      divider: 'bg-white/10',
+      cta: 'bg-white text-black hover:bg-zinc-200',
+      pill: 'bg-white/10 text-white/80 border border-white/10',
+      glass: 'bg-black/35 text-white border-white/15 hover:bg-black/50',
+      logoWrap: 'border-white/10 bg-white/[0.06] text-white',
+      fadeFrom: 'from-[#141414]',
+      avatarRing: 'ring-[#141414]',
+      selection: 'selection:bg-white selection:text-black',
+    };
+  }
+  return {
+    page: 'bg-[#f3f1ec] text-zinc-900',
+    card: 'bg-white border border-black/[0.04] shadow-[0_28px_80px_-28px_rgba(0,0,0,0.35)]',
+    text: 'text-zinc-900',
+    muted: 'text-zinc-500',
+    faint: 'text-zinc-400',
+    divider: 'bg-zinc-200',
+    cta: 'bg-zinc-950 text-white hover:bg-zinc-800',
+    pill: 'bg-zinc-100 text-zinc-600 border border-zinc-200/80',
+    glass: 'bg-white/70 text-zinc-800 border-white/60 hover:bg-white/90 backdrop-blur-md',
+    logoWrap: 'border-black/8 bg-white/80 text-zinc-800 shadow-sm',
+    fadeFrom: 'from-white',
+    avatarRing: 'ring-white',
+    selection: 'selection:bg-zinc-900 selection:text-white',
+  };
 }
 
 export default function ProfileView({
@@ -285,9 +320,30 @@ export default function ProfileView({
   const [hasLoggedPlay, setHasLoggedPlay] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const storedTheme =
+    profileThemeProp ??
+    (showFounderBadge ? parseProfileTheme(user.profileTheme) : null);
+
+  const [dark, setDark] = useState(() =>
+    storedTheme ? isDarkProfileTheme(storedTheme) : true
+  );
+
+  useEffect(() => {
+    if (storedTheme) {
+      setDark(isDarkProfileTheme(storedTheme));
+      return;
+    }
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    setDark(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setDark(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [storedTheme]);
+
   const isPublicProfile = !embedded && !preview;
   const isDesktopLayout = layout === 'desktop';
   const isMobileLayout = layout === 'mobile';
+  const s = getSurface(dark);
 
   useEffect(() => {
     if (preview || !user.thumbnailUrl) return;
@@ -338,279 +394,272 @@ export default function ProfileView({
   };
 
   const displayName = user.fullName || user.username || 'Your Name';
-  const firstName = displayName.trim().split(/\s+/)[0] || displayName;
   const displayHeadline = user.headline || 'Your professional headline';
-  const displayLocation = user.location || 'Location';
-  const displayBio = user.bio || displayHeadline;
+  const displayLocation = user.location || '';
 
-  const profileTheme =
-    profileThemeProp ??
-    (showFounderBadge ? parseProfileTheme(user.profileTheme) : 'minimal');
+  const contactHref =
+    (socials?.email && `mailto:${socials.email}`) ||
+    socials?.linkedin ||
+    socials?.portfolio ||
+    socials?.website ||
+    (user.resumeUrl && user.resumeUrl !== '#' ? user.resumeUrl : null);
 
-  const isCinema = profileTheme === 'cinema';
-  const accentClass = isCinema ? 'bg-amber-400 text-black' : 'bg-profile-accent text-black';
-  const accentText = isCinema ? 'text-amber-300' : 'text-profile-accent';
-  const socialIconClass = isCinema
-    ? 'border-amber-400/80 text-amber-300 hover:bg-amber-400 hover:text-black hover:border-amber-400'
-    : 'border-profile-accent/80 text-profile-accent';
-  const cardBg = 'bg-[#161616]';
+  const contactLabel = socials?.email
+    ? 'Get in touch'
+    : socials?.linkedin
+      ? 'Connect'
+      : user.resumeUrl && user.resumeUrl !== '#'
+        ? 'View resume'
+        : 'Get in touch';
 
-  const featuredProject = projects[0];
+  const stats: Array<{ value: string; label: string }> = [];
+  if (projects.length > 0) {
+    stats.push({ value: String(projects.length), label: projects.length === 1 ? 'project' : 'projects' });
+  }
+  if (experiences.length > 0) {
+    stats.push({ value: String(experiences.length), label: experiences.length === 1 ? 'role' : 'roles' });
+  }
+  if (displayLocation) {
+    stats.push({ value: displayLocation.split(',')[0].trim(), label: 'location' });
+  }
+  if (stats.length === 0 && user.bio) {
+    stats.push({ value: 'Open', label: 'to work' });
+  }
 
-  const renderSocialIcons = () => (
-    <div className="flex flex-wrap items-center gap-2.5">
-      {socials?.twitter && (
-        <SocialIconLink href={socials.twitter} label="Twitter" className={socialIconClass}>
-          <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.792l7.719-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-        </SocialIconLink>
-      )}
-      {socials?.email && (
-        <SocialIconLink href={`mailto:${socials.email}`} label="Email" className={socialIconClass}>
-          <Mail className="h-4 w-4" />
-        </SocialIconLink>
-      )}
-      {socials?.linkedin && (
-        <SocialIconLink href={socials.linkedin} label="LinkedIn" className={socialIconClass}>
-          <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
-        </SocialIconLink>
-      )}
-      {socials?.github && (
-        <SocialIconLink href={socials.github} label="GitHub" className={socialIconClass}>
-          <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" /></svg>
-        </SocialIconLink>
-      )}
-      {(socials?.website || socials?.portfolio) && (
-        <SocialIconLink href={(socials.website || socials.portfolio)!} label="Website" className={socialIconClass}>
-          <Globe className="h-4 w-4" />
-        </SocialIconLink>
-      )}
-    </div>
+  const projectTags = projects.slice(0, 3).map((p) => p.title);
+
+  const profileCard = (
+    <article className={`relative w-full overflow-hidden rounded-[1.75rem] sm:rounded-[2rem] ${s.card}`}>
+      {/* Video hero */}
+      <div className="relative h-[min(52vw,340px)] sm:h-[min(48vw,420px)] md:h-[440px]">
+        <IntroVideo
+          videoUrl={user.videoUrl}
+          thumbnailUrl={user.thumbnailUrl}
+          preview={preview}
+          userId={user.id}
+          onPlay={handleVideoPlay}
+          fill
+        />
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-28 bg-gradient-to-t ${s.fadeFrom} to-transparent`}
+        />
+        <button
+          type="button"
+          onClick={handleShare}
+          className={`absolute right-4 top-4 z-[4] flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md transition-colors sm:right-5 sm:top-5 ${s.glass}`}
+          aria-label={copied ? 'Link copied' : 'Share profile'}
+        >
+          <Share2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="relative px-5 pb-5 pt-0 sm:px-7 sm:pb-7">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+          <div className="flex min-w-0 items-end gap-3.5 sm:gap-4">
+            <div
+              className={`relative -mt-12 h-16 w-16 shrink-0 overflow-hidden rounded-full bg-zinc-800 ring-[3px] sm:-mt-14 sm:h-[4.5rem] sm:w-[4.5rem] ${s.avatarRing}`}
+            >
+              {user.avatar ? (
+                <img src={user.avatar} alt={displayName} className="h-full w-full object-cover" />
+              ) : (
+                <span className="flex h-full items-center justify-center text-lg font-bold text-white/50">
+                  {user.username?.slice(0, 2).toUpperCase() || '??'}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0 pb-0.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <h1 className={`truncate text-xl font-semibold tracking-tight sm:text-2xl ${s.text}`}>
+                  {displayName}
+                </h1>
+                {showFounderBadge && <GoldenVerifiedTick size="md" />}
+                {!showFounderBadge && showProBadge && <ProVerifiedTick size="md" />}
+              </div>
+              <p className={`mt-0.5 truncate text-sm ${s.muted}`}>{displayHeadline}</p>
+            </div>
+          </div>
+
+          {projectTags.length > 0 && (
+            <div className={`inline-flex max-w-full shrink-0 items-center gap-2 self-start rounded-full px-3 py-1.5 sm:self-end ${s.pill}`}>
+              <span className={`text-[10px] font-semibold uppercase tracking-wider ${s.faint}`}>
+                Work
+              </span>
+              <span className={`h-3 w-px ${s.divider}`} />
+              <span className={`truncate text-xs font-medium ${s.muted}`}>
+                {projectTags.join(' · ')}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {user.bio && (
+          <p className={`mt-4 text-sm leading-relaxed ${s.muted}`}>{user.bio}</p>
+        )}
+
+        {/* Stats + CTA */}
+        <div className="mt-5 flex flex-col gap-4 border-t border-transparent pt-1 sm:mt-6 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          {stats.length > 0 && (
+            <div className="flex flex-wrap items-stretch gap-0">
+              {stats.map((stat, idx) => (
+                <React.Fragment key={stat.label}>
+                  {idx > 0 && <div className={`mx-4 w-px self-stretch sm:mx-5 ${s.divider}`} />}
+                  <div className="min-w-0 py-1">
+                    <p className={`text-base font-semibold tracking-tight sm:text-lg ${s.text}`}>
+                      {stat.value}
+                    </p>
+                    <p className={`text-[11px] capitalize ${s.faint}`}>{stat.label}</p>
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+            {socials?.linkedin && (
+              <a
+                href={socials.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${dark ? 'border-white/10 text-white/60 hover:bg-white/5 hover:text-white' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800'}`}
+                aria-label="LinkedIn"
+              >
+                <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
+              </a>
+            )}
+            {socials?.github && (
+              <a
+                href={socials.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${dark ? 'border-white/10 text-white/60 hover:bg-white/5 hover:text-white' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800'}`}
+                aria-label="GitHub"
+              >
+                <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" /></svg>
+              </a>
+            )}
+            {(socials?.website || socials?.portfolio) && (
+              <a
+                href={(socials.website || socials.portfolio)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${dark ? 'border-white/10 text-white/60 hover:bg-white/5 hover:text-white' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800'}`}
+                aria-label="Website"
+              >
+                <Globe className="h-4 w-4" />
+              </a>
+            )}
+            {socials?.email && (
+              <a
+                href={`mailto:${socials.email}`}
+                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${dark ? 'border-white/10 text-white/60 hover:bg-white/5 hover:text-white' : 'border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800'}`}
+                aria-label="Email"
+              >
+                <Mail className="h-4 w-4" />
+              </a>
+            )}
+            {user.resumeUrl && user.resumeUrl !== '#' && (
+              <button
+                type="button"
+                onClick={handleDownloadResume}
+                className={`hidden h-10 items-center gap-1.5 rounded-full border px-3.5 text-xs font-medium transition-colors sm:inline-flex ${dark ? 'border-white/10 text-white/70 hover:bg-white/5' : 'border-zinc-200 text-zinc-600 hover:bg-zinc-50'}`}
+              >
+                Resume <ExternalLink className="h-3 w-3" />
+              </button>
+            )}
+            {contactHref ? (
+              <a
+                href={contactHref}
+                target={contactHref.startsWith('mailto:') ? undefined : '_blank'}
+                rel={contactHref.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
+                className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold transition-colors ${s.cta}`}
+              >
+                {contactLabel}
+              </a>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Experience / projects detail */}
+        {(experiences.length > 0 || projects.length > 1) && (
+          <div className={`mt-6 grid gap-5 border-t pt-5 sm:grid-cols-2 ${dark ? 'border-white/[0.08]' : 'border-zinc-100'}`}>
+            {experiences.length > 0 && (
+              <div>
+                <p className={`text-[11px] font-semibold uppercase tracking-wider ${s.faint}`}>Experience</p>
+                <ul className="mt-3 space-y-3">
+                  {experiences.slice(0, 4).map((exp, idx) => (
+                    <li key={idx}>
+                      <p className={`text-sm font-medium ${s.text}`}>{exp.role}</p>
+                      <p className={`text-xs ${s.muted}`}>
+                        {exp.company}
+                        {exp.duration ? ` · ${exp.duration}` : ''}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {projects.length > 0 && (
+              <div>
+                <p className={`text-[11px] font-semibold uppercase tracking-wider ${s.faint}`}>Projects</p>
+                <ul className="mt-3 space-y-3">
+                  {projects.slice(0, 4).map((proj, idx) => (
+                    <li key={idx}>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`text-sm font-medium ${s.text}`}>{proj.title}</p>
+                        {proj.website && (
+                          <a
+                            href={proj.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`shrink-0 ${s.faint} hover:opacity-80`}
+                            aria-label={`Open ${proj.title}`}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        )}
+                      </div>
+                      {proj.description && (
+                        <p className={`mt-0.5 line-clamp-2 text-xs ${s.muted}`}>{proj.description}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </article>
   );
 
-  /** Bento public profile — video first, same data as before */
   if (isPublicProfile) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-black font-geist text-white selection:bg-profile-accent selection:text-black">
-        {/* Atmosphere */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 -top-24 h-[28rem] w-[28rem] rounded-full bg-[radial-gradient(circle,rgba(200,245,66,0.12),transparent_65%)] blur-2xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-32 -left-20 h-[24rem] w-[24rem] rounded-full bg-[radial-gradient(circle,rgba(180,120,40,0.14),transparent_70%)] blur-2xl"
-        />
-
-        <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:py-12">
-          <div className="mb-8 flex items-center justify-between gap-4 sm:mb-10">
+      <div className={`min-h-screen font-geist transition-colors ${s.page} ${s.selection}`}>
+        <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10 md:py-14">
+          <div className="mb-6 flex items-center justify-between gap-3 sm:mb-8">
             <SeenlyLogo
               size="md"
               showBeta={false}
-              className="rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 backdrop-blur-md"
+              className={`rounded-full border px-4 py-2.5 backdrop-blur-md ${s.logoWrap}`}
             />
             <button
               type="button"
-              onClick={handleShare}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-xs font-medium text-white/70 transition-colors hover:border-white/20 hover:text-white"
+              onClick={() => setDark((v) => !v)}
+              className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-medium transition-colors ${dark ? 'border-white/10 bg-white/[0.04] text-white/70 hover:text-white' : 'border-black/8 bg-white/70 text-zinc-600 hover:text-zinc-900 shadow-sm'}`}
+              aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              <Share2 className="h-3.5 w-3.5" />
-              {copied ? 'Copied' : 'Share'}
+              {dark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+              {dark ? 'Light' : 'Dark'}
             </button>
           </div>
 
-          {/* Name header with hairlines */}
-          <div className="mb-8 flex items-center gap-4 sm:mb-10 sm:gap-6">
-            <div className="h-px flex-1 bg-white/20" />
-            <div className="flex shrink-0 flex-wrap items-center justify-center gap-2 text-center">
-              <h1
-                className="font-display text-3xl tracking-tight text-white sm:text-4xl md:text-5xl"
-                style={{ fontFamily: 'var(--font-instrument-serif), ui-serif, Georgia, serif' }}
-              >
-                {displayName}
-              </h1>
-              {showFounderBadge && <GoldenVerifiedTick size="lg" />}
-              {!showFounderBadge && showProBadge && <ProVerifiedTick size="lg" />}
-            </div>
-            <div className="h-px flex-1 bg-white/20" />
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-5">
-            {/* Mobile: video first */}
-            <div className="order-1 lg:order-2 lg:col-span-7 xl:col-span-8">
-              <div className={`${cardBg} overflow-hidden rounded-[1.5rem] p-3 sm:p-4`}>
-                <div className="mb-3 flex items-center justify-between gap-3 px-1">
-                  <h2 className="text-sm font-semibold text-white sm:text-base">Intro video</h2>
-                  {featuredProject?.website && (
-                    <a
-                      href={featuredProject.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`inline-flex items-center gap-1 text-xs font-medium ${accentText} hover:underline`}
-                    >
-                      View project <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
-                </div>
-                <div className="overflow-hidden rounded-[1.15rem] bg-black">
-                  <IntroVideo
-                    videoUrl={user.videoUrl}
-                    thumbnailUrl={user.thumbnailUrl}
-                    preview={preview}
-                    userId={user.id}
-                    onPlay={handleVideoPlay}
-                    maxHeightClass="max-h-[min(68dvh,520px)]"
-                  />
-                </div>
-
-                {projects.length > 0 && (
-                  <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                    {projects.slice(0, 4).map((proj, idx) => (
-                      <div
-                        key={idx}
-                        className={`rounded-2xl p-3.5 sm:p-4 ${
-                          idx % 2 === 1
-                            ? isCinema
-                              ? 'bg-amber-400 text-black'
-                              : 'bg-profile-accent text-black'
-                            : 'bg-white text-black'
-                        }`}
-                      >
-                        <p className="text-sm font-semibold leading-snug">{proj.title}</p>
-                        {proj.description && (
-                          <p className="mt-1.5 line-clamp-2 text-xs opacity-70">{proj.description}</p>
-                        )}
-                        <div className="mt-2.5 flex flex-wrap gap-2">
-                          {proj.website && (
-                            <a
-                              href={proj.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-0.5 text-[10px] font-semibold underline-offset-2 hover:underline"
-                            >
-                              Live <ExternalLink className="h-2.5 w-2.5" />
-                            </a>
-                          )}
-                          {proj.github && (
-                            <a
-                              href={proj.github}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-0.5 text-[10px] font-semibold underline-offset-2 hover:underline"
-                            >
-                              Code <ExternalLink className="h-2.5 w-2.5" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Bottom action bar */}
-              <div className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] ${cardBg} px-4 py-3.5 sm:px-5`}>
-                {renderSocialIcons()}
-                <div className="flex flex-wrap items-center gap-2">
-                  {user.resumeUrl && user.resumeUrl !== '#' && (
-                    <button
-                      type="button"
-                      onClick={handleDownloadResume}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-black transition-transform hover:scale-[1.02]"
-                    >
-                      Resume <ExternalLink className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Left column */}
-            <div className="order-2 flex flex-col gap-4 lg:order-1 lg:col-span-5 xl:col-span-4">
-              <div className={`${cardBg} overflow-hidden rounded-[1.5rem]`}>
-                <div className="relative aspect-[4/5] max-h-[320px] w-full overflow-hidden bg-zinc-900 sm:max-h-[380px]">
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={displayName}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-5xl font-bold text-white/30">
-                      {user.username?.slice(0, 2).toUpperCase() || '??'}
-                    </div>
-                  )}
-                </div>
-                <div className={`m-3 rounded-[1.15rem] px-4 py-4 sm:m-3.5 ${accentClass}`}>
-                  <p className="text-base font-bold tracking-tight sm:text-lg">
-                    Hello, I&apos;m {firstName}
-                  </p>
-                  <p className="mt-1.5 text-sm leading-relaxed opacity-80">
-                    &ldquo;{displayBio}&rdquo;
-                  </p>
-                </div>
-              </div>
-
-              <div className={`${cardBg} space-y-5 rounded-[1.5rem] px-5 py-5`}>
-                {user.location && (
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wider text-white/35">Location</p>
-                    <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm text-white/80">
-                      <MapPin className="h-3.5 w-3.5 text-white/40" />
-                      {displayLocation}
-                    </p>
-                  </div>
-                )}
-
-                {experiences.length > 0 && (
-                  <div>
-                    <p className="text-sm font-semibold text-white">Experience</p>
-                    <ul className="mt-3 space-y-3">
-                      {experiences.map((exp, idx) => (
-                        <li key={idx} className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-white/90">{exp.company}</p>
-                            <p className="text-xs text-white/45">{exp.role}</p>
-                          </div>
-                          {exp.duration && (
-                            <span className="shrink-0 text-right text-[11px] text-white/40">
-                              {exp.duration}
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {projects.length > 0 && (
-                  <div>
-                    <p className="text-sm font-semibold text-white">Focus</p>
-                    <p className="mt-2 text-sm leading-relaxed text-white/50">
-                      {projects
-                        .slice(0, 4)
-                        .map((p) => p.title)
-                        .join(' · ')}
-                    </p>
-                  </div>
-                )}
-
-                {user.headline && (
-                  <div>
-                    <p className="text-sm font-semibold text-white">About</p>
-                    <p className="mt-2 text-sm leading-relaxed text-white/50">{displayHeadline}</p>
-                  </div>
-                )}
-
-                {!experiences.length && !projects.length && !user.headline && (
-                  <p className="text-sm text-white/40">Profile details coming soon.</p>
-                )}
-              </div>
-            </div>
-          </div>
+          {profileCard}
 
           {!removeBranding && (
-            <div className="mt-12 border-t border-white/10 pt-10 md:mt-16">
-              <ProfilePublicFooter username={user.username} />
+            <div className="mt-10">
+              <ProfilePublicFooter username={user.username} dark={dark} />
             </div>
           )}
         </div>
@@ -618,136 +667,37 @@ export default function ProfileView({
     );
   }
 
-  // Embedded / dashboard preview — same bento language, compact
-  const gridClass = isDesktopLayout
-    ? 'grid grid-cols-12 gap-4 items-start'
-    : isMobileLayout
-      ? 'grid grid-cols-1 gap-4 items-start'
-      : 'grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-5 items-start';
-
-  const sidebarClass = isDesktopLayout
-    ? 'col-span-4 flex flex-col gap-3'
-    : isMobileLayout
-      ? 'col-span-1 flex flex-col gap-3 order-2'
-      : 'md:col-span-4 flex flex-col gap-3 order-2 md:order-1';
-
-  const mainClass = isDesktopLayout
-    ? 'col-span-8 space-y-3'
-    : isMobileLayout
-      ? 'col-span-1 space-y-3 order-1'
-      : 'md:col-span-8 space-y-3 order-1 md:order-2';
+  // Preview / embed
+  const wrapClass = embedded
+    ? `font-geist ${s.page} ${s.selection}`
+    : `min-h-screen font-geist py-8 md:py-12 ${s.page} ${s.selection}`;
 
   return (
-    <div
-      className={
-        embedded
-          ? 'bg-black font-geist text-white selection:bg-profile-accent selection:text-black'
-          : 'min-h-screen bg-black font-geist text-white selection:bg-profile-accent selection:text-black py-10 md:py-16'
-      }
-    >
-      <div
-        className={`mx-auto px-3 sm:px-4 ${gridClass} ${
-          embedded ? 'max-w-none py-4' : 'max-w-5xl'
-        }`}
-      >
-        <div className={sidebarClass}>
-          <div className={`${cardBg} overflow-hidden rounded-2xl`}>
-            <div className="aspect-[4/5] max-h-48 overflow-hidden bg-zinc-900">
-              {user.avatar ? (
-                <img src={user.avatar} alt={displayName} className="h-full w-full object-cover" />
-              ) : (
-                <span className="flex h-full items-center justify-center text-2xl font-bold text-white/30">
-                  {user.username?.slice(0, 2).toUpperCase() || '??'}
-                </span>
-              )}
-            </div>
-            <div className={`m-2.5 rounded-xl px-3 py-3 ${accentClass}`}>
-              <p className="text-sm font-bold">Hello, I&apos;m {firstName}</p>
-              <p className="mt-1 line-clamp-3 text-xs opacity-80">&ldquo;{displayBio}&rdquo;</p>
-            </div>
+    <div className={wrapClass}>
+      <div className={`mx-auto px-3 sm:px-4 ${embedded ? 'max-w-none py-2' : 'max-w-3xl'}`}>
+        {!embedded && (
+          <div className="mb-4 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setDark((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium ${dark ? 'border-white/10 text-white/60' : 'border-zinc-200 text-zinc-500'}`}
+            >
+              {dark ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
+              {dark ? 'Light' : 'Dark'}
+            </button>
           </div>
-
-          <div className={`${cardBg} space-y-3 rounded-2xl px-4 py-4`}>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <h1
-                className="text-lg font-semibold tracking-tight"
-                style={{ fontFamily: 'var(--font-instrument-serif), ui-serif, Georgia, serif' }}
-              >
-                {displayName}
-              </h1>
-              {showFounderBadge && <GoldenVerifiedTick size="md" />}
-              {!showFounderBadge && showProBadge && <ProVerifiedTick size="md" />}
-            </div>
-            <p className="text-xs text-white/50">{displayHeadline}</p>
-            {(user.location || preview) && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-white/40">
-                <MapPin className="h-3 w-3" /> {displayLocation}
-              </span>
-            )}
-          </div>
+        )}
+        <div className={isMobileLayout ? 'max-w-md mx-auto' : isDesktopLayout ? '' : ''}>
+          {profileCard}
         </div>
-
-        <div className={mainClass}>
-          <div className={`${cardBg} overflow-hidden rounded-2xl p-3`}>
-            <p className="mb-2 px-1 text-xs font-semibold text-white/80">Intro video</p>
-            <div className="overflow-hidden rounded-xl ring-1 ring-white/5">
-              <IntroVideo
-                videoUrl={user.videoUrl}
-                thumbnailUrl={user.thumbnailUrl}
-                preview={preview}
-                userId={user.id}
-                onPlay={handleVideoPlay}
-                maxHeightClass={embedded ? 'max-h-[42vh]' : 'max-h-[50vh]'}
-              />
-            </div>
-          </div>
-
-          {experiences.length > 0 && (
-            <div className={`${cardBg} space-y-2 rounded-2xl px-4 py-3`}>
-              <h3 className="text-[11px] font-semibold uppercase tracking-widest text-white/35">Experience</h3>
-              <ul className="space-y-2">
-                {experiences.map((exp, idx) => (
-                  <li key={idx}>
-                    <p className="text-sm font-medium">{exp.role}</p>
-                    <p className="text-xs text-white/40">
-                      {exp.company}
-                      {exp.duration ? ` · ${exp.duration}` : ''}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {projects.length > 0 && (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {projects.slice(0, 4).map((proj, idx) => (
-                <div
-                  key={idx}
-                  className={`rounded-2xl p-3 ${
-                    idx % 2 === 1 ? accentClass : 'bg-white text-black'
-                  }`}
-                >
-                  <p className="text-sm font-semibold">{proj.title}</p>
-                  {proj.description && (
-                    <p className="mt-1 line-clamp-2 text-[11px] opacity-70">{proj.description}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {!embedded && !removeBranding && (
-        <footer className="px-6 pb-10 pt-8">
-          <div className="mx-auto flex max-w-5xl justify-center">
-            <Link href="/onboarding" className="text-xs text-zinc-600 hover:text-zinc-400">
-              Built with <span className="text-zinc-400">seenly.tech</span>
+        {!embedded && !removeBranding && (
+          <div className="mt-8 flex justify-center">
+            <Link href="/onboarding" className={`text-xs ${s.faint} hover:opacity-80`}>
+              Built with seenly.tech
             </Link>
           </div>
-        </footer>
-      )}
+        )}
+      </div>
     </div>
   );
 }

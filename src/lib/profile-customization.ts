@@ -25,17 +25,23 @@ export const PROFILE_THEME_META: Record<
   { label: string; description: string }
 > = {
   minimal: {
-    label: 'Minimal',
-    description: 'Bento layout with lime accents and video up front.',
+    label: 'Light',
+    description: 'White card, soft shadows, video hero.',
   },
   cinema: {
-    label: 'Cinema',
-    description: 'Same bento layout with warm amber accents.',
+    label: 'Dark',
+    description: 'Charcoal card, high contrast, video hero.',
   },
 };
 
+/** `minimal` = light, `cinema` = dark (legacy DB values). Also accepts light/dark. */
 export function parseProfileTheme(value?: string | null): ProfileTheme {
-  return value === 'cinema' ? 'cinema' : 'minimal';
+  if (value === 'cinema' || value === 'dark') return 'cinema';
+  return 'minimal';
+}
+
+export function isDarkProfileTheme(theme: ProfileTheme): boolean {
+  return theme === 'cinema';
 }
 
 export function parseProfileSectionOrder(raw?: string | null): ProfileSectionId[] {

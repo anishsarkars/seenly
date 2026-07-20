@@ -70,7 +70,7 @@ export default function ProfileCustomizePanel({
         <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-400/80" strokeWidth={1.5} />
         <div>
           <p className="text-sm font-medium text-white">Customize your page</p>
-          <p className={muted}>Final boss — pick a look and drag sections below the video.</p>
+          <p className={muted}>Final boss — pick light or dark, and drag sections below the video.</p>
         </div>
       </div>
 
